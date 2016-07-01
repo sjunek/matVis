@@ -74,13 +74,18 @@ function varargout = matVis(varargin)
 %                               plotMean          Number indicating status of plot-average-mode: 0: 1x1, 1: 3x3, 2: 5x5, 3: [1x1,3x3,5x5], 4: zoom area, 5: RGB
 %                               currPos           Vector indicating starting position
 %                               cmMinMax          Matrix of size 2 x number of data sets for colormap limits
-%                               cmap              Number of colormap from list of available colormaps:  {'Gray';'Gray (Range)'; 'Jet'; 'HSV'; 'Hot'; 'Cool';'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2'; 'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';'Blue-Gray-Yellow (0 centered)';'Magenta-Gray-Green (0 centered)'}
+%                               cmap              Number of colormap from list of available colormaps:  {'Gray';'Gray (Range)'; 'Jet'; 'HSV'; 'Hot'; 'Cool';
+%                                                   'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2'; 'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';
+%                                                   'Blue-Gray-Yellow (0 centered)';'Magenta-Gray-Green (0 centered)'}
 %                               aspRatio          Two element vector
 %                               rgbDim            Number of RGB dimensions
 %                               projDim           Number of projection dimensions
 %                               projMethod        Number or string: {'None';'Max';'Min';'Mean';'Std';'Var'; 'Tile'}
 %                               windowVisibility  Binary vector indicating visibility of [imageWin zoomWin plotWin]
-%                               windowPositions   Structure s containing the fields s.gui, s.imageWin, s.zoomWin and s.plotWin. In case there is one data set, the values of the fields are four element vectors [x0, y0, width, height], in case there are nMat data sets, the values are matrices of size nMat x 4.
+%                               windowPositions   Structure s containing the fields s.gui, s.imageWin, s.zoomWin and s.plotWin. In case there is one data set, 
+%                                                   the values of the fields are four element vectors [x0, y0, width, height], in case there are nMat data sets, 
+%                                                   the values are matrices of size nMat x 4.
+%                                                   WARNING: gui Position includs TooltipDisplay!!!
 %
 % Output Argument (optional)
 %    Structure containing the following fields:
@@ -4741,7 +4746,7 @@ end
             updateColormap;
         end
         if get(tbRoi, 'Value') && ~isempty(plotDim)
-            updateRoiProperties(any(plotDim ~= dimNum)); % Update properties of ROIs, with plot updates only if necessary
+            updateRoiProperties(length(plotDim)>1 || any(plotDim ~= dimNum)); % Update properties of ROIs, with plot updates only if necessary
         end
         if movdata.rec
             vidWriter('append');
@@ -5019,27 +5024,28 @@ end
                             currIm{ii} = min(c, [], 3);    % Used to be nanmin
                         case 3      %mean projection
                           if withAlpha
-                            currIm{ii}       = nansum(c.*cA,3)./nansum(cA.*~isnan(c),3); % weighted mean ratio
-                            currAlphaMap{ii} = nansum(cA.^2,3)  ./nansum(cA,3);          % mean Intensity
+                            currIm{ii}       = sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'); % weighted mean ratio
+                            currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')./sum(cA,           3, 'omitnan'); % mean Intensity
                           else
                             currIm{ii} = mean(c,  3, 'omitnan'); % used to be nanmean
                           end
                         case 4      %standard deviation projection
                           if withAlpha
                             % standard error:  SE = sum( (x - <x>)^2.*w, 3) ./ sum(w, 3)
-                            currIm{ii}       = sqrt( nansum( (c - repmat(nansum(c.*cA,3)./nansum(cA.*~isnan(c),3),[1 1 sz1(3)]) ).^2 .* cA,3)./nansum(cA.*~isnan(c),3));  % standard error of currIm{ii} -> SEM ././sqrt(sum(~isnan(A_rr),3))
+                            currIm{ii}       = sqrt( sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'));  % standard error of currIm{ii} -> SEM ././sqrt(sum(~isnan(A_rr),3))
                             % standard error of mean:  SEM = sum( (x - <x>)^2.*w, 3) ./ sum(w, 3) ./ sz(3)
-                            %currIm{ii}       = sqrt( nansum( (c - repmat(nansum(c.*cA,3)./nansum(cA.*~isnan(c),3),[1 1 sz1(3)]) ).^2 .* cA,3)./nansum(cA.*~isnan(c),3))./sqrt(sum(~isnan(c),3));
-                            currAlphaMap{ii} = nansum(cA.^2,3)  ./nansum(cA,3);           % mean Intensity
+                            %currIm{ii}       = sqrt( sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'))./sqrt(sum(~isnan(c),3));
+                            currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')  ./sum(cA,3, 'omitnan');           % mean Intensity
                           else
-                            currIm{ii} = nanstd(double(c), [], 3);
+                            currIm{ii} = std(double(c), [], 3, 'omitnan');
                           end
                         case 5      %variance projection
                           if withAlpha
-                            currIm{ii}       = nansum( (c - repmat(nansum(c.*cA,3)./nansum(cA.*~isnan(c),3),[1 1 sz1(3)]) ).^2 .* cA,3)./nansum(cA.*~isnan(c),3);  % standard error of currIm{ii} -> SEM ././sqrt(sum(~isnan(A_rr),3))
-                            currAlphaMap{ii} = nansum(cA.^2,3)  ./nansum(cA,3);          % mean Intensity
+                            currIm{ii}       = sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')...
+                              ./sum(cA.*~isnan(c),3, 'omitnan');  % standard error of currIm{ii} -> SEM ././sqrt(sum(~isnan(A_rr),3))
+                            currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')  ./sum(cA,3, 'omitnan');          % mean Intensity
                           else
-                            currIm{ii} = nanvar(double(c), [], 3);
+                            currIm{ii} = var(double(c), [], 3, 'omitnan');
                           end
                         case 6    %Tile images ('montage')
                             nCols = max(1,round(sqrt(dim(xySel(1))/dim(xySel(2))*size(c,3)/aspRatio(2) * aspRatio(1))));
@@ -5298,11 +5304,11 @@ end
                         else % Stretch 2 channels across complete RGB-rainbow (instead of using only blends of red and blue)
                             % Averaged and normalized values used for
                             % brightness of image:
-                            d_brightness = nansum(currStack,2);
+                            d_brightness = sum(currStack,2, 'omitnan');
                             d_brightness = d_brightness./max(d_brightness(:));
                             % RGB color balance
                             currStack = currStack - min(currStack(:));
-                            d_color = currStack(:,1)./nansum(currStack,2); % Weighted color balance
+                            d_color = currStack(:,1)./sum(currStack,2, 'omitnan'); % Weighted color balance
                             d_color(isnan(d_color)) = 0;                % avoid NaNs
                             rgbVal2 = zeros(256,3);
                             for kk = 1:256
@@ -5355,7 +5361,7 @@ end
         % Reshape and avoid negative values by shifting data
         in = single(reshape(in-min(in(:)), [], sz(3)));
         % Determine the brightness of each pixel, given by its norm
-        brightness = single(sqrt(nansum(in.^2,2)));
+        brightness = single(sqrt(sum(in.^2,2, 'omitnan')));
         % Determine max vector length for the RGB triple of each pixel
         % (e.g. pixels with a hue along [1 1 1] can have a larger RGB
         % vector than pixels along the RGB triple [1 0 0])
@@ -5828,7 +5834,7 @@ end
                                     plotValues{jj,ii,1} = currImVal{jj}(:,currPos(xySel(2)));
                                     plotValues{jj,ii,2} = currIm{jj}(:,currPos(xySel(2)));
                                 else
-                                    plotValues{jj,ii,kk} = mean(currImVal{jj}(:,plotIndex{xySel(2)}),2);
+                                    plotValues{jj,ii,kk} = mean(currImVal{jj}(:,plotIndex{xySel(2)}),2, 'omitnan');
                                 end
                             end
                             % Plot along y direction
@@ -5850,10 +5856,10 @@ end
                                     plotValues{jj,ii,2} = currIm{jj}(currPos(xySel(1)),:);
                                 else
                                   if withAlpha
-                                    plotValues{jj,ii,kk} =  nansum(currImVal{jj}(plotIndex{xySel(1)},:).*currAlphaMapVal{jj}(plotIndex{xySel(1)},:),1)./...
-                                                            nansum(currAlphaMapVal{jj}(plotIndex{xySel(1)},:).*~isnan(currImVal{jj}(plotIndex{xySel(1)},:)),1);
+                                    plotValues{jj,ii,kk} =  sum(currImVal{jj}(plotIndex{xySel(1)},:).*currAlphaMapVal{jj}(plotIndex{xySel(1)},:),1, 'omitnan')./...
+                                                            sum(currAlphaMapVal{jj}(plotIndex{xySel(1)},:).*~isnan(currImVal{jj}(plotIndex{xySel(1)},:)),1, 'omitnan');
                                   else
-                                    plotValues{jj,ii,kk} = mean(currImVal{jj}(plotIndex{xySel(1)},:),1);
+                                    plotValues{jj,ii,kk} = mean(currImVal{jj}(plotIndex{xySel(1)},:),1, 'omitnan');
                                   end
                                 end
                             end
@@ -5872,11 +5878,11 @@ end
                             end
                         else  % plot along potential RGB dimension
                           if withAlpha
-                            %nansum(c.*cA,3)./nansum(cA.*~isnan(c),3); % weighted mean ratio
-                            plotValues{jj,ii,kk} =  nansum(nansum(data{jj}(plotIndex{:}).*alphaMap{jj}(plotIndex{:}),xySel(1)),xySel(2))./...
-                                                    nansum(nansum(alphaMap{jj}(plotIndex{:}).*~isnan(data{jj}(plotIndex{:})),xySel(1)),xySel(2));
+                            %sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'); % weighted mean ratio
+                            plotValues{jj,ii,kk} =  sum(sum(data{jj}(plotIndex{:})    .*alphaMap{jj}(plotIndex{:}),    xySel(1), 'omitnan'),xySel(2), 'omitnan')./...
+                                                    sum(sum(alphaMap{jj}(plotIndex{:}).*~isnan(data{jj}(plotIndex{:})),xySel(1), 'omitnan'),xySel(2), 'omitnan');
                           else
-                            plotValues{jj,ii,kk} = mean(mean(data{jj}(plotIndex{:}),xySel(1)),xySel(2));
+                            plotValues{jj,ii,kk} = mean(mean(data{jj}(plotIndex{:}),xySel(1), 'omitnan'),xySel(2), 'omitnan');
                           end
                         end
                     end
@@ -5896,10 +5902,10 @@ end
                         plotIndex = repmat(plotIndex, [1 dim(plotDim(ii))]);                %Replicate linear index
                         plotIndex = plotIndex + repmat(deltaIndex * (0:dim(plotDim(ii))-1),[size(roiList(selRois(kk)).index.x,1) 1]);   %Extend to all other points by adding deltaInd for each step
                         if withAlpha
-                          plotValues{jj,ii,kk} =  nansum(data{jj}(plotIndex).*alphaMap{jj}(plotIndex),1)./...
-                                                  nansum(alphaMap{jj}(plotIndex).*~isnan(data{jj}(plotIndex)),1);
+                          plotValues{jj,ii,kk} =  sum(data{jj}(plotIndex)    .*alphaMap{jj}(plotIndex),    1, 'omitnan')./...
+                                                  sum(alphaMap{jj}(plotIndex).*~isnan(data{jj}(plotIndex)),1, 'omitnan');
                         else
-                          plotValues{jj,ii,kk} = mean(data{jj}(plotIndex),1);
+                          plotValues{jj,ii,kk} = mean(data{jj}(plotIndex),1, 'omitnan');
                         end
                     end
                 end
@@ -8492,7 +8498,7 @@ end
         switch profileProj
             case 'Mean'
                 if withAlpha
-                    profile = nansum(A.*AA,1)./nansum(AA.*~isnan(A),1); % weighted mean ratio
+                    profile = sum(A.*AA,1, 'omitnan')./sum(AA.*~isnan(A),1, 'omitnan'); % weighted mean ratio
                 else
                     profile = mean(A,1, 'omitnan'); % used to be nanmean
                 end
@@ -9213,6 +9219,7 @@ end
         %Calculate index of each pixel in xySel plane
         [roiList(numberRoi).index.x roiList(numberRoi).index.y] = find(roiList(numberRoi).mask);
         if customDimScale
+            roiList(numberRoi).corners = [];
             for ii = 1:size(roi,2)
                 roiList(numberRoi).corners(:,ii) = scaledLocation(roi(:,ii)');
             end
@@ -9233,7 +9240,7 @@ end
                 round(min(dim(xySel(1)),1+max(roiList(numberRoi).corners(2,:))))];
         end
         roiList(numberRoi).rectangle = roiRegion;
-        if ~any(cell2mat(get([tbRoiShift tbRoiRotate tbRoiScale], 'Value')))
+        if numel(get(roiListbox,'Value'))==1 %~any(cell2mat(get([tbRoiShift tbRoiRotate tbRoiScale], 'Value')))
           roiList(numberRoi).settings.xySel = xySel;
           roiList(numberRoi).settings.position = currPos;
           roiList(numberRoi).settings.zoomVal = zoomVal;
@@ -9327,8 +9334,8 @@ end
         roiLine.zoom(:,roiSel) = [];
         nRois = nRois - size(roiSel,2);
         if nRois > 0
-            set(roiListbox, 'Value',1);
-            updateRoiSelection;
+            set(roiListbox, 'Value',min(roiSel(1),nRois));
+            updateRoiSelection(min(roiSel(1),nRois));
         else
             set(roiListbox, 'Value',0, 'String', '');
             set([roiBtRename tbRoiShift tbRoiRotate tbRoiScale roiBtReplace bt_roiExport bt_deleteRoi bt_exportRoiData] , 'Enable', 'off');
@@ -9344,22 +9351,24 @@ end
         set(roiBtRename, 'UserData',1)
         currRoi = get(roiListbox, 'Value');
         ROIpos = roiList(currRoi).settings.position;
+        nROIDim = length(ROIpos);
         ROIZoomVal = roiList(currRoi).settings.zoomVal;
-        NDim = length(ROIpos);
+        %ROIZoomVal(end+1:nROIDim,2) = dim(size(ROIZoomVal,1)+1:nROIDim);
+        %ROIZoomVal(end+1:nROIDim,1) = 1; 
         ROIStr = sprintf('         Position        Zoom Settings');
-        for np = 1:NDim;
+        for np = 1:min(nROIDim,nDim);
           ROIStr = sprintf('%s\nDim%d:  %4d %s %4d  %4d:%4d %s %4d:%4d',...
             ROIStr,np,ROIpos(np),char(hex2dec('2192')),currPos(np),ROIZoomVal(np,1),sum(ROIZoomVal(np,:))-1,char(hex2dec('2192')),zoomVal(np,1),sum(zoomVal(np,:))-1);
         end
-        
-        tempRoiPropWin = figure('Position', [270, 380, 320, 25*NDim + 50],...
+        gp = get(gui,'Position');
+        tempRoiPropWin = figure('Position', [gp(1)+270, gp(2)-100-25*nROIDim, 320, 25*nROIDim + 50],...
           'MenuBar', 'none','NumberTitle', 'off', 'Name', 'ROI Properties!');%
         
-        uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 25*NDim+26 55 18],...
+        uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 25*nROIDim+26 55 18],...
           'String','ROI name:');
-        etxt_newRoiName = uicontrol(tempRoiPropWin,'Style', 'Edit', 'Position', [80 25*NDim+25 150 20],...
+        etxt_newRoiName = uicontrol(tempRoiPropWin,'Style', 'Edit', 'Position', [80 25*nROIDim+25 150 20],...
           'String',roiList(currRoi).name,'HorizontalAlignment','left');
-        uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 35 290 15*NDim+15],...
+        uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 35 290 15*nROIDim+15],...
           'String',ROIStr,'HorizontalAlignment','left','FontName','Courier');%
         btn1 = uicontrol(tempRoiPropWin,'Style', 'pushbutton', 'Position', [12 12 100 20],...
           'String','Cancle','Callback', {@getNewRoiProps,0});%ROIStr
@@ -9493,7 +9502,9 @@ end
         if numel(numberRoi) == 1
           ROIPos = roiList(numberRoi).settings.position;
           matchDims = min([length(currPos) length(ROIPos)]);
+          matchDims = find([ROIPos(1:matchDims)>dim(1:matchDims) 1],1,'first')-1; % checks if saved ROIpos is larger than data dimension and reduces MATCHDIMS, in case
           currPos(1:matchDims) = ROIPos(1:matchDims);
+          currPos(currPos(1:matchDims)>dim(1:matchDims))=1;
           %ROIZoomVal = roiList(numberRoi).settings.zoomVal;
           updateSelection(1:length(currPos));
         end
@@ -9808,11 +9819,11 @@ end
             for ii=1:size(selRois,2)
                 scalingFct(1) = 1 + (p2(1)-p(1)) / (roiList(selRois(ii)).rectangle(3)-roiList(selRois(ii)).rectangle(1));
                 scalingFct(2) = 1 + (p2(2)-p(2)) / (roiList(selRois(ii)).rectangle(4)-roiList(selRois(ii)).rectangle(2));
-                newCoord(1  ,:) = scalingFct(1) * (roiList(selRois(ii)).corners(1  ,:) - mean(roiList(selRois(ii)).corners(1  ,1:end-1)));
+                newCoord(1,:) = scalingFct(1) * (roiList(selRois(ii)).corners(1,:) - mean(roiList(selRois(ii)).corners(1,1:end-1)));
                 newCoord(2,:) = scalingFct(2) * (roiList(selRois(ii)).corners(2,:) - mean(roiList(selRois(ii)).corners(2,1:end-1)));
-                newCoord(1  ,:) = newCoord(1  ,:) + mean(roiList(selRois(ii)).corners(1  ,1:end-1));
+                newCoord(1,:) = newCoord(1,:) + mean(roiList(selRois(ii)).corners(1,1:end-1));
                 newCoord(2,:) = newCoord(2,:) + mean(roiList(selRois(ii)).corners(2,1:end-1));
-                set(roiLine.im(:,selRois(ii)),'XData',newCoord(1  ,:),'YData',newCoord(2,:));
+                set(roiLine.im(:,  selRois(ii)),'XData',newCoord(1  ,:),'YData',newCoord(2,:));
                 set(roiLine.zoom(:,selRois(ii)),'XData',newCoord(1  ,:),'YData',newCoord(2,:));
                 newCoord = [];
             end
@@ -9826,9 +9837,9 @@ end
             for ii=1:size(selRois,2)
                 scalingFct(1) = 1 + (p2(1)-p(1)) / (roiList(selRois(ii)).rectangle(3)-roiList(selRois(ii)).rectangle(1));
                 scalingFct(2) = 1 + (p2(2)-p(2)) / (roiList(selRois(ii)).rectangle(4)-roiList(selRois(ii)).rectangle(2));
-                newCoord(1  ,:) = scalingFct(1) * (roiList(selRois(ii)).corners(1  ,:) - mean(roiList(selRois(ii)).corners(1  ,1:end-1)));
+                newCoord(1,:) = scalingFct(1) * (roiList(selRois(ii)).corners(1,:) - mean(roiList(selRois(ii)).corners(1,1:end-1)));
                 newCoord(2,:) = scalingFct(2) * (roiList(selRois(ii)).corners(2,:) - mean(roiList(selRois(ii)).corners(2,1:end-1)));
-                newCoord(1  ,:) = newCoord(1  ,:) + mean(roiList(selRois(ii)).corners(1  ,1:end-1));
+                newCoord(1,:) = newCoord(1,:) + mean(roiList(selRois(ii)).corners(1,1:end-1));
                 newCoord(2,:) = newCoord(2,:) + mean(roiList(selRois(ii)).corners(2,1:end-1));
                 if customDimScale
                     for jj=1:size(newCoord,2)
@@ -9962,7 +9973,7 @@ end
                     dataIndex = sub2ind(dim, dataIndex{:});                         %Determine linear index of roi pixels for first point
                     dataIndex = repmat(dataIndex, [1 dim(exportDim)]);                %Replicate linear index
                     dataIndex = dataIndex + repmat(deltaIndex * (0:dim(exportDim)-1),[size(roiList(selRois(kk)).index.x,1) 1]);   %Extend to all other points by adding deltaInd for each step
-                    exportValues(kk,:) = mean(data{ii}(dataIndex),1);   %#ok
+                    exportValues(kk,:) = mean(data{ii}(dataIndex),1,'omitnan');   %#ok
                 end
                 assignin('base',['roiData_set' num2str(ii,'%02d') '_',dimNames{exportDim}], exportValues);
             end
