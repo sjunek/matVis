@@ -5,10 +5,10 @@ function varargout = matVis(varargin)
 % 1D profiles. Key features of matVis include
 % - Easy data input: load variables from the workspace or various image file
 %   formats including Zeiss lsm-files and .mat-files
-% - Easy navigation through data sets of arbitrary dimension
-% - Easy to learn user interface with tooltips for each control item
-% - Visualize multiple data sets of identical dimensions in parallel
-% - Histogram-guided contrast adjustment including gamma correction and
+% - Easy navigation through data sets of arbitrary dimension - Easy to
+% learn user interface with tooltips for each control item - Visualize
+% multiple data sets of identical dimensions in parallel - Histogram-guided
+% contrast adjustment including gamma correction and
 %   algorithmic thresholding
 % - Large variety of colormaps
 % - Image and plot filter
@@ -763,6 +763,7 @@ bt_deleteRoi = [];
 bt_roiExport = [];
 bt_exportRoiData = [];
 newRoiSize = 5;                             %Size of "one-click" ROIs (radius, squares will have 2*newRoiSize+1 side length)
+jump2ROIPos_cb = 1;                       % Handle to checkbox indidacting whether the current position chould be changed when a new ROI is selected (jump to position where ROI was created)
 profilePoints = [];
 profileInwork = 0;
 profileComplete = 0;
@@ -2707,13 +2708,13 @@ if withDipimage || withImageProcessingTB
     end
     % Filter
     uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
-        'Position', [125 175 30 20], 'String', 'Filter', ...
+        'Position', [125 173 30 20], 'String', 'Filter', ...
         'HorizontalAlignment', 'left', 'Tag', 'Select filter function.');
     popFilter = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', @updateFilter, 'Units', 'Pixel', ...
         'Position', [108 160 60 20], 'String',s, 'Value',xySel(1),'FontSize',7, 'Tag', 'Select filter function','Tooltipstring','Select filter function');
     % Filter size
     txtFilterPar = uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
-        'Position', [167 175 32 20], 'String', 'Par', ...
+        'Position', [167 173 32 20], 'String', 'Par', ...
         'HorizontalAlignment', 'center', 'Tag', 'Enter filter size (0 = no filter applied)');
     if withDipimage
         set(popFilter, 'Tag', 'Select filter function. Functions from DIPImage will be used.','Tooltip', 'Select filter function. Functions from DIPImage will be used.')
@@ -2729,10 +2730,10 @@ end
 
 %Projection popup and button
 projText = uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
-    'Position', [200 175 50 20], 'String', 'Projection', ...
+    'Position', [200 173 50 20], 'String', 'Projection', ...
     'HorizontalAlignment', 'left', 'Tag', 'Display projection of data along a certain dimension.');
 projDimText = uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
-    'Position', [255 175 50 20], 'String', 'Proj. dim', ...
+    'Position', [255 173 50 20], 'String', 'Proj. dim', ...
     'HorizontalAlignment', 'left', 'Tag', 'Display projection of data along a certain dimension.');
 projMethodPop  = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', {@projCallback,'method'}, 'Units', 'Pixel','FontSize',7, ...
     'Position', [200 160 50 20], 'String', {'none';'max';'min';'mean';'std';'var'; 'tile'}, 'Value',projMethod+1,...
@@ -7042,12 +7043,25 @@ end
             if winPos(2)+round(zoomValXY(4)*currWinScale/100) > scnSize(4)
                 winPos(2) = scnSize(4)-round(zoomValXY(4)*currWinScale/100)-30;
             end
-            set(zoomWin(ii), 'Position', [winPos(1) winPos(2) round(currWinScale/100*zoomValXY(3)) round(currWinScale/100*zoomValXY(4))]);
+            set(zoomWin(ii), 'Position', [winPos(1) winPos(2) round(screenSizeScaling*currWinScale/100*zoomValXY(3)) round(screenSizeScaling*currWinScale/100*zoomValXY(4))]);
         end
         drawnow
         set(zoomWin, 'ResizeFcn',{@resizeWin, 'zoom'});
         figure(zoomWin(1));
         resizeWin(0,0,'zoom');
+        if debugMatVis, debugMatVisFcn(2); end
+    end
+
+    function scalingFct = screenSizeScaling
+        % Determine and return scaling due to OS settings (e.g. Windows
+        % font scaling affects the way Matlab reports screen resolution)
+        % So far only tested on Windows!
+        if debugMatVis, debugMatVisFcn(1); end
+        ge = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment;
+        gd = ge.getDefaultScreenDevice;
+        actualScreensize = [gd.getDisplayMode.getWidth gd.getDisplayMode.getHeight];
+        matlabScreensize = get(0,'Screensize');
+        scalingFct = matlabScreensize(3)/actualScreensize(1);
         if debugMatVis, debugMatVisFcn(2); end
     end
 
@@ -8792,6 +8806,9 @@ end
                     'CData', roiExportDataBt,'Callback', @exportRoiData,'Enable','on','ToolTipString', ' Export Roi data along specified dimension ',...
                     'Tag', 'Export ROI data along specified dimension into the workspace.', 'Enable', 'off');
             end
+            jump2ROIPos_cb = uicontrol(roiWin, 'Style', 'checkbox','Position', [10,2,250  ,22],...
+                    'Value',1,'String','Jump to ROI selection position',...
+                    'Tag', 'Jump to position in data set at which ROI was defined.');
             %             %Roi Calculator
             %              uicontrol(roiWin, 'Style', 'Text', 'Position', [90 28 110 15], ...
             %                     'String','ROI Calculator','FontWeight', 'bold',...
@@ -9499,7 +9516,7 @@ end
     function listboxCallback(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         numberRoi = get(roiListbox, 'Value');
-        if numel(numberRoi) == 1
+        if numel(numberRoi) == 1 && get(jump2ROIPos_cb,'Value')
           ROIPos = roiList(numberRoi).settings.position;
           matchDims = min([length(currPos) length(ROIPos)]);
           matchDims = find([ROIPos(1:matchDims)>dim(1:matchDims) 1],1,'first')-1; % checks if saved ROIpos is larger than data dimension and reduces MATCHDIMS, in case
@@ -11004,7 +11021,11 @@ end
                 prevFigPos = get(movdata.prev.hprev,'Position');
                 movdata.set.parts{np}.origpos(1:2) = [prevFigPos(1)+prevFigPos(3)*movdata.set.parts{np}.pos(1) prevFigPos(2)-prevFigPos(4)-50++prevFigPos(4)*movdata.set.parts{np}.pos(2)];
                 movdata.set.parts{np}.origpos(3:4) = part{np}.abs(3:4);
-                set(movdata.set.parts{np}.handle,'Units','pixels','Position',movdata.set.parts{np}.origpos);
+                % Font scaling as set in the settings of the OS has to be
+                % taken into account, as the getframe commad returns the
+                % scaled image (e.g. 1.25x larger than screen pixels dimensions), while get(h, 'Position') returns the image
+                % dimensions as if there was no scaling.
+                set(movdata.set.parts{np}.handle,'Units','pixels','Position',screenSizeScaling*movdata.set.parts{np}.origpos);
                 figure(movdata.set.parts{np}.handle);
                 %Get CData
                 if movdata.set.parts{np}.status == true;
@@ -11547,14 +11568,14 @@ end
                 %                 Correction doesn't appear to (alway) work
                 % Corrected version (Stephan Junek)
                 if size(A,1) < hh.px(1)
-                    A(end+1:hh.px(1),:,:) = 0;
+                    A(end+1:round(hh.px(1)),:,:) = 0;
                 elseif size(A,1) > hh.px(1)
-                    A = A(1:hh.px(1),:,:);
+                    A = A(1:round(hh.px(1)),:,:);
                 end
                 if size(A,2) < hh.px(2)
-                    A(:,end+1:hh.px(2),:) = 0;
+                    A(:,end+1:round(hh.px(2)),:) = 0;
                 elseif size(A,2) > hh.px(2)
-                    A = A(:,1:hh.px(2),:);
+                    A = A(:,1:round(hh.px(2)),:);
                 end
             end
             % does resizing (requires image processing toolbox :-(
