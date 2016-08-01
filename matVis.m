@@ -28,7 +28,7 @@ function varargout = matVis(varargin)
 % - Use 'startPar' argument to selectively overwrite configuration
 %   paramaters (see below for list of start parameters)
 % - Check for updates from within the main GUI
-%
+% 
 % Input Arguments
 %   -none-                      Select image file(s) (including matrices 
 %                               saved as .mat-file, multi-image tif, Zeiss 
@@ -166,7 +166,7 @@ dimNames = [];       % Dimensions names
 withDimUnits = 0;    % Dimension units
 fromFile = 0;        % Flag indicating whether data are loaded from file
 os = computer;       % Operating system
-macScaleFactor = [1.2 1.75]; % Scaling factor to adjust width and height of GUI and uicontrols for Mac OS-X
+macScaleFactor = [1.05 1.05]; % Scaling factor to adjust width and height of GUI and uicontrols for Mac OS-X
 %% Read Data ...
 % ... from Files
 if nargin == 0 || ischar(varargin{1})
@@ -7223,7 +7223,7 @@ end
             set(tbTifPar, 'Value', 0);
         end
         if isempty(tifParFig)
-            tifParFig = figure('name', ['CustomTif Parameter',' (',varName{1},')'], 'Number', 'off',...
+            tifParFig = figure('name', ['CustomTif Parameter',' (',varName{1},')'], ... %'Number', 'off',...
                 'CloseRequestFcn', @hideTifPar, 'HandleVisibility', 'off');
             set(tifParFig, 'HandleVisibility', 'on');
             axis off;
