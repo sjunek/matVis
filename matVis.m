@@ -28,7 +28,7 @@ function varargout = matVis(varargin)
 % - Use 'startPar' argument to selectively overwrite configuration
 %   paramaters (see below for list of start parameters)
 % - Check for updates from within the main GUI
-%
+% 
 % Input Arguments
 %   -none-                      Select image file(s) (including matrices 
 %                               saved as .mat-file, multi-image tif, Zeiss 
@@ -7223,7 +7223,7 @@ end
             set(tbTifPar, 'Value', 0);
         end
         if isempty(tifParFig)
-            tifParFig = figure('name', ['CustomTif Parameter',' (',varName{1},')'], 'Number', 'off',...
+            tifParFig = figure('name', ['CustomTif Parameter',' (',varName{1},')'], ... %'Number', 'off',...
                 'CloseRequestFcn', @hideTifPar, 'HandleVisibility', 'off');
             set(tifParFig, 'HandleVisibility', 'on');
             axis off;
