@@ -166,7 +166,7 @@ dimNames = [];       % Dimensions names
 withDimUnits = 0;    % Dimension units
 fromFile = 0;        % Flag indicating whether data are loaded from file
 os = computer;       % Operating system
-macScaleFactor = [1.2 1.75]; % Scaling factor to adjust width and height of GUI and uicontrols for Mac OS-X
+macScaleFactor = [1.05 1.05]; % Scaling factor to adjust width and height of GUI and uicontrols for Mac OS-X
 %% Read Data ...
 % ... from Files
 if nargin == 0 || ischar(varargin{1})
