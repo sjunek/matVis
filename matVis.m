@@ -432,6 +432,7 @@ if nargin == 0 || ischar(varargin{1})
     withAlpha = 0;
     debugMatVis = 0;
     startPar = [];
+    numberOptionalArgs = 0;
     % ... from Arguments
 else
     %Check for optional arguments, identified by string
