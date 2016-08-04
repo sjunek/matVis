@@ -28,7 +28,7 @@ function varargout = matVis(varargin)
 % - Use 'startPar' argument to selectively overwrite configuration
 %   paramaters (see below for list of start parameters)
 % - Check for updates from within the main GUI
-% 
+%
 % Input Arguments
 %   -none-                      Select image file(s) (including matrices 
 %                               saved as .mat-file, multi-image tif, Zeiss 
@@ -166,7 +166,7 @@ dimNames = [];       % Dimensions names
 withDimUnits = 0;    % Dimension units
 fromFile = 0;        % Flag indicating whether data are loaded from file
 os = computer;       % Operating system
-macScaleFactor = [1.05 1.05]; % Scaling factor to adjust width and height of GUI and uicontrols for Mac OS-X
+macScaleFactor = [1.2 1.75]; % Scaling factor to adjust width and height of GUI and uicontrols for Mac OS-X
 %% Read Data ...
 % ... from Files
 if nargin == 0 || ischar(varargin{1})
@@ -3443,27 +3443,30 @@ end
         %Update projection method
         prevProjMethod = projMethod;
         projMethod = get(projMethodPop, 'Value') - 1;
+        if rgbCount == get(projDimPop,'Value')
+          projMethod =0;
+          set(projMethodPop, 'Enable','off')
+          %set(projMethodPop, 'Value', 1)
+        else
+          set(projMethodPop, 'Enable','on')
+        end
         set([sld etxt btPlayAll btPlayZoom cbPlots tb_lockPlots2Zoom], 'Enable', 'on');
         if projMethod
             if isPlaying
                 isPlaying = 0;
                 set(btPlayAll, 'CData', arrow, 'Value', 0);
             end
-            set(tbSwitchRGB, 'Enable', 'off');
+            %set(tbSwitchRGB, 'Enable', 'off');
             set(btMean, 'Enable', 'off', 'CData', squeeze(meanBt{1}));
             %Update projection dimension
-            s = get(projDimPop, 'String');
-            projDim = s{get(projDimPop, 'Value')};
-            projDim = find(strcmp(projDim, dimNames));
+            notXY = setdiff(1:nDim, xySel);
+            projDim = notXY(get(projDimPop, 'Value'));
             set([sld(projDim) etxt(projDim) btPlayAll(projDim) btPlayZoom(projDim) tb_lockPlots2Zoom(projDim)], 'Enable', 'off');
             %Allow no plots other than xy dimension (plot dimensions)
-            notXY = 1:nDim;
-            notXY(notXY==xySel(1)) = [];
-            notXY(notXY==xySel(2)) = [];
             set(cbPlots(notXY),  'Value', 0 ,'Enable', 'off'); %necessary when call from WindowCloseRequestFcn
             plotSel(notXY) = 0;
         else
-            set(tbSwitchRGB, 'Enable', 'on');
+            %set(tbSwitchRGB, 'Enable', 'on');
             set(btMean, 'Enable', 'on', 'CData', squeeze(meanBt{get(btMean, 'UserData')+1}));
             set([tbWin(3) cbPlots tbShowObjects], 'Enable', 'on');
         end
@@ -3668,7 +3671,6 @@ end
 %Callback for RGB toggle button
     function switchRGB(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        nonXY = setdiff(1:nDim, xySel);
         rgbCount = mod(rgbCount + 1  , nDim - 1);
         %RGB mode off
         if rgbCount == 0
@@ -3702,7 +3704,8 @@ end
             if rgbCount == 1 || any(get(bg_colormap, 'SelectedObject')==[cmManual cmImage cmZoom cmThresh]) 
                 set(bg_colormap, 'SelectedObject', cmGlobal);
             end
-            rgbDim = nonXY(rgbCount);
+            notXY = setdiff(1:nDim, xySel);
+            rgbDim = notXY(rgbCount);
             set(tbSwitchRGB, 'String', dimNames(rgbDim), 'CData', RGB2, 'FontSize', 7, 'Value', 1);
             set(cmImage, 'String', 'Channel','ToolTipString', 'Scale each color channel to its range.');
             set(cmManual, 'Visible', 'off');
@@ -3712,7 +3715,13 @@ end
             set([sldMin sldMax], 'Enable', 'on','Callback',@updateImages);
             set(popLut, 'Enable', 'off');
             set(tbColorbar, 'Enable', 'off', 'Value', 0);
-            set(projMethodPop,'Enable', 'off');
+            if rgbCount == get(projDimPop,'Value')
+              projMethod =0;
+              set(projMethodPop,'Enable', 'off');
+            else
+              projMethod = get(projMethodPop, 'Value') - 1;
+              set(projMethodPop,'Enable', 'on');
+            end
             %             set([sldGamma valSldGamma strGamma], 'Visible', 'off');
             set([sldMin sldMax], 'Callback',@updateImages);
             set([valSldMin_RGB valSldMax_RGB sldMin_RGB sldMax_RGB], 'Visible', 'on');
@@ -4971,12 +4980,16 @@ end
                     currAlphaMap{ii} = cA;
                 end
             end
+        elseif get(tbSwitchRGB, 'Value')
+            if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value'))
+                imIndex{rgbDim} = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;  %#ok
+            else
+                imIndex{rgbDim} = ':';
+            end
         end
         if with2DHist
             updateAlphaContrast;
         end
-        %Non-RGB mode
-        if get(tbSwitchRGB, 'Value') == 0
             % No projection selected
             if projMethod == 0
                 for ii = 1:nMat
@@ -4990,24 +5003,34 @@ end
                 %Projection of data if selected
             else
                 busy(1);
-                imIndex{projDim} = ':';
+                if get(bt_zoomProj, 'Value')
+                  imIndex{projDim} = zoomVal(projDim,1):sum(zoomVal(projDim,:))-1;
+                else
+                  imIndex{projDim} = ':';
+                end
                 % Find number of dimension of xySel(1), xySel(2) and projDim with
                 % respect to extracted 3D data volume
-                p   = find(projDim == sort([xySel projDim]));
-                xx  = find(xySel(1) == sort([xySel projDim]));
-                yy  = find(xySel(2) == sort([xySel projDim]));
+                if get(tbSwitchRGB, 'Value') == 0
+                  xx  = find(xySel(1) == sort([xySel projDim]));
+                  yy  = find(xySel(2) == sort([xySel projDim]));
+                  p   = find(projDim == sort([xySel projDim]));
+                else
+                  xx  = find(xySel(1) == sort([xySel projDim rgbDim]));
+                  yy  = find(xySel(2) == sort([xySel projDim rgbDim]));
+                  p   = find(projDim  == sort([xySel projDim rgbDim]));
+                  rgb = find(rgbDim   == sort([xySel projDim rgbDim]));
+                end
                 for ii = 1:nMat
                     % Sort dimension to [xySel(1) xySel(2) projDim]
-                    c = squeeze(permute(squeeze(data{ii}(imIndex{:})),[xx yy p]));
-                    if withAlpha
-                      cA = squeeze(permute(squeeze(alphaMap{ii}(imIndex{:})),[xx yy p]));
-                      sz1 = size(cA);
-                    end
-                    if get(bt_zoomProj, 'Value')
-                        c = c(:,:,zoomVal(projDim,1):sum(zoomVal(projDim,:))-1);
-                        if withAlpha
-                          cA = cA(:,:,zoomVal(projDim,1):sum(zoomVal(projDim,:))-1);
-                        end
+                    if get(tbSwitchRGB, 'Value') == 0
+                      c = squeeze(permute(squeeze(data{ii}(imIndex{:})),[xx yy p]));
+                      if withAlpha
+                        cA = squeeze(permute(squeeze(alphaMap{ii}(imIndex{:})),[xx yy p]));
+                        sz1 = size(cA);
+                      end
+                    else
+                      c = squeeze(permute(squeeze(data{ii}(imIndex{:})),[xx yy p rgb]));
+                      sz1 = size(c);
                     end
                     switch projMethod
                         case 1      %maximum projection
@@ -5015,6 +5038,11 @@ end
                             [currAlphaMap{ii},cAInd] = max(cA, [], 3); %squeeze() % used to be nanmax
                             cAInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cAInd(:)-1);
                             currIm{ii}  = reshape(c(cAInd), sz1(1:2));
+                          elseif get(tbSwitchRGB, 'Value')
+                            [~,cInd] = max(sum(c,4), [], 3); %squeeze() % used to be nanmax
+                            cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
+                            c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
+                            currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
                           else
                             currIm{ii} = max(c, [], 3); % used to be nanmax
                           end
@@ -5022,7 +5050,14 @@ end
                           if withAlpha
                             warning(sprintf('MIN PROJECTION not understood in combination with alphaMap\nmin values of datamatrix is shown instead'))
                           end
+                          if get(tbSwitchRGB, 'Value')
+                            [~,cInd] = min(sum(c,4), [], 3); %squeeze() % used to be nanmax
+                            cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
+                            c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
+                            currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
+                          else
                             currIm{ii} = min(c, [], 3);    % Used to be nanmin
+                          end
                         case 3      %mean projection
                           if withAlpha
                             currIm{ii}       = sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'); % weighted mean ratio
@@ -5037,6 +5072,11 @@ end
                             % standard error of mean:  SEM = sum( (x - <x>)^2.*w, 3) ./ sum(w, 3) ./ sz(3)
                             %currIm{ii}       = sqrt( sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'))./sqrt(sum(~isnan(c),3));
                             currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')  ./sum(cA,3, 'omitnan');           % mean Intensity
+                          elseif get(tbSwitchRGB, 'Value')
+                            [~,cInd] = std(sum(c,4), [], 3, 'omitnan'); %squeeze() % used to be nanmax
+                            cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
+                            c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
+                            currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
                           else
                             currIm{ii} = std(double(c), [], 3, 'omitnan');
                           end
@@ -5045,6 +5085,11 @@ end
                             currIm{ii}       = sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')...
                               ./sum(cA.*~isnan(c),3, 'omitnan');  % standard error of currIm{ii} -> SEM ././sqrt(sum(~isnan(A_rr),3))
                             currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')  ./sum(cA,3, 'omitnan');          % mean Intensity
+                          elseif get(tbSwitchRGB, 'Value')
+                            [~,cInd] = var(sum(c,4), [], 3, 'omitnan'); 
+                            cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
+                            c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
+                            currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
                           else
                             currIm{ii} = var(double(c), [], 3, 'omitnan');
                           end
@@ -5086,10 +5131,13 @@ end
                 end
                 busy(0);
             end
+        %Non-RGB mode
+        if get(tbSwitchRGB, 'Value') == 0
             currImVal = currIm; % Remember "original" values
             if withAlpha
                 currAlphaMapVal = currAlphaMap;
             end
+            % Apply filter
             if withFilter && get(popFilter, 'Value')>1
                 for ii=1:nMat
                     currIm{ii} = filterImage(currIm{ii});
@@ -5159,11 +5207,6 @@ end
             if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value'))
                 %"Normal" RGB mode (Global, Channel or Image)
                 for ii = 1:nMat
-                    imIndex{rgbDim} = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;  %#ok
-                    % here it would be good to differenciate between currIm and currImVal if dim(rgbDim) == 2 
-                    % I would expect size(currIm, 3)== 2 but size(currImVal, 3)== 3
-                    % Question is if sz should be size(currIm{ii}) or size(currImVal{ii})
-                    currIm{ii} = squeeze(data{ii}(imIndex{:}));
                     sz = size(currIm{ii});
                     if dim(rgbDim) == 2
                         currIm{ii}(:,:,3) = min(currIm{ii}(:));
@@ -5174,8 +5217,10 @@ end
                     [s,ind] = sort([xySel,rgbDim]);
                     currIm{ii} = ipermute(currIm{ii}, ind);
                     % Apply filter
-                    for jj = 1:size(currIm{ii},3)
+                    if withFilter && get(popFilter, 'Value')>1
+                      for jj = 1:size(currIm{ii},3)
                         currIm{ii}(:,:,jj) = filterImage(currIm{ii}(:,:,jj));
+                      end
                     end
                     currImVal = currIm; % Remember "original" values
                     switch get(bg_colormap, 'SelectedObject')
@@ -5253,29 +5298,10 @@ end
 %                 rgbStretchSldVal = [get(sldMin_RGB, 'Value') get(sldMax_RGB, 'Value')];
 %                 set(valSldMin_RGB, 'String', num2str(rgbStretchSldVal(1),'%6.3f'));
 %                 set(valSldMax_RGB, 'String', num2str(rgbStretchSldVal(2),'%6.3f'));
-                stackIndex = imIndex;
-                stackIndex{rgbDim} = ':';
+                %stackIndex = imIndex;
+                %stackIndex{rgbDim} = ':';
                 for ii = 1:nMat
-                    currStack =  squeeze(data{ii}(stackIndex{:}));
-                    % Calculation of histogram removed for speed reasons
-                    % and lack of usefulness
-                    %                     if (forceUpdateGuiHist || updateGuiHistState) && ii==1
-                    %                         try
-                    %                             histValCurrIm = hist(single(currStack(:)),histXData);
-                    %                         catch    %#ok
-                    %                             histValCurrIm = zeros(length(histXData),size(currStack,3));
-                    %                             for iii=1:size(currStack,3)
-                    %                                 cc = currStack(:,:,iii);
-                    %                                 histValCurrIm(:,iii) = hist(cc(:),histXData);
-                    %                             end
-                    %                             histValCurrIm = sum(h,2);
-                    %                         end
-                    %                     end
-                    [s,ind] = sort([xySel,rgbDim]);
-                    currStack = ipermute(currStack, ind);
-                    if get(bt_zoomProj, 'Value')
-                        currStack = currStack(:,:,zoomVal(rgbDim,1):sum(zoomVal(rgbDim,:))-1);
-                    end
+                    currStack = currIm{ii};
                     minVal(ii) = min(currStack(:));
                     maxVal(ii) = max(currStack(:));
                     sz = size(currStack);
@@ -5331,8 +5357,10 @@ end
                     %                     currIm{ii} = reshape(currStack,[sz(1:2) 3]);
                     currIm{ii} = reshape(currStack,[sz(1:2) 3]);
                     % Apply filter
-                    for jj = 1:size(currIm{ii},3)
+                    if withFilter && get(popFilter, 'Value')>1 
+                      for jj = 1:size(currIm{ii},3)
                         currIm{ii}(:,:,jj) = filterImage(currIm{ii}(:,:,jj));
+                      end
                     end
                     currIm{ii} = rgbContrastAdjust(currIm{ii},min_currStack_rel, max_currStack_rel);
                 end
@@ -5636,7 +5664,7 @@ end
         if (~rgbCount || (rgbCount && ~updateGuiHistState)) && (get(tbWin(1), 'Value') == 1 || get(tbWin(2), 'Value') == 1 || get(tbHist,'Value'))  % in RGB mode, updateCurrIm is called from updateGuiHist
             updateCurrIm(varargin{:});
         end
-        if updateGuiHistState
+        if updateGuiHistState %&& ~rgbCount % AZ: added '&& ~rgbCount' because 'updateGuiHistVal' was called twice in RGB mode, but this was wrong
             updateGuiHistVal;
         end
         if get(tbWin(1), 'Value') == 1
@@ -7223,7 +7251,7 @@ end
             set(tbTifPar, 'Value', 0);
         end
         if isempty(tifParFig)
-            tifParFig = figure('name', ['CustomTif Parameter',' (',varName{1},')'], ... %'Number', 'off',...
+            tifParFig = figure('name', ['CustomTif Parameter',' (',varName{1},')'], 'Number', 'off',...
                 'CloseRequestFcn', @hideTifPar, 'HandleVisibility', 'off');
             set(tifParFig, 'HandleVisibility', 'on');
             axis off;
@@ -11693,17 +11721,28 @@ end
           %stopHere
         end
         if inOut == 1
+          if fctLevel == 1 && isstruct(fctCount)
+            fnames = fieldnames(fctCount);
+            for ii = 1:length(fnames)
+              fctCount.(fnames{ii}).count = 0;
+            end
+          end
           if isfield(fctCount,fctName);
             fctCount.(fctName).count = fctCount.(fctName).count+1;
+            fctCount.(fctName).countTot = fctCount.(fctName).countTot+1;
           else
             fctCount.(fctName).count = 1;
+            fctCount.(fctName).countTot = 1;
           end
           fctCount.(fctName).time  = tic;
           timeStr = [];
         else
           timeStr = sprintf('(execution time: %.3f s)',toc(fctCount.(fctName).time));
         end
-        fprintf('%s%s %d:%s %s\n',repmat(sprintf('|\t'), 1, fctLevel-1), inOutStr{inOut},fctCount.(fctName).count, fctName, timeStr);
+        fprintf('%s%s %d/%d:%s %s\n',repmat(sprintf('|\t'), 1, fctLevel-1), inOutStr{inOut},fctCount.(fctName).count,fctCount.(fctName).countTot, fctName, timeStr);
+        if fctLevel == 1 && inOut == 2
+          fprintf('\n')
+        end
     end
     if debugMatVis, debugMatVisFcn(2); end
 end
