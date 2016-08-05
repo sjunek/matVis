@@ -2554,8 +2554,8 @@ for i = 1:nDim
     % Toggle button to lock plot x-axes to zoom values
     tb_lockPlots2Zoom(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Callback', {@updateZoom,i,'lockBt'}, 'Units', 'Pixel', ...
         'Position', [295 (nDim-i+2)*40+9 15 15], 'Value',0  , 'CData', lockOpen,...
-        'BackgroundColor', get(gui, 'Color'),'Tooltipstring', 'Locks x-lim of plot axes to zoom interval. Requires pressed ''x-lim button'' (under plot controls) ',...
-        'Tag', ['Lock x-lim of plot axes to zoom interval.' char(10) 'Requires pressed ''x-lim button'' (under plot controls) ']);  %#ok
+        'BackgroundColor', get(gui, 'Color'),'Tooltipstring', sprintf('Locks x-lim of plot axes to zoom interval. Requires pressed ''x-lim button'' (under plot controls)\nIn RGB-Stretch mode it limits the stretch range.'),...
+        'Tag', ['Lock x-lim of plot axes to zoom interval.' char(10) 'Requires pressed ''x-lim button'' (under plot controls).' char(10) 'In RGB-Stretch mode it limits the stretch range.']);  %#ok
 end
 if customDimScale
     set(panel_positionControls, 'Children',[tb_lockPlots2Zoom cbPlots txt_zoomWidthScale txt_zoomDownScaled txt_zoomUpScaled txt_pxScale txt_zoomWidth btPlayZoom btPlayAll sld_up sld_down sld txt_dimName dimSize flipdim(reshape((cat(1,etxt_down,etxt_up)),[1 2*nDim]),2) etxt(nDim:-1:1)]);
@@ -4985,7 +4985,11 @@ end
             if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value'))
                 imIndex{rgbDim} = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;  %#ok
             else
+              if get(tb_lockPlots2Zoom(rgbDim), 'Value')
+                imIndex{rgbDim} = zoomVal(rgbDim,1):sum(zoomVal(rgbDim,:))-1;
+              else
                 imIndex{rgbDim} = ':';
+              end
             end
         end
         if with2DHist
@@ -6988,7 +6992,7 @@ end
             %             updateColormap;
             updateObjects; % Adjust length of position lines in zoom window to new zoom setting
         end
-        if get(tbSwitchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value')) && get(bt_zoomProj, 'Value')
+        if get(tbSwitchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value')) && get(tb_lockPlots2Zoom(rgbDim), 'Value')
             updateImages;
         end
         if get(tbPlotsXLim, 'Value') && get(tbWin(3),'Value')
