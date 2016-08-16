@@ -513,16 +513,20 @@ else
                 withAlpha = 1;
                 currAlphaMap = [];
             case 'dimNames'
-                dimNames = val;
-                if size(dimNames,1) ~= ndims(varargin{1})
-                    display(char('Error: Dimension of matrix and number of strings have to be equal!',...
-                        'Type "help matVis" for help.'));
-                    return
+                if length(val) ~= ndims(varargin{1})
+                    error(sprintf('Dimension of matrix and number of ''dimNames'' have to be equal!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
                 end
+                dimNames = val;
             case 'dimUnits'
+                if length(val) ~= ndims(varargin{1})
+                    error(sprintf('Dimension of ''dimUnits'' mut fit matrix dimension!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
+                end
                 dimUnits = val;
                 withDimUnits = 1;
             case 'matNames'
+                if length(val) ~= length(data)
+                    error(sprintf('Dimension of ''matNames'' mut fit number of provided data sets!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
+                end
                 varName = val;
                 allNames = '';
                 for j=1:length(varName)
@@ -4760,7 +4764,7 @@ end
             % Other calls
             imageUpdated = 0;
             if (numel(dimNum) > 1) ||(numel(dimNum) == 1 && ~any(xySel == dimNum))
-                updateImages;
+                updateImages(dimNum);
                 imageUpdated = 1;
                 if ~isempty(globalHist) && strcmp(get(tbHist, 'Enable'),'on') && ~calculatingGlobalHist
                     updateHist;
@@ -4784,9 +4788,6 @@ end
         end
         if any(get(bg_colormap, 'SelectedObject') == [cmImage cmZoom cmThresh]) && ~get(tbSwitchRGB, 'Value')
             updateColormap;
-        end
-        if get(tbRoi, 'Value') && ~isempty(plotDim)
-            updateRoiProperties(length(plotDim)>1 || any(plotDim ~= dimNum)); % Update properties of ROIs, with plot updates only if necessary
         end
         if movdata.rec
             vidWriter('append');
@@ -5694,6 +5695,7 @@ end
 %Update axes in Image and zoom window
     function updateImages(varargin)
         if debugMatVis, debugMatVisFcn(1); end
+        if nargin; dimNum = varargin{1}; end
         currGamma(currContrastSel) = get(sldGamma(1), 'Value');
         if (~rgbCount || (rgbCount && ~updateGuiHistState)) && (get(tbWin(1), 'Value') == 1 || get(tbWin(2), 'Value') == 1 || get(tbHist,'Value'))  % in RGB mode, updateCurrIm is called from updateGuiHist
             updateCurrIm(varargin{:});
@@ -5723,6 +5725,14 @@ end
             updateColormap;
         end
         %         if
+        if get(tbRoi, 'Value')
+          if ~isempty(plotDim) && exist('dimNum','var')
+            updateRoiProperties(length(plotDim)>1 || any(plotDim ~= dimNum)); % Update properties of ROIs, with plot updates only if necessary
+          else
+            updateRoiProperties(0);
+          end
+        end
+
         if debugMatVis, debugMatVisFcn(2); end
     end
 
@@ -8892,7 +8902,7 @@ end
                 roiImage = imagesc(currIm{1});
             end
             if withAlpha
-              set(roiImage, 'AlphaData', currAlphaMap{1});
+              set(roiImage, 'AlphaData', currAlphaMap{1},'AlphaDataMapping','scaled');
             end
             axis image;
             set(roiAxes,'FontSize',8,'Color','k');
@@ -8906,7 +8916,7 @@ end
         end
         
         function resizeRoiWin(varargin)
-			if debugMatVis, debugMatVisFcn(1); end
+            if debugMatVis, debugMatVisFcn(1); end
             adjustGuiSize(roiWin,-1);
             newPos = get(roiWin, 'Position');
             if any(newPos(3:4) < [180 250])
@@ -8919,7 +8929,7 @@ end
             set(roiName, 'Position', [5 newPos(4)-90 newPos(3)-150 30]);
             set(roiAxes, 'Position', [25 80 newPos(3)-175 newPos(4)-160]);
             adjustGuiSize(roiWin);
-			if debugMatVis, debugMatVisFcn(2); end
+            if debugMatVis, debugMatVisFcn(2); end
         end
         
         function buttonDownRoiGui(varargin)
@@ -9531,7 +9541,7 @@ end
         set(roiSize, 'String', num2str(sum(roiList(numberRoi(1)).mask(:))));
         set(roiImage, 'CData',currIm{1}, 'AlphaData', 5/9*(0.8+roiList(numberRoi(1)).mask));
         set(roiAxes, 'Color','k');
-        updateRoiProperties(1);
+        updateRoiProperties(0);
         if debugMatVis, debugMatVisFcn(2); end
     end
     function updateRoiProperties(plotUpdate)
