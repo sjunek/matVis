@@ -664,6 +664,7 @@ if oldMATLAB
   exportWin = [];                          %Temp. window used for data export
   subPlotHandles = [];                     %Handles to subplot axes in Plots Window
   subPlotPlots = [];                       %Handles to data displayed in Plots Window
+  subPlotPlotsAlpha = [];                  %Handles to data displayed in Plots Window
   posLine = [];                            %Lines in plots indicating current value of diplayed dimension
   lineHorZoom = [];                        %Handles to position lines in Image and Zoom Windows
   lineVertZoom = [];
@@ -699,6 +700,7 @@ else
   exportWin = matlab.ui.Figure.empty;                          %Temp. window used for data export
   subPlotHandles = matlab.graphics.chart.primitive.Line.empty;              %Handles to subplot axes in Plots Window
   subPlotPlots = matlab.graphics.chart.primitive.Line.empty;                %Handles to data displayed in Plots Window
+  subPlotPlotsAlpha = matlab.graphics.chart.primitive.Line.empty;           %Handles to data displayed in Plots Window
   posLine = matlab.graphics.chart.primitive.Line.empty;                     %Lines in plots indicating current value of diplayed dimension
   lineHorZoom = matlab.graphics.chart.primitive.Line.empty;                 %Handles to position lines in Image and Zoom Windows
   lineVertZoom = matlab.graphics.chart.primitive.Line.empty;
@@ -751,6 +753,7 @@ colorcodePlots = [];                     %colorcode for plots: used for plots ba
 rgbStretchSldVal  = [0 1];               %Slider value for RGB stretch mode
 cmap = gray(255);                        %Current colormap
 plotValues = [];                         %Values used in plots
+plotValuesAlpha = [];                    %AlphaValues used in plots
 isPlaying = 0;                           %Playing status
 playDim = [];                            %Dimension which was selected for play mode
 projMethod = 0;                          %Number indicating method for projection.
@@ -4764,7 +4767,7 @@ end
             % Other calls
             imageUpdated = 0;
             if (numel(dimNum) > 1) ||(numel(dimNum) == 1 && ~any(xySel == dimNum))
-                updateImages(dimNum);
+                updateImages;%(dimNum)
                 imageUpdated = 1;
                 if ~isempty(globalHist) && strcmp(get(tbHist, 'Enable'),'on') && ~calculatingGlobalHist
                     updateHist;
@@ -5695,7 +5698,7 @@ end
 %Update axes in Image and zoom window
     function updateImages(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        if nargin; dimNum = varargin{1}; end
+        %if nargin; dimNum = varargin{1}; end
         currGamma(currContrastSel) = get(sldGamma(1), 'Value');
         if (~rgbCount || (rgbCount && ~updateGuiHistState)) && (get(tbWin(1), 'Value') == 1 || get(tbWin(2), 'Value') == 1 || get(tbHist,'Value'))  % in RGB mode, updateCurrIm is called from updateGuiHist
             updateCurrIm(varargin{:});
@@ -5726,11 +5729,12 @@ end
         end
         %         if
         if get(tbRoi, 'Value')
-          if ~isempty(plotDim) && exist('dimNum','var')
-            updateRoiProperties(length(plotDim)>1 || any(plotDim ~= dimNum)); % Update properties of ROIs, with plot updates only if necessary
-          else
-            updateRoiProperties(0);
-          end
+          updateRoiProperties(1); % I do not know, which dim was called + changed
+%           if ~isempty(plotDim) && exist('dimNum','var')
+%             updateRoiProperties(length(plotDim)>1 || any(plotDim ~= dimNum)); % Update properties of ROIs, with plot updates only if necessary
+%           else
+%             updateRoiProperties(0);
+%           end
         end
 
         if debugMatVis, debugMatVisFcn(2); end
@@ -5907,7 +5911,13 @@ end
                                     plotValues{jj,ii,1} = currImVal{jj}(:,currPos(xySel(2)));
                                     plotValues{jj,ii,2} = currIm{jj}(:,currPos(xySel(2)));
                                 else
+                                  if withAlpha
+                                    plotValues{jj,ii,kk} =  sum(currImVal{jj}(:,plotIndex{xySel(2)}).*currAlphaMapVal{jj}(:,plotIndex{xySel(2)}),2, 'omitnan')./...
+                                                            sum(currAlphaMapVal{jj}(:,plotIndex{xySel(2)}).*~isnan(currImVal{jj}(:,plotIndex{xySel(2)})),2, 'omitnan');
+                                    plotValuesAlpha{jj,ii,kk} =  mean(currAlphaMapVal{jj}(:,plotIndex{xySel(2)}),    2, 'omitnan');
+                                  else
                                     plotValues{jj,ii,kk} = mean(currImVal{jj}(:,plotIndex{xySel(2)}),2, 'omitnan');
+                                  end
                                 end
                             end
                             % Plot along y direction
@@ -5931,6 +5941,7 @@ end
                                   if withAlpha
                                     plotValues{jj,ii,kk} =  sum(currImVal{jj}(plotIndex{xySel(1)},:).*currAlphaMapVal{jj}(plotIndex{xySel(1)},:),1, 'omitnan')./...
                                                             sum(currAlphaMapVal{jj}(plotIndex{xySel(1)},:).*~isnan(currImVal{jj}(plotIndex{xySel(1)},:)),1, 'omitnan');
+                                    plotValuesAlpha{jj,ii,kk} =  mean(currAlphaMapVal{jj}(plotIndex{xySel(1)},:),    1, 'omitnan');
                                   else
                                     plotValues{jj,ii,kk} = mean(currImVal{jj}(plotIndex{xySel(1)},:),1, 'omitnan');
                                   end
@@ -5954,6 +5965,7 @@ end
                             %sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'); % weighted mean ratio
                             plotValues{jj,ii,kk} =  sum(sum(data{jj}(plotIndex{:})    .*alphaMap{jj}(plotIndex{:}),    xySel(1), 'omitnan'),xySel(2), 'omitnan')./...
                                                     sum(sum(alphaMap{jj}(plotIndex{:}).*~isnan(data{jj}(plotIndex{:})),xySel(1), 'omitnan'),xySel(2), 'omitnan');
+                            plotValuesAlpha{jj,ii,kk} =  mean(mean(alphaMap{jj}(plotIndex{:}),    xySel(1), 'omitnan'),xySel(2), 'omitnan');
                           else
                             plotValues{jj,ii,kk} = mean(mean(data{jj}(plotIndex{:}),xySel(1), 'omitnan'),xySel(2), 'omitnan');
                           end
@@ -5977,6 +5989,7 @@ end
                         if withAlpha
                           plotValues{jj,ii,kk} =  sum(data{jj}(plotIndex)    .*alphaMap{jj}(plotIndex),    1, 'omitnan')./...
                                                   sum(alphaMap{jj}(plotIndex).*~isnan(data{jj}(plotIndex)),1, 'omitnan');
+                          plotValuesAlpha{jj,ii,kk} =  mean(alphaMap{jj}(plotIndex),    1, 'omitnan');
                         else
                           plotValues{jj,ii,kk} = mean(data{jj}(plotIndex),1, 'omitnan');
                         end
@@ -6000,14 +6013,20 @@ end
             else
                 nPlotCol = 2;
             end
-            plotValues = [];
+            plotValues = [];plotValuesAlpha = [];
             updatePlotValues;
             if oldMATLAB
                 subPlotHandles = [];
                 subPlotPlots = [];
+                if withAlpha
+                  subPlotPlotsAlpha = [];
+                end
             else
                 subPlotHandles = matlab.graphics.chart.primitive.Line.empty;                     %Handles to subplot axes in Plots Window
                 subPlotPlots = matlab.graphics.chart.primitive.Line.empty;                       %Handles to data displayed in Plots Window
+                if withAlpha
+                  subPlotPlotsAlpha = matlab.graphics.chart.primitive.Line.empty;                       %Handles to data displayed in Plots Window
+                end
             end
             if get(tbRoi, 'Value')
                 roiSel = get(roiListbox, 'Value');
@@ -6051,19 +6070,44 @@ end
                                 if ~isempty(plotValues{jj,ii,kk})
                                     if customDimScale
                                         subPlotPlots{jj,ii,kk} = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValues{jj,ii,kk}),...
-                                            'Color', [kk==1 kk==2 kk==3], 'LineWidth', kk/2);
+                                            'Color', [kk==1 kk==2 kk==3], 'LineWidth', kk/2,'LineStyle','-');
+                                        if withAlpha && ~verLessThan('matlab','9.0')
+                                          yyaxis(subPlotHandles(jj,ii),'right')
+                                          subPlotPlotsAlpha{jj,ii,kk} = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValuesAlpha{jj,ii,kk}),...
+                                          'Color', [kk==1 kk==2 kk==3], 'LineWidth', kk/2,'LineStyle',':');
+                                          yyaxis(subPlotHandles(jj,ii),'left')
+                                        end
                                     else
                                         subPlotPlots{jj,ii,kk} = plot(subPlotHandles(jj,ii), squeeze(plotValues{jj,ii,kk}),...
-                                            'Color', [kk==1 kk==2 kk==3], 'LineWidth', kk/2);
+                                            'Color', [kk==1 kk==2 kk==3], 'LineWidth', kk/2,'LineStyle','-');
+                                          if withAlpha && ~verLessThan('matlab','9.0')
+                                            yyaxis(subPlotHandles(jj,ii),'right')
+                                            subPlotPlotsAlpha{jj,ii,kk} = plot(subPlotHandles(jj,ii),squeeze(plotValuesAlpha{jj,ii,kk}),...
+                                              'Color', [kk==1 kk==2 kk==3], 'LineWidth', kk/2,'LineStyle',':');
+                                            yyaxis(subPlotHandles(jj,ii),'left')
+                                          end
                                     end
                                 end
                             end
                         else
                             if ~(isequal(roiSel,0) || isempty(roiSel))
                                 if customDimScale
-                                    subPlotPlots{jj,ii,kk} = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValues{jj,ii,kk}),'Color',colorcodePlots(kk,:));
+                                    subPlotPlots{jj,ii,kk} = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValues{jj,ii,kk}),...
+                                      'Color',colorcodePlots(kk,:),'LineStyle','-');
+                                    if withAlpha && ~verLessThan('matlab','9.0')
+                                      yyaxis(subPlotHandles(jj,ii),'right')
+                                      subPlotPlotsAlpha{jj,ii,kk} = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValuesAlpha{jj,ii,kk}),...
+                                        'Color', colorcodePlots(kk,:),'LineStyle',':');%, 'LineWidth', kk/2
+                                      yyaxis(subPlotHandles(jj,ii),'left')
+                                    end
                                 else
-                                    subPlotPlots{jj,ii,kk} = plot(subPlotHandles(jj,ii), squeeze(plotValues{jj,ii,kk}),'Color',colorcodePlots(kk,:));
+                                    subPlotPlots{jj,ii,kk} = plot(subPlotHandles(jj,ii), squeeze(plotValues{jj,ii,kk}),'Color',colorcodePlots(kk,:),'LineStyle','-');
+                                    if withAlpha && ~verLessThan('matlab','9.0')
+                                      yyaxis(subPlotHandles(jj,ii),'right')
+                                      subPlotPlotsAlpha{jj,ii,kk} = plot(subPlotHandles(jj,ii), squeeze(plotValuesAlpha{jj,ii,kk}),...
+                                        'Color', colorcodePlots(kk,:),'LineStyle',':');%, 'LineWidth', kk/2
+                                      yyaxis(subPlotHandles(jj,ii),'left')
+                                    end
                                 end
                                 l{kk} = roiList(roiSel(kk)).name;  %Legend strings for roi plots
                             end
@@ -6133,10 +6177,17 @@ end
                     for kk = 1:size(plotValues,3)            %Number of plots in one axes (more than 1 for mean plots and rois)
                         try   %For different number of plots in different plot axes
                             set(subPlotPlots{jj,ii,kk}, 'YData', squeeze(plotValues{jj,ii,kk}));
+                            if withAlpha
+                              set(subPlotPlotsAlpha{jj,ii,kk}, 'YData', squeeze(plotValuesAlpha{jj,ii,kk}));
+                            end
                         catch    %#ok
+                           fprintf('''set(subPlotPlots{jj,ii,kk}, ''YData'', squeeze(plotValues{jj,ii,kk}));'' failed\n')
                         end
                         try                                   %for dimensions with less plot entries, e.g. rgbDim for RGB plot mode
                             pV(kk,:) = squeeze(plotValues{jj,ii,kk});  %#ok
+                            if withAlpha
+                              pVA(kk,:) = squeeze(plotValuesAlpha{jj,ii,kk});  %#ok
+                            end
                         catch    %#ok
                         end
                     end
@@ -6169,6 +6220,15 @@ end
                         if  ~isnan(minValY) && minValY ~= maxValY
                             set(subPlotHandles(jj,ii), 'YLim', [minValY-(maxValY-minValY)/25 maxValY+(maxValY-minValY)/25]);
                         end
+                        if withAlpha && ~verLessThan('matlab','9.0')
+                          minValYA = min(min(pVA(:,plotXLim(plotDim(ii),1):plotXLim(plotDim(ii),2))));
+                          maxValYA = max(max(pVA(:,plotXLim(plotDim(ii),1):plotXLim(plotDim(ii),2))));
+                          if  ~isnan(minValYA) && minValYA ~= maxValYA
+                            yyaxis(subPlotHandles(jj,ii),'right')
+                            set(subPlotHandles(jj,ii), 'YLim', [minValYA-(maxValYA-minValYA)/25 maxValYA+(maxValYA-minValYA)/25]);
+                            yyaxis(subPlotHandles(jj,ii),'left')
+                          end
+                        end
                     end
                     %                     %Apply zoom intervals to axes if "Zoom axes" is selected
                     %                     if get(tbPlotsXLim, 'Value') == 1 && sum(plotDim(ii) == xySel) > 0
@@ -6185,7 +6245,7 @@ end
                     %                         set(subPlotHandles(jj,ii),...
                     %                             'YLim', [minVal(jj) maxVal(jj)]);
                     %                     end
-                    clear pV;
+                    clear pV pVA
                 end
                 if ~isempty(subPlotPlots)
                     if get(tbMarker, 'Value') == 1
@@ -8979,7 +9039,7 @@ end
         
         %Choose new Roi (rectangular, ellipsoid or polygonal/free)
         function getNewRoi(varargin)
-			if debugMatVis, debugMatVisFcn(1); end
+            if debugMatVis, debugMatVisFcn(1); end
             roi = [];
             % Check if called with left mouse button ("push mode" = single ROI selection)
             if nargin == 4 && strcmp(varargin{4},'one')
@@ -9003,7 +9063,7 @@ end
                     set([imageWin zoomWin],'WindowButtonDownFcn',@selectPolyRoi);
             end
             function selectRectRoi(varargin)
-				if debugMatVis, debugMatVisFcn(1); end
+                if debugMatVis, debugMatVisFcn(1); end
                 roi = [];           %Clear old roi position
                 p = get(myGca, 'CurrentPoint');
                 p = p(1 ,[1 2]);
@@ -9068,10 +9128,10 @@ end
                     end
                 end
                 addNewRoi(roi,nRois,'new');
-				if debugMatVis, debugMatVisFcn(2); end
+                if debugMatVis, debugMatVisFcn(2); end
             end
             function selectEllipseRoi(varargin)
-				if debugMatVis, debugMatVisFcn(1); end
+                if debugMatVis, debugMatVisFcn(1); end
                 roi = [];           %Clear old roi position
                 p = get(myGca,'CurrentPoint');
                 p = p(1  ,1:2);
@@ -9105,7 +9165,7 @@ end
                     set(myGcf,'WindowButtonMotionFcn',@updateRoiRect);
                 end
                 function updateRoiRect(varargin)
-					if debugMatVis, debugMatVisFcn(1); end
+                    if debugMatVis, debugMatVisFcn(1); end
                     p = get(myGca,'CurrentPoint');
                     p = p(1  ,1:2);
 %                     if customDimScale
@@ -9120,10 +9180,10 @@ end
                     end
                     set(tempEllipse, 'Position',[x y w h]);
                     set(tempRect, 'Position',[x y w h]);
-					if debugMatVis, debugMatVisFcn(2); end
+                    if debugMatVis, debugMatVisFcn(2); end
                 end
                 function finishEllipse(varargin)
-					if debugMatVis, debugMatVisFcn(1); end
+                    if debugMatVis, debugMatVisFcn(1); end
                     p2 = get(myGca, 'CurrentPoint');
                     p2 = p2(1 ,1:2);
                     if customDimScale
@@ -9144,24 +9204,27 @@ end
                     delete(tempRect);
                     nRois = nRois + 1;
                     addNewRoi(roi,nRois,'new');
-					if debugMatVis, debugMatVisFcn(2); end
+                    if debugMatVis, debugMatVisFcn(2); end
                 end
-				if debugMatVis, debugMatVisFcn(2); end
+                if debugMatVis, debugMatVisFcn(2); end
             end
             function selectPolyRoi(varargin)
-				if debugMatVis, debugMatVisFcn(1); end
+                if debugMatVis, debugMatVisFcn(1); end
                 if ~any(myGcf==[imageWin zoomWin])
                     return
                 end
                 set(myGcf,'WindowButtonMotionFcn',@freeDraw);
                 set(myGcf,'WindowButtonUpFcn',@stopFreeDraw);
                 function freeDraw(varargin)
-                  if debugMatVis >1, debugMatVisFcn(1); end
+                    if debugMatVis >1, debugMatVisFcn(1); end
                     p = get(myGca, 'CurrentPoint');
                     p = p(1 ,1:2);
-%                     if customDimScale
-%                         p = pixelLocation(p);
-%                     end
+                    %fprintf('p(%f,%f)',p)
+                    %if customDimScale
+                    %    p = pixelLocation(p);
+                    %    fprintf('\tp(%f,%f)',p)
+                    %end
+                    %fprintf('\n')
                     set(tempLine,'XData',[p(1  ,1),p(1  ,1)],'YData',[p(1  ,2),p(1  ,2)]);
                     roi(:,end+1) = p(1  ,1:2);
                     set(roiSelLine,'XData',roi(1  ,:),'YData',roi(2,:));
@@ -9191,9 +9254,9 @@ end
                     if isempty(tempLine)
                         p = get(myGca, 'CurrentPoint');
                         p = p(1 ,1:2);
-                        if customDimScale
-                            p = pixelLocation(p);
-                        end
+                        %if customDimScale
+                        %    p = pixelLocation(p);
+                        %end
                         set(myGcf, 'HandleVisibility', 'on');
                         tempLine = line(p(1),p(2),'Color','w');
                         roiSelLine = line(p(1),p(2),'Color','w');
