@@ -9405,20 +9405,32 @@ end
           if projMethod
             %updatePlotValues;
             %Get plot values for fs
-            deltaIndex = prod(dim(1:projDim-1));                             %Difference value of indices along plotted dimension
             for m=1:nDim                                                    %Fill indices of all dimension with current-position-vectors of length of roi-size
               plotIndex{m} = currPos(m) * ones(size(roiList(numberRoi).index.x,1),1);
             end
             plotIndex{xySel(1)} = roiList(numberRoi).index.x;                       %Fill xySel dimension indices with roi indices
             plotIndex{xySel(2)} = roiList(numberRoi).index.y;
             plotIndex{projDim} = ones(size(roiList(numberRoi).index.x,1),1);        %Fill plot-dimension with ones (for first point)
+            if get(tbSwitchRGB, 'Value')
+              plotIndex{rgbDim} = ones(size(roiList(numberRoi).index.x,1),1);        %Fill plot-dimension with ones (for first point)
+            end
             plotIndex = sub2ind(dim, plotIndex{:});                         %Determine linear index of roi pixels for first point
             plotIndex = repmat(plotIndex, [1 dim(projDim)]);                %Replicate linear index
+            deltaIndex = prod(dim(1:projDim-1));                             %Difference value of indices along plotted dimension
             plotIndex = plotIndex + repmat(deltaIndex * (0:dim(projDim)-1),[size(roiList(numberRoi).index.x,1) 1]);   %Extend to all other points by adding deltaInd for each step
-            if withAlpha
-              pV = mean(alphaMap{1}(plotIndex),    1, 'omitnan');
+            if get(tbSwitchRGB, 'Value')
+              plotIndex = repmat(plotIndex(:), [1 dim(rgbDim)]);                %Replicate linear index
+              deltaIndex = prod(dim(1:rgbDim-1));                             %Difference value of indices along plotted dimension
+              plotIndex = plotIndex + repmat(deltaIndex * (0:dim(rgbDim)-1),[size(roiList(numberRoi).index.x,1)*dim(projDim) 1]);   %Extend to all other points by adding deltaInd for each step
+              plotIndex = reshape(plotIndex,[size(roiList(numberRoi).index.x,1) dim(projDim) dim(rgbDim)]);
+              pV = mean(sum(data{1}(plotIndex),3, 'omitnan'),1, 'omitnan');
             else
-              pV = mean(data{1}(plotIndex),1, 'omitnan');
+              if withAlpha
+                pV = mean(alphaMap{1}(plotIndex),    1, 'omitnan');
+              else
+                pV = mean(data{1}(plotIndex),1, 'omitnan');
+              end
+              
             end
             [~,pVMaxPos] = max(pV);
             roiList(numberRoi).settings.position(projDim) = pVMaxPos;
