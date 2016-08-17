@@ -6074,7 +6074,7 @@ end
                                         if withAlpha && ~verLessThan('matlab','9.0')
                                           yyaxis(subPlotHandles(jj,ii),'right')
                                           subPlotPlotsAlpha{jj,ii,kk} = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValuesAlpha{jj,ii,kk}),...
-                                          'Color', [kk==1 kk==2 kk==3], 'LineWidth', kk/2,'LineStyle',':');
+                                            'Color', [kk==1 kk==2 kk==3], 'LineWidth', kk/2,'LineStyle',':','Marker','none');
                                           yyaxis(subPlotHandles(jj,ii),'left')
                                         end
                                     else
@@ -6083,7 +6083,7 @@ end
                                           if withAlpha && ~verLessThan('matlab','9.0')
                                             yyaxis(subPlotHandles(jj,ii),'right')
                                             subPlotPlotsAlpha{jj,ii,kk} = plot(subPlotHandles(jj,ii),squeeze(plotValuesAlpha{jj,ii,kk}),...
-                                              'Color', [kk==1 kk==2 kk==3], 'LineWidth', kk/2,'LineStyle',':');
+                                              'Color', [kk==1 kk==2 kk==3], 'LineWidth', kk/2,'LineStyle',':','Marker','none');
                                             yyaxis(subPlotHandles(jj,ii),'left')
                                           end
                                     end
@@ -6097,7 +6097,7 @@ end
                                     if withAlpha && ~verLessThan('matlab','9.0')
                                       yyaxis(subPlotHandles(jj,ii),'right')
                                       subPlotPlotsAlpha{jj,ii,kk} = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValuesAlpha{jj,ii,kk}),...
-                                        'Color', colorcodePlots(kk,:),'LineStyle',':');%, 'LineWidth', kk/2
+                                        'Color', colorcodePlots(kk,:),'LineStyle',':','Marker','none');%, 'LineWidth', kk/2
                                       yyaxis(subPlotHandles(jj,ii),'left')
                                     end
                                 else
@@ -6105,7 +6105,7 @@ end
                                     if withAlpha && ~verLessThan('matlab','9.0')
                                       yyaxis(subPlotHandles(jj,ii),'right')
                                       subPlotPlotsAlpha{jj,ii,kk} = plot(subPlotHandles(jj,ii), squeeze(plotValuesAlpha{jj,ii,kk}),...
-                                        'Color', colorcodePlots(kk,:),'LineStyle',':');%, 'LineWidth', kk/2
+                                        'Color', colorcodePlots(kk,:),'LineStyle',':','Marker','none');%, 'LineWidth', kk/2
                                       yyaxis(subPlotHandles(jj,ii),'left')
                                     end
                                 end
@@ -7009,9 +7009,14 @@ end
                             plotXLimScale(dimNum,:) = dimScale(dimNum,:);
                         end
                     end
+              case 'ROIupdate'
+                zoomValXY([1,3]) = zoomVal(xySel(2),:);
+                zoomValXY([2,4]) = zoomVal(xySel(1),:);
             end
-            set(txt_zoomWidth(dimNum), 'String', [' = ' num2str(zoomVal(dimNum,2))]);
-            if any(xySel == dimNum) || (projMethod && projDim == dimNum)
+            for ii = dimNum
+              set(txt_zoomWidth(ii), 'String', [' = ' num2str(zoomVal(ii,2))]);
+            end
+            if length(dimNum) < 3 && (any(xySel == dimNum) || (projMethod && any(projDim == dimNum)))
                 zoomValXY([1,3]) = zoomVal(xySel(2),:);
                 zoomValXY([2,4]) = zoomVal(xySel(1),:);
             end
@@ -7077,7 +7082,7 @@ end
         if get(tbHist, 'Value')
             updateHist;
         end
-        if projMethod && get(bt_zoomProj, 'Value') && nargin > 2 && dimNum == projDim
+        if projMethod && get(bt_zoomProj, 'Value') && nargin > 2 && any(projDim == dimNum)
             if projMethod == 6
                 drawImages;
                 if get(tbRoi, 'Value')
@@ -9395,6 +9400,29 @@ end
         if numel(get(roiListbox,'Value'))==1 %~any(cell2mat(get([tbRoiShift tbRoiRotate tbRoiScale], 'Value')))
           roiList(numberRoi).settings.xySel = xySel;
           roiList(numberRoi).settings.position = currPos;
+          % replace currPos of projection dim with position of max value
+          % along projection dim
+          if projMethod
+            %updatePlotValues;
+            %Get plot values for fs
+            deltaIndex = prod(dim(1:projDim-1));                             %Difference value of indices along plotted dimension
+            for m=1:nDim                                                    %Fill indices of all dimension with current-position-vectors of length of roi-size
+              plotIndex{m} = currPos(m) * ones(size(roiList(numberRoi).index.x,1),1);
+            end
+            plotIndex{xySel(1)} = roiList(numberRoi).index.x;                       %Fill xySel dimension indices with roi indices
+            plotIndex{xySel(2)} = roiList(numberRoi).index.y;
+            plotIndex{projDim} = ones(size(roiList(numberRoi).index.x,1),1);        %Fill plot-dimension with ones (for first point)
+            plotIndex = sub2ind(dim, plotIndex{:});                         %Determine linear index of roi pixels for first point
+            plotIndex = repmat(plotIndex, [1 dim(projDim)]);                %Replicate linear index
+            plotIndex = plotIndex + repmat(deltaIndex * (0:dim(projDim)-1),[size(roiList(numberRoi).index.x,1) 1]);   %Extend to all other points by adding deltaInd for each step
+            if withAlpha
+              pV = mean(alphaMap{1}(plotIndex),    1, 'omitnan');
+            else
+              pV = mean(data{1}(plotIndex),1, 'omitnan');
+            end
+            [~,pVMaxPos] = max(pV);
+            roiList(numberRoi).settings.position(projDim) = pVMaxPos;
+          end
           roiList(numberRoi).settings.zoomVal = zoomVal;
         end
         %Draw lines and add to list if Roi is new
@@ -9657,7 +9685,8 @@ end
           matchDims = find([ROIPos(1:matchDims)>dim(1:matchDims) 1],1,'first')-1; % checks if saved ROIpos is larger than data dimension and reduces MATCHDIMS, in case
           currPos(1:matchDims) = ROIPos(1:matchDims);
           currPos(currPos(1:matchDims)>dim(1:matchDims))=1;
-          %ROIZoomVal = roiList(numberRoi).settings.zoomVal;
+          zoomVal = roiList(numberRoi).settings.zoomVal;
+          updateZoom(1,1,1:nDim,'ROIupdate');
           updateSelection(1:length(currPos));
         end
         drawPlots;
