@@ -147,7 +147,7 @@ function varargout = matVis(varargin)
 %**************************************************************************
 %               Copyright 13.06.2012, S. Junek (sjunek@gwdg.de)
 %
-versionNumber = 1.101;  % Current version number of matVis
+versionNumber = 1.102;  % Current version number of matVis
 %% Check Matlab version and installed toolboxes
 v = version;
 % v = num2str(v(1:3));
@@ -3860,7 +3860,7 @@ end
     end
 
     function meanPlots(varargin)
-		if debugMatVis, debugMatVisFcn(1); end
+        if debugMatVis, debugMatVisFcn(1); end
         if varargin{1} == -1
             incr = -1;
         else
@@ -3876,7 +3876,7 @@ end
         if ~isempty(plotDim)
             updateObjects;
         end
-		if debugMatVis, debugMatVisFcn(2); end
+        if debugMatVis, debugMatVisFcn(2); end
     end
 %% Mouse Controls
 %Mouse Movement Controls
@@ -5016,7 +5016,7 @@ end
             end
         elseif get(tbSwitchRGB, 'Value')
             if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value'))
-                imIndex{rgbDim} = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;  %#ok
+                imIndex{rgbDim} = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;  
             else
               if get(tb_lockPlots2Zoom(rgbDim), 'Value')
                 imIndex{rgbDim} = zoomVal(rgbDim,1):sum(zoomVal(rgbDim,:))-1;
@@ -9411,14 +9411,14 @@ end
             plotIndex{xySel(1)} = roiList(numberRoi).index.x;                       %Fill xySel dimension indices with roi indices
             plotIndex{xySel(2)} = roiList(numberRoi).index.y;
             plotIndex{projDim} = ones(size(roiList(numberRoi).index.x,1),1);        %Fill plot-dimension with ones (for first point)
-            if get(tbSwitchRGB, 'Value')
+            if get(tbSwitchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value'))
               plotIndex{rgbDim} = ones(size(roiList(numberRoi).index.x,1),1);        %Fill plot-dimension with ones (for first point)
             end
             plotIndex = sub2ind(dim, plotIndex{:});                         %Determine linear index of roi pixels for first point
             plotIndex = repmat(plotIndex, [1 dim(projDim)]);                %Replicate linear index
             deltaIndex = prod(dim(1:projDim-1));                             %Difference value of indices along plotted dimension
             plotIndex = plotIndex + repmat(deltaIndex * (0:dim(projDim)-1),[size(roiList(numberRoi).index.x,1) 1]);   %Extend to all other points by adding deltaInd for each step
-            if get(tbSwitchRGB, 'Value')
+            if get(tbSwitchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value'))
               plotIndex = repmat(plotIndex(:), [1 dim(rgbDim)]);                %Replicate linear index
               deltaIndex = prod(dim(1:rgbDim-1));                             %Difference value of indices along plotted dimension
               plotIndex = plotIndex + repmat(deltaIndex * (0:dim(rgbDim)-1),[size(roiList(numberRoi).index.x,1)*dim(projDim) 1]);   %Extend to all other points by adding deltaInd for each step
