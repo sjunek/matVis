@@ -3406,7 +3406,7 @@ end
         else
             %Exchange x and y
             for ii=1:nMat
-                currIm{ii} = currIm{ii}';
+                currIm{ii} = permute(currIm{ii},[2 1 3]);
             end
             set(pop(1), 'Value', xySel(2));
             set(pop(2), 'Value', xySel(1));
@@ -5035,10 +5035,15 @@ end
             if projMethod == 0
                 for ii = 1:nMat
                     c = squeeze(data{ii}(imIndex{:}));
-                    if xySel(1) > xySel(2)
-                        currIm{ii} = c';
+                    if get(tbSwitchRGB, 'Value')
+                      [s,ind] = sort([xySel,rgbDim]);
+                      currIm{ii} = ipermute(c, ind);
                     else
+                      if xySel(1) > xySel(2)
+                        currIm{ii} = permute(c,[2 1 3]);
+                      else
                         currIm{ii} = c;
+                      end
                     end
                 end
                 %Projection of data if selected
@@ -5256,7 +5261,7 @@ end
                         colDim = 3;
                     end
                     [s,ind] = sort([xySel,rgbDim]);
-                    currIm{ii} = ipermute(currIm{ii}, ind);
+                    %currIm{ii} = ipermute(currIm{ii}, ind);
                     % Apply filter
                     if withFilter && get(popFilter, 'Value')>1
                       for jj = 1:size(currIm{ii},3)
