@@ -1,5 +1,5 @@
 function varargout = matVis(varargin)
-% matVis(data1, data2, ... , 'PropertyName', PropertyValue, ...)
+%% matVis(data1, data2, ... , 'PropertyName', PropertyValue, ...)
 %**************************************************************************
 % GUI for displaying data sets of arbitrary dimension using 2D images and 
 % 1D profiles. Key features of matVis include
@@ -799,8 +799,11 @@ tb_newRoi = [];                          %Handle for toggle buttons to creat new
 bt_deleteRoi = [];
 bt_roiExport = [];
 bt_exportRoiData = [];
-newRoiSize = 5;                             %Size of "one-click" ROIs (radius, squares will have 2*newRoiSize+1 side length)
-jump2ROIPos_cb = 1;                       % Handle to checkbox indidacting whether the current position chould be changed when a new ROI is selected (jump to position where ROI was created)
+newRoiSize = 5;                          %Size of "one-click" ROIs (radius, squares will have 2*newRoiSize+1 side length)
+jump2ROIPos_cb = 1;                      %Handle to checkbox indidacting whether the current position chould be changed when a new ROI is selected (jump to position where ROI was created)
+etxt_newRoiName = [];
+txt_RoiPropWinTxt = [];                  %Handle Textfield in Figure for ROI update of ROI settings
+
 profilePoints = [];
 profileInwork = 0;
 profileComplete = 0;
@@ -4338,7 +4341,7 @@ end
                     figure(movdata.gui.hvidgen);
                     figure(movdata.prev.hprev);
                 end
-                if get(roiBtRename, 'UserData')
+                if get(roiBtRename, 'Value')
                     figure(tempRoiPropWin);
                 end
             end
@@ -5729,7 +5732,9 @@ end
         end
         %         if
         if get(tbRoi, 'Value')
-          updateRoiProperties(1); % I do not know, which dim was called + changed
+          % after optimizing ROI properties I switched
+          % "updateRoiProperties(1)" off, since it was called twice
+%          updateRoiProperties(1); % I do not know, which dim was called + changed
 %           if ~isempty(plotDim) && exist('dimNum','var')
 %             updateRoiProperties(length(plotDim)>1 || any(plotDim ~= dimNum)); % Update properties of ROIs, with plot updates only if necessary
 %           else
@@ -8805,7 +8810,7 @@ end
                 'WindowButtonDownFcn',@buttonDownCallback,...
                 'WindowButtonUpFcn','');
             drawPlots;
-            if get(roiBtRename, 'UserData')
+            if get(roiBtRename, 'Value')
               set(tempRoiPropWin, 'Visible','off');
             end
 
@@ -8911,7 +8916,7 @@ end
                 'FontSize', 6, 'Enable', 'off','ToolTipString','Replace selected ROI by new selection');
             
             %Rename Roi Button
-            roiBtRename = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [49,75,32,22],...
+            roiBtRename = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [49,75,32,22],...
                 'String', 'ROI upd.','Callback', @updateRoiSettings,'FontSize', 6, 'Enable', 'off','UserData',0,...
                 'ToolTipString','Update settings for selected ROI','Tag','Update settings for selected ROI');
             
@@ -9540,48 +9545,69 @@ end
     end
     function updateRoiSettings(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        set(roiBtRename, 'UserData',1)
+        if nargin == 3 || ~get(roiBtRename,'Value')
+          set(tempRoiPropWin, 'Visible','off');
+          set(roiBtRename,'Value',0)
+          if debugMatVis, debugMatVisFcn(2); end
+          return
+        end
         currRoi = get(roiListbox, 'Value');
         ROIpos = roiList(currRoi).settings.position;
         nROIDim = length(ROIpos);
         ROIZoomVal = roiList(currRoi).settings.zoomVal;
         %ROIZoomVal(end+1:nROIDim,2) = dim(size(ROIZoomVal,1)+1:nROIDim);
         %ROIZoomVal(end+1:nROIDim,1) = 1; 
-        ROIStr = sprintf('         Position        Zoom Settings');
         for np = 1:min(nROIDim,nDim);
-          ROIStr = sprintf('%s\nDim%d:  %4d %s %4d  %4d:%4d %s %4d:%4d',...
-            ROIStr,np,ROIpos(np),char(hex2dec('2192')),currPos(np),ROIZoomVal(np,1),sum(ROIZoomVal(np,:))-1,char(hex2dec('2192')),zoomVal(np,1),sum(zoomVal(np,:))-1);
+          ROIStr{np} = sprintf('Dim%d:  %4d %s %4d  %4d:%4d %s %4d:%4d',...
+            np,ROIpos(np),char(hex2dec('2192')),currPos(np),...
+            ROIZoomVal(np,1),sum(ROIZoomVal(np,:))-1,char(hex2dec('2192')),zoomVal(np,1),sum(zoomVal(np,:))-1);
         end
         gp = get(gui,'Position');
-        tempRoiPropWin = figure('Position', [gp(1)+270, gp(2)-100-25*nROIDim, 320, 25*nROIDim + 50],...
-          'MenuBar', 'none','NumberTitle', 'off', 'Name', 'ROI Properties!');%
-        
-        uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 25*nROIDim+26 55 18],...
-          'String','ROI name:');
-        etxt_newRoiName = uicontrol(tempRoiPropWin,'Style', 'Edit', 'Position', [80 25*nROIDim+25 150 20],...
-          'String',roiList(currRoi).name,'HorizontalAlignment','left');
-        uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 35 290 15*nROIDim+15],...
-          'String',ROIStr,'HorizontalAlignment','left','FontName','Courier');%
-        btn1 = uicontrol(tempRoiPropWin,'Style', 'pushbutton', 'Position', [12 12 100 20],...
-          'String','Cancle','Callback', {@getNewRoiProps,0});%ROIStr
-        btn2 = uicontrol(tempRoiPropWin,'Style', 'pushbutton', 'Position', [200 12 100 20],...
-          'String','Update','Callback', {@getNewRoiProps,1});%ROIStr
-        function getNewRoiProps(hO,h,sw)
+        if isempty(tempRoiPropWin)
+          tempRoiPropWin = figure('Position', [gp(1), max(50,gp(2)-444-25*nROIDim), 320, 25*nROIDim + 50],...
+            'MenuBar', 'none','NumberTitle', 'off', 'Name', 'ROI Properties!');%
+          
+          uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 25*nROIDim+26 55 18],...
+            'String','ROI name:');
+          etxt_newRoiName = uicontrol(tempRoiPropWin,'Style', 'Edit', 'Position', [80 25*nROIDim+25 150 20],...
+            'String',roiList(currRoi).name,'HorizontalAlignment','left');
+          uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 35 290 15*nROIDim+15],...
+            'String','         Position        Zoom Settings','HorizontalAlignment','left','FontName','Courier');%
+          for np = 1:min(nROIDim,nDim);
+            if projMethod  && np == find(projDim == sort([xySel projDim])); myCol = [.5 .5 .5]; else myCol = [0 0 0]; end
+            txt_RoiPropWinTxt(np) = uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 35+15*(nROIDim-np) 290 15],...
+              'String',ROIStr{np},'HorizontalAlignment','left','FontName','Courier','ForegroundColor',myCol);%
+          end
+          btn1 = uicontrol(tempRoiPropWin,'Style', 'pushbutton', 'Position', [12 12 100 20],...
+            'String','Close','Callback', {@updateRoiSettings,0});%ROIStr
+          btn2 = uicontrol(tempRoiPropWin,'Style', 'pushbutton', 'Position', [200 12 100 20],...
+            'String','Update','Callback', {@getNewRoiProps,1});%ROIStr
+        else
+          set(etxt_newRoiName,'String',roiList(currRoi).name)
+          for np = 1:min(nROIDim,nDim);
+            if projMethod  && np == find(projDim == sort([xySel projDim])); myCol = [.5 .5 .5]; else myCol = [0 0 0]; end
+            set(txt_RoiPropWinTxt(np),'String',ROIStr{np},'ForegroundColor',myCol);%
+          end
+          set(tempRoiPropWin, 'Visible','on');
+        end
+        function getNewRoiProps(varargin)
             if debugMatVis, debugMatVisFcn(1); end
-            if sw
-              roiList(currRoi).name = get(etxt_newRoiName, 'String');
-              roiList(currRoi).settings.xySel    = xySel;
-              roiList(currRoi).settings.position = currPos;
-              roiList(currRoi).settings.zoomVal  = zoomVal;
-              set(roiText.im(:,currRoi), 'String', roiList(currRoi).name);
-              set(roiText.zoom(:,currRoi), 'String', roiList(currRoi).name);
-              s = get(roiListbox, 'String');
-              s{currRoi} = [s{currRoi}(1:5) roiList(currRoi).name];
-              set(roiListbox, 'String', s);
-              updateRoiSelection
+            roiList(currRoi).name = get(etxt_newRoiName, 'String');
+            roiList(currRoi).settings.xySel    = xySel;
+            for np = 1:min(nROIDim,nDim);
+              if ~(projMethod  && np == find(projDim == sort([xySel projDim])))
+                roiList(currRoi).settings.position(np) = currPos(np);
+              end
             end
-            delete(tempRoiPropWin);
-            set(roiBtRename, 'UserData',0)
+            roiList(currRoi).settings.zoomVal  = zoomVal;
+            set(roiText.im(:,currRoi), 'String', roiList(currRoi).name);
+            set(roiText.zoom(:,currRoi), 'String', roiList(currRoi).name);
+            s = get(roiListbox, 'String');
+            s{currRoi} = [s{currRoi}(1:5) roiList(currRoi).name];
+            set(roiListbox, 'String', s);
+            updateRoiSelection
+            %set(roiBtRename,'Value',0)
+            %updateRoiSettings;
             if debugMatVis, debugMatVisFcn(2); end
         end
         if debugMatVis, debugMatVisFcn(2); end
@@ -9685,6 +9711,7 @@ end
                     updatePlots;
                 end
             end
+            if get(roiBtRename,'Value'); updateRoiSettings; end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
@@ -9702,6 +9729,7 @@ end
           updateSelection(1:length(currPos));
         end
         drawPlots;
+        
         updateRoiSelection(numberRoi);
 
         if debugMatVis, debugMatVisFcn(2); end
