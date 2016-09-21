@@ -11792,8 +11792,7 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
-% resets figure properties
+%% resets figure properties
     function vidGenerator_myHardcopyFigureReset(hh)
         if debugMatVis, debugMatVisFcn(1); end
         % Reset the axes limit modes
@@ -11835,7 +11834,7 @@ end
         end
         if debugMatVis>1, debugMatVisFcn(2); end
     end
-    %Close all windows
+%% Close all windows
     function closeGui(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         % Set flag to stop execution of calculation of global histogram
@@ -11917,10 +11916,12 @@ end
           end
           fctCount.(fctName).time  = tic;
           timeStr = [];
+          fctNameStr = sprintf('<a href="matlab:matlab.desktop.editor.openAndGoToFunction(which(''matVis.m''),''%s'');">%s</a>',fctName, fctName);%fctName
         else
           timeStr = sprintf('(execution time: %.3f s)',toc(fctCount.(fctName).time));
+          fctNameStr = sprintf('%s',fctName);%fctName
         end
-        fprintf('%s%s %d/%d:%s %s\n',repmat(sprintf('|\t'), 1, fctLevel-1), inOutStr{inOut},fctCount.(fctName).count,fctCount.(fctName).countTot, fctName, timeStr);
+        fprintf('%s%s %d/%d:%s %s\n',repmat(sprintf('|\t'), 1, fctLevel-1), inOutStr{inOut},fctCount.(fctName).count,fctCount.(fctName).countTot, fctNameStr, timeStr);
         if fctLevel == 1 && inOut == 2
           fprintf('\n')
         end
