@@ -784,6 +784,7 @@ roiMean = [];                            %Mean of current Roi
 roiSize = [];                            %Number of pixels of Roi
 roiList = [];                            %List of Rois
 roiLine = [];                            %Handle to lines indicating Rois
+roiCenterIndicator = [];                 %Handle to '+' (text) indicating center of current Roi
 nRois = 0;                               %Number of Rois
 roiText = [];                            %Handle to text (numbers) for Rois
 roiName = [];                            %Roi name of currently selected roi above roiAxes
@@ -8982,6 +8983,10 @@ end
             axis image;
             set(roiAxes,'FontSize',8,'Color','k');
             roiLine.roi = line(0,0,'Parent', roiAxes,'Color','w');
+            for iii = 1:numel(data)
+                roiCenterIndicator(1,iii) = text(0,0,'+','Parent',zoomAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off');
+                roiCenterIndicator(2,iii) = text(0,0,'+','Parent',imAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off');
+            end
             set(roiWin, 'HandleVisibility', 'off');
             %Set first entry of roi list (so it is not empty - will be
             %replaced by 1 when first Roi is selected)
@@ -9661,6 +9666,12 @@ end
         set(roiText.zoom, 'FontWeight', 'normal','Color','w');   %'Color', 'b');
         set(roiText.im(:,numberRoi), 'FontWeight', 'bold'); %'Color','r');
         set(roiText.zoom(:,numberRoi),'FontWeight', 'bold'); % 'Color','r');
+        if numel(numberRoi) == 1 
+             [maskXIdx, maskYIdx] = find(roiList(numberRoi).mask);
+            set(roiCenterIndicator(:),'Visible','on','Position',[mean(maskYIdx),mean(maskXIdx),0]);
+        else
+            set(roiCenterIndicator(:),'Visible','off');
+        end
         % Color for selected ROIs
         colorcodePlots = plotColors(numel(numberRoi));
         for ii = 1:numel(numberRoi)
