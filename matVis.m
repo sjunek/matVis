@@ -9363,6 +9363,8 @@ end
         % end
         roiList(numberRoi).mask = false(dim(xySel(1)),dim(xySel(2)));
         roiList(numberRoi).mask(inregion) = 1;
+        [maskXIdx, maskYIdx] = find(roiList(numberRoi).mask);
+        roiList(numberRoi).centerOfGravity = [mean(maskXIdx), mean(maskYIdx)];
         %         toc
         if ~any(roiList(numberRoi).mask(:))
             roiList(numberRoi) = [];
@@ -9667,8 +9669,7 @@ end
         set(roiText.im(:,numberRoi), 'FontWeight', 'bold'); %'Color','r');
         set(roiText.zoom(:,numberRoi),'FontWeight', 'bold'); % 'Color','r');
         if numel(numberRoi) == 1 
-             [maskXIdx, maskYIdx] = find(roiList(numberRoi).mask);
-            set(roiCenterIndicator(:),'Visible','on','Position',[mean(maskYIdx),mean(maskXIdx),0]);
+            set(roiCenterIndicator(:),'Visible','on','Position',[roiList(numberRoi).centerOfGravity([2 1]),0]);
         else
             set(roiCenterIndicator(:),'Visible','off');
         end
