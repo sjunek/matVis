@@ -9669,7 +9669,11 @@ end
         set(roiText.im(:,numberRoi), 'FontWeight', 'bold'); %'Color','r');
         set(roiText.zoom(:,numberRoi),'FontWeight', 'bold'); % 'Color','r');
         if numel(numberRoi) == 1 
+          if customDimScale
+            set(roiCenterIndicator(:),'Visible','on','Position',[roiList(numberRoi).centerOfGravity([2 1]).*pxWidth(xySel([2 1])),0]);
+          else
             set(roiCenterIndicator(:),'Visible','on','Position',[roiList(numberRoi).centerOfGravity([2 1]),0]);
+          end
         else
             set(roiCenterIndicator(:),'Visible','off');
         end
