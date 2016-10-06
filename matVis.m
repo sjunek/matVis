@@ -797,6 +797,7 @@ tbRoiShift = [];                         %Handle for toggle button for shifting 
 tbRoiRotate = [];                        %Handle for toggle button for rotating Rois
 tbRoiScale = [];                         %Handle for toggle button for scaling Rois
 tb_newRoi = [];                          %Handle for toggle buttons to creat new rois
+bt_copyRoi = [];
 bt_deleteRoi = [];
 bt_roiExport = [];
 bt_exportRoiData = [];
@@ -2411,6 +2412,47 @@ icon_Stop = [
  NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN;
  NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN];
  icon_Stop = repmat(icon_Stop,[1 1 3]);
+copyRoiBt = [
+    NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN     0     0     0     0     0     0     0     0     0     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN     1     1     1     1     1     1     1     0     1   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN     1   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN     1   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN     1   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN     1   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN     0     0     0     0     0     0     0     0     0     0   NaN   NaN     1   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     1   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     1   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     1   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     1   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     1     1     1     1     1     1     1     1     1   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN];
+
+copyRoiBt(:,:,2) = [
+   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN     0     0     0     0     0     0     0     0     0     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN     0     0     0     0     0     0     0     0     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN     0     0     0     0     0     0     0     0     0     0   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0     0     0     0     0     0     0     0     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN];
+
+copyRoiBt(:,:,3) = [
+   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN     0     0     0     0     0     0     0     0     0     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN     0     0     0     0     0     0     0     0     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN     0     0     0     0     0     0     0     0     0     0   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN     0     0     0     0     0     0     0     0     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN];
+
+
+
 
 % hand3 = ...
 %  [NaN   NaN   NaN   NaN   NaN   NaN   NaN    0     0   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
@@ -8942,13 +8984,17 @@ end
             uicontrol(roiWin, 'Style', 'Pushbutton','Position', [88,50,32,22],...
                 'CData', roiImportBt,'Callback', @importRois,'Enable','on','ToolTipString', ' Import Rois ',...
                 'Tag', 'Import ROIs.');
+            %Copy Roi Button
+            bt_copyRoi = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [10,24,32,22],...
+                'CData', copyRoiBt,'Callback', @copyRoi,'Enable','on','ToolTipString', ' Copy Roi ',...
+                'Tag', 'Copy ROI.', 'Enable','off');
             if nDim>2
                 %Popup for Dimension for roi data export
                 n = dimNames;
                 n(xySel) = [];
-                roiPopDataExport = uicontrol(roiWin, 'Style', 'Popup','Position', [10,24,71  ,22],...
+                roiPopDataExport = uicontrol(roiWin, 'Style', 'Popup','Position', [49,24,32  ,22],...
                     'Enable','on','String',n,...
-                    'Tag', 'Select dimension for ROI data export.');
+                    'Tag', 'Select dimension for ROI data export.','Fontsize',8);
                 %Export Roi Data Button
                 bt_exportRoiData = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [88,25,32,22],...
                     'CData', roiExportDataBt,'Callback', @exportRoiData,'Enable','on','ToolTipString', ' Export Roi data along specified dimension ',...
@@ -9400,6 +9446,7 @@ end
         else
             roiList(numberRoi).corners = roi;
         end
+        roiList(numberRoi).cornersPixelDim = roi;
         %Determine rectangle surrounding ROI pixels in polygon
         %with border of one pixel around rounded values (left,down, right, up)
         if customDimScale
@@ -9522,6 +9569,14 @@ end
         drawPlots;
         if debugMatVis, debugMatVisFcn(2); end
     end
+
+    function copyRoi(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        currRoi = get(roiListbox, 'Value');
+        nRois = nRois + 1;
+        addNewRoi(roiList(currRoi).cornersPixelDim,nRois,'new');
+        if debugMatVis, debugMatVisFcn(2); end
+    end
     function deleteRoi(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         roiSel = get(roiListbox, 'Value');
@@ -9551,6 +9606,7 @@ end
             if ~isempty(bt_exportRoiData)
                 set(bt_exportRoiData, 'Enable','off')
             end
+            set(bt_copyRoi, 'Enable', 'off');
         end
         drawPlots;
         if debugMatVis, debugMatVisFcn(2); end
@@ -9636,8 +9692,10 @@ end
 
         if length(numberRoi) > 1
             set(roiBtReplace, 'Enable','off')
+            set(bt_copyRoi, 'Enable', 'off');
         else
             set(roiBtReplace, 'Enable','on')
+            set(bt_copyRoi, 'Enable', 'on');
         end
         if isempty(numberRoi)
             set(roiLine.im, 'LineWidth',1,'Color','w');
