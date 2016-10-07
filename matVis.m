@@ -9558,6 +9558,7 @@ end
             set([roiBtRename tbRoiShift tbRoiRotate tbRoiScale roiBtReplace bt_roiExport bt_deleteRoi] , 'Enable', 'on');
             %             if isempty(bt_exportRoiData)
             set(bt_exportRoiData, 'Enable','on')
+            set(bt_copyRoi, 'Enable', 'on');
             %             end
             set(roiBtReplace,'Value',0)
         else
@@ -9572,9 +9573,14 @@ end
 
     function copyRoi(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        currRoi = get(roiListbox, 'Value');
-        nRois = nRois + 1;
-        addNewRoi(roiList(currRoi).cornersPixelDim,nRois,'new');
+        copyRoiIdx = get(roiListbox, 'Value');
+        for iii = 1:numel(copyRoiIdx)
+            nRois = nRois + 1;
+            addNewRoi(roiList(copyRoiIdx(iii)).cornersPixelDim,nRois,'new');
+            roiList(nRois).settings = roiList(copyRoiIdx(iii)).settings;
+        end
+        set(roiListbox, 'Value',nRois-numel(copyRoiIdx)+1:nRois);
+        updateRoiSelection;
         if debugMatVis, debugMatVisFcn(2); end
     end
     function deleteRoi(varargin)
@@ -9692,10 +9698,8 @@ end
 
         if length(numberRoi) > 1
             set(roiBtReplace, 'Enable','off')
-            set(bt_copyRoi, 'Enable', 'off');
         else
             set(roiBtReplace, 'Enable','on')
-            set(bt_copyRoi, 'Enable', 'on');
         end
         if isempty(numberRoi)
             set(roiLine.im, 'LineWidth',1,'Color','w');
