@@ -9030,8 +9030,8 @@ end
             set(roiAxes,'FontSize',8,'Color','k');
             roiLine.roi = line(0,0,'Parent', roiAxes,'Color','w');
             for iii = 1:numel(data)
-                roiCenterIndicator(1,iii) = text(0,0,'+','Parent',zoomAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off');
-                roiCenterIndicator(2,iii) = text(0,0,'+','Parent',imAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off');
+                roiCenterIndicator(1,iii) = text(0,0,'+','Parent',zoomAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center');
+                roiCenterIndicator(2,iii) = text(0,0,'+','Parent',imAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center');
             end
             set(roiWin, 'HandleVisibility', 'off');
             %Set first entry of roi list (so it is not empty - will be
