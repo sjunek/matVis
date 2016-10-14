@@ -11991,10 +11991,7 @@ end
         ST = dbstack;
         %ST.name
         fctLevel = length(ST)-1;
-        fctName = strrep(strrep(ST(2).name,'matVis/',''),'/','_');
-        if strcmp(fctName,'profileGui_imgTraceUpdate') && inOut == 1
-          %stopHere
-        end
+        fctName = strrep(strrep(ST(2).name,'matVis/',''),'/','_');          % name of executed function
         if inOut == 1
           if fctLevel == 1 && isstruct(fctCount)
             fnames = fieldnames(fctCount);
@@ -12002,12 +11999,29 @@ end
               fctCount.(fnames{ii}).count = 0;
             end
           end
-          if isfield(fctCount,fctName);
-            fctCount.(fctName).count = fctCount.(fctName).count+1;
-            fctCount.(fctName).countTot = fctCount.(fctName).countTot+1;
+          if strcmp(fctName,'profileGui_imgTraceUpdate') && inOut == 1      % to stop at specific function name
+            %stopHere
+          end
+          if isfield(fctCount,fctName)                                      % counts for executed function
+            fctCount.(fctName).count = fctCount.(fctName).count+1;          % counts within callback
+            fctCount.(fctName).countTot = fctCount.(fctName).countTot+1;    % total calls since matVis start
           else
             fctCount.(fctName).count = 1;
             fctCount.(fctName).countTot = 1;
+            fctCount.(fctName).callFct = [];
+            fctCount.(fctName).countCallFct = 0;
+          end
+          % stores calling subfunction name
+          if fctLevel > 1
+            callFctName = strrep(strrep(ST(3).name,'matVis/',''),'/','_');  
+            if isfield(fctCount.(fctName).callFct,callFctName)
+              fctCount.(fctName).callFct.(callFctName).count    = fctCount.(fctName).callFct.(callFctName).count + 1;
+              %fctCount.(fctName).callFct.(callFctName).countTot = fctCount.(fctName).callFct.(callFctName).countTot + 1;
+            else
+              fctCount.(fctName).callFct.(callFctName).count = 1;
+              %fctCount.(fctName).callFct.(callFctName).countTot = 1;
+              fctCount.(fctName).countCallFct = fctCount.(fctName).countCallFct + 1;
+            end
           end
           fctCount.(fctName).time  = tic;
           timeStr = [];
@@ -12019,6 +12033,7 @@ end
         fprintf('%s%s %d/%d:%s %s\n',repmat(sprintf('|\t'), 1, fctLevel-1), inOutStr{inOut},fctCount.(fctName).count,fctCount.(fctName).countTot, fctNameStr, timeStr);
         if fctLevel == 1 && inOut == 2
           fprintf('\n')
+          assignin('base', 'matVisFunctionCalls', fctCount);  % saves fctCount to matlab workspace when complete function call for later analysis
         end
     end
     if debugMatVis, debugMatVisFcn(2); end
