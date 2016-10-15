@@ -11999,7 +11999,7 @@ end
               fctCount.(fnames{ii}).count = 0;
             end
           end
-          if strcmp(fctName,'profileGui_imgTraceUpdate') && inOut == 1      % to stop at specific function name
+          if strcmp(fctName,'updateRoiSelection') && inOut == 1      % to stop at specific function name
             %stopHere
           end
           if isfield(fctCount,fctName)                                      % counts for executed function
@@ -12026,6 +12026,9 @@ end
           fctCount.(fctName).time  = tic;
           timeStr = [];
           fctNameStr = sprintf('<a href="matlab:matlab.desktop.editor.openAndGoToFunction(which(''matVis.m''),''%s'');">%s</a>',fctName, fctName);%fctName
+          if fctLevel > 1
+            fctNameStr = sprintf('%s/<a href="matlab:matlab.desktop.editor.openAndGoToLine(which(''matVis.m''),%d);">line%d</a>',fctNameStr,ST(3).line,ST(3).line);
+          end
         else
           timeStr = sprintf('(execution time: %.3f s)',toc(fctCount.(fctName).time));
           fctNameStr = sprintf('%s',fctName);%fctName
