@@ -9047,8 +9047,8 @@ end
             set(roiAxes,'FontSize',8,'Color','k');
             roiLine.roi = line(0,0,'Parent', roiAxes,'Color','w');
             for iii = 1:numel(data)
-                roiCenterIndicator(1,iii) = text(0,0,'+','Parent',zoomAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center');
-                roiCenterIndicator(2,iii) = text(0,0,'+','Parent',imAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center');
+                roiCenterIndicator(1,iii) = text(0,0,'+','Parent',zoomAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+                roiCenterIndicator(2,iii) = text(0,0,'+','Parent',imAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
             end
             set(roiWin, 'HandleVisibility', 'off');
             %Set first entry of roi list (so it is not empty - will be
@@ -9824,7 +9824,9 @@ end
           matchDims = find([ROIPos(1:matchDims)>dim(1:matchDims) 1],1,'first')-1; % checks if saved ROIpos is larger than data dimension and reduces MATCHDIMS, in case
           currPos(1:matchDims) = ROIPos(1:matchDims);
           currPos(currPos(1:matchDims)>dim(1:matchDims))=1;
-          zoomVal = roiList(numberRoi).settings.zoomVal;
+          zoomVal(1:matchDims) = roiList(numberRoi).settings.zoomVal(1:matchDims); % checks if saved zoomVals are larger than data dimension and reduces MATCHDIMS, in case
+          zoomVal(zoomVal((1:matchDims),2) > dim(1:matchDims)',1) = 1; 
+          zoomVal(zoomVal((1:matchDims),2) > dim(1:matchDims)',2) = dim(zoomVal((1:matchDims),2)' > dim(1:matchDims));
           updateZoom(1,1,1:nDim,'ROIupdate');
           updateSelection(1:length(currPos));
         end
