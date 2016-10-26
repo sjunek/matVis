@@ -5338,7 +5338,7 @@ end
                         case cmGlobal       %Global (all data points)
                             % Get values for histogram
                             if (forceUpdateGuiHist || updateGuiHistState) && ii==1  % Disable update of histogram when necessary
-                                histValCurrIm = hist(single(reshape(currIm{ii}(:,:,1:min(dim(rgbDim),sz(3))),[prod(sz(1:2)) min(dim(rgbDim),sz(3))])),histXData)';
+                                histValCurrIm = histcounts(single(reshape(currIm{ii}(:,:,1:min(dim(rgbDim),sz(3))),[prod(sz(1:2)) min(dim(rgbDim),sz(3))])),histXData)';
                             end
                         case cmImage        %Image (each of the three images individual).  Before: Channel (by selected rgb-dimension) (see below)
                             currIm{ii} = double(currIm{ii});
@@ -5356,7 +5356,7 @@ end
                             end
                             % Get values for histogram
                             if ii==1 %(forceUpdateGuiHist || updateGuiHistState) && ii==1
-                                histValCurrIm = hist(single(reshape(currIm{ii}(:,:,1:min(dim(rgbDim),sz(3))),[prod(sz(1:2)) min(dim(rgbDim),sz(3))])),histXData)';
+                                histValCurrIm = histcounts(single(reshape(currIm{ii}(:,:,1:min(dim(rgbDim),sz(3))),[prod(sz(1:2)) min(dim(rgbDim),sz(3))])),histXData)';
                             end
                             if colDim == 2      %otherwise channel 3 remains constant
                                 currIm{ii}(:,:,3) = 0;
@@ -5420,7 +5420,7 @@ end
                     end
                     if (forceUpdateGuiHist || updateGuiHistState) && ii==1 
                       if get(cb_showHist,'Value')
-                        histValCurrIm = hist(single(reshape(currStack,[prod(sz(1:2)) sz(3)])),histXData)'; %
+                        histValCurrIm = histcounts(single(reshape(currStack,[prod(sz(1:2)) sz(3)])),histXData)'; %
                       else
                         histValCurrIm = ones(sz(3), numel(histXData));
                       end
@@ -5551,9 +5551,9 @@ end
         if debugMatVis, debugMatVisFcn(1); end
         if rgbCount == 0
             if strcmp(get(histAxGui, 'USerData'),'gamma')
-                guiHistVal = hist(single(currIm{currContrastSel}(:)),histXData);
+                guiHistVal = histcounts(single(currIm{currContrastSel}(:)),histXData);
             else
-                guiHistVal = hist(single(currImVal{currContrastSel}(:)),histXData);
+                guiHistVal = histcounts(single(currImVal{currContrastSel}(:)),histXData);
             end
             set(histAxPlot, 'YData', guiHistVal, 'XData',histXData);
             updateGuiHist(guiHistVal);
@@ -6423,7 +6423,7 @@ end
                             % Might produce slightly different results than
                             % dipimage implementation!
                             %   Find maximum of histogram and its location along the x axis
-                            guiHistVal = hist(currImVal{1}(:), histXData);
+                            guiHistVal = histcounts(currImVal{1}(:), histXData);
                             [h,xmax]=max(guiHistVal);
                             num_bins = numel(histXData);
                             xmax=round(mean(xmax));   %can have more than a single value!
@@ -6480,7 +6480,7 @@ end
                     case 'max. entropy' % Maximum entropy algorithm adopted from file exchange submission maxentropy.m from F.Gargouri
                         n = dim(xySel(1));
                         m = dim(xySel(2));
-                        ghv = hist(uint8(255*scaleMinMax(double(currImVal{1}(:)))),0:255);
+                        ghv = histcounts(uint8(255*scaleMinMax(double(currImVal{1}(:)))),0:255);
                         %normalize the histogram ==>  hn(k)=h(k)/(n*m) ==> k  in [1 256]
                         hn=ghv/(n*m);
                         %Cumulative distribution function
@@ -6533,7 +6533,7 @@ end
                             % produce slightly different results than
                             % Dipimage implementation
                             % STEP 1: Compute mean intensity of image from histogram, set T(1) = mean(I)
-                            [counts N] = hist(currImVal{1}(:),histXData);
+                            [counts N] = histcounts(currImVal{1}(:),histXData);
                             ct = 1;
                             mu1 = cumsum(counts);
                             T(ct) = (sum(N.*counts)) / mu1(end);
@@ -7540,8 +7540,8 @@ end
                     cI = currIm{1};
                 end
                 cZ = cI(round(zoomValXY(2)):zoomValXY(2)+zoomValXY(4)-1,round(zoomValXY(1)):zoomValXY(1)+zoomValXY(3)-1);
-                histVal(1  ,:) = hist(cI(:),histXData) * prod(dim) / dim(xySel(1)) / dim(xySel(2));
-                histVal(2,:) = hist(cZ(:), histXData) /zoomValXY(3)/zoomValXY(4)*prod(dim);
+                histVal(1  ,:) = histcounts(cI(:),histXData) * prod(dim) / dim(xySel(1)) / dim(xySel(2));
+                histVal(2,:) = histcounts(cZ(:), histXData) /zoomValXY(3)/zoomValXY(4)*prod(dim);
                 set(histAx, 'YLim',[0 max(histVal(:))]);
                 set(histObj([1 3]), 'YData', [1 max(histVal(:))]);
                 set(histPlots(1), 'YData', histVal(1  ,:));
@@ -7649,8 +7649,8 @@ end
             cI = currIm{1};
         end
         cZ = cI(round(zoomValXY(2)):floor(zoomValXY(2)+zoomValXY(4)-1),round(zoomValXY(1)):floor(zoomValXY(1)+zoomValXY(3)-1));
-        histVal(1  ,:) = hist(cI(:),histXData) * prod(dim) / dim(xySel(1)) / dim(xySel(2));
-        histVal(2,:) = hist(cZ(:),histXData)/zoomValXY(3)/zoomValXY(4)*prod(dim);
+        histVal(1  ,:) = histcounts(cI(:),histXData) * prod(dim) / dim(xySel(1)) / dim(xySel(2));
+        histVal(2,:) = histcounts(cZ(:),histXData)/zoomValXY(3)/zoomValXY(4)*prod(dim);
         histVal(3,:) = globalHist;
         histPlots = stairs(histXData, histVal','Parent',histAx(1));
         set(histPlots(1), 'Color','c');
