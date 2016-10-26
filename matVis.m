@@ -10688,7 +10688,7 @@ end
 % Load new data into matVis. Handle to this function can be returned
 % during initial calling of matVis, and can then be used to exchange
 % the loaded data set(s).
-    function loadNewData(d,varargin)
+    function loadNewData(d,mode,replaceIdx,varargin)
         if debugMatVis, debugMatVisFcn(1); end
         % If single data set is given as matrix instead of cell, convert
         % into cell first for consistency.
@@ -10697,18 +10697,38 @@ end
         end
         % Check if number of data sets, number of dimensions and length of
         % dimensions is consistent with currently loaded data. If not, give
-        % error message and return.
+%         % error message and return.
         if numel(d) ~= nMat
             errordlg('New data cannot be loaded into existing matVis GUI: Number of data sets not correct!');
         end
-        if numel(size(data{1})) ~= numel(size(d{1}))
-            errordlg('New data cannot be loaded into existing matVis GUI: Wrong number of dimensions!');
-        end
+       
         %         if any(size(data{1}) ~= size(d{1}))
         %             errordlg('New data cannot be loaded into existing matVis GUI: Size of data set not correct!');
         %         end
         % Exchange data and clear input variable
-        data =  d;
+        if nargin == 1
+            mode = 'replaceData';
+        end
+        switch mode
+            case 'replaceData'
+                if numel(size(data{1})) ~= numel(size(d{1}))
+                    errordlg('New data cannot be loaded into existing matVis GUI: Wrong number of dimensions!');
+                end
+                data =  d;
+            case 'replaceFrame'
+                if size(data{1},1) ~= size(d{1},1) || size(data{1},2) ~= size(d{1},2)
+                    errordlg('New data cannot be loaded into existing matVis GUI: Wrong number of dimensions!');
+                end
+                data{1}(:,:,replaceIdx) =  d{1};
+            case 'append'
+                if numel(dim) == 2
+                    errordlg('Cannot append frame to 2D data set!');  % Possible solution: restart matVis automatically. This would break the possibility to use the function handles, as the new matVis wouldn't be linked to the old handles.
+                end
+                if size(data{1},1) ~= size(d{1},1) || size(data{1},2) ~= size(d{1},2)
+                    errordlg('New data cannot be loaded into existing matVis GUI: Wrong number of dimensions!');
+                end
+                data{1}(:,:,end+1:end+size(d{1},3)) =  d{1};
+        end
         clear d;
         newDim = size(data{1});
         if any(newDim ~= dim)
