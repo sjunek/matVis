@@ -3592,7 +3592,9 @@ end
         if any(get(bg_colormap, 'SelectedObject') == [cmImage cmZoom])
             updateColormap
         end
-        updateGuiHistVal;
+        if ~rgbCount
+          updateGuiHistVal;
+        end
         if debugMatVis, debugMatVisFcn(2); end
     end
 
@@ -4851,6 +4853,9 @@ end
             if (get(tbProfile,'Value') && nProfiles)
                updateProfileProperties; 
             end
+            if get(tbRoi,'Value') && nRois && rgbCount~=dimNum
+              updateRoiSelection(get(roiListbox, 'Value')); % updateRoiProperties(0);
+            end
         end
         if any(get(bg_colormap, 'SelectedObject') == [cmImage cmZoom cmThresh]) && ~get(tbSwitchRGB, 'Value')
             updateColormap;
@@ -5091,8 +5096,8 @@ end
         if with2DHist
             updateAlphaContrast;
         end
-            % No projection selected
-            if projMethod == 0
+        % No projection selected
+        if projMethod == 0
                 for ii = 1:nMat
                     c = squeeze(data{ii}(imIndex{:}));
                     if get(tbSwitchRGB, 'Value')
@@ -5169,7 +5174,7 @@ end
                             currIm{ii}       = sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'); % weighted mean ratio
                             currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')./sum(cA,           3, 'omitnan'); % mean Intensity
                           else
-                            currIm{ii} = mean(c,  3, 'omitnan'); % used to be nanmean
+                            currIm{ii} = squeeze(mean(c,  3, 'omitnan')); % used to be nanmean
                           end
                         case 4      %standard deviation projection
                           if withAlpha
@@ -5568,7 +5573,7 @@ end
     function updateGuiHist(h,varargin)
         if debugMatVis, debugMatVisFcn(1); end
         % if get(bt_zoomProj, 'Value') size(h,1) might be smaller than length(histAxPlot)
-        for ii = 1:size(h,1); % length(histAxPlot)
+        for ii = 1:size(h,1) % length(histAxPlot)
             set(histAxPlot(ii), 'YData', h(ii,:), 'XData',histXData,'Visible','on');
         end
         for ii = size(h,1)+1:length(histAxPlot)
@@ -10556,7 +10561,7 @@ end
 % Sets name of main gui to 'Busy' during long calculations (projections
 % and RGB image calculations)
     function busy(in)
-        if debugMatVis, debugMatVisFcn(1); end
+        if debugMatVis > 1, debugMatVisFcn(1); end
         % in == 1: matVis busy
         % in == 0: matVis not busy
         if in
@@ -10572,7 +10577,7 @@ end
                 %                 drawnow;
             end
         end
-        if debugMatVis, debugMatVisFcn(2); end
+        if debugMatVis > 1, debugMatVisFcn(2); end
     end
     function out = scaleMinMax(in,scaleMin, scaleMax, minIn, maxIn, trunc)
         if debugMatVis > 1, debugMatVisFcn(1); end
