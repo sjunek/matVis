@@ -4975,7 +4975,6 @@ end
         % If in RGB-mode only filter in x/y
         if rgbCount
             fs = fs(1:min(2,numel(fs)));
-
         end
         % Specifiy par-vector depending on input
         if numel(fs) == 1 % Single number: isotropic filtering in x/y
