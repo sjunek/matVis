@@ -1074,18 +1074,18 @@ if ~isempty(startPar)
                 customConfig.winVis.zoomWin  = propVal(2);
                 customConfig.winVis.plotWin  = propVal(3);
             case 'windowPositions'
-                if isfield(propVal,'image')
-                    customConfig.winPos.imageWin = propVal.image;
+                if isfield(propVal,'imageWin')
+                    customConfig.winPos.imageWin = propVal.imageWin;
                 elseif isfield(propVal,'gui')
                     customConfig.winPos.imageWin(1:2) = customConfig.winPos.imageWin(1:2)+propVal.gui(1:2)-customConfig.winPos.gui(1:2);
                 end
-                if isfield(propVal,'zoom')
-                    customConfig.winPos.zoomWin = propVal.zoom;
+                if isfield(propVal,'zoomWin')
+                    customConfig.winPos.zoomWin = propVal.zoomWin;
                 elseif isfield(propVal,'gui')
                     customConfig.winPos.zoomWin(1:2) = customConfig.winPos.zoomWin(1:2)+propVal.gui(1:2)-customConfig.winPos.gui(1:2);
                 end
-                if isfield(propVal,'plot')
-                    customConfig.winPos.plotWin = propVal.plot;
+                if isfield(propVal,'plotWin')
+                    customConfig.winPos.plotWin = propVal.plotWin;
                 elseif isfield(propVal,'gui')
                     customConfig.winPos.plotWin(1:2) = customConfig.winPos.plotWin(1:2)+propVal.gui(1:2)-customConfig.winPos.gui(1:2);
                 end
