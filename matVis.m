@@ -7882,7 +7882,7 @@ end
             end
         end
         %RGB Mode
-        if config.RGB
+        if config.RGB && ~withAlpha
             set(cmImage, 'String', 'Channel');
             set(tbSwitchRGB, 'Value', 1);
             switchRGB;
@@ -7892,7 +7892,9 @@ end
             set(bg_colormap, 'SelectedObject',...
                 strcmp(get(get(bg_colormap,'Children'),'String'),config.colormapMode)'*get(bg_colormap,'Children'));   %Default: 'Global'
         else
+          if ~(config.RGB && withAlpha)
             set(bg_colormap, 'SelectedObject',bg_colormap.Children(strcmp(get(bg_colormap.Children,'String'),config.colormapMode)))
+          end
         end
         %Lines Visibility
         set(tbShowObjects, 'Value', config.lineVis);               %Default: 1
