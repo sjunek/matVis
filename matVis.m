@@ -3337,7 +3337,6 @@ end
         updateSelection(1:numel(dim));
         if debugMatVis, debugMatVisFcn(2); end
     end
-    
     function findExtremum(hO,ev,mnmx, zmim)
         % Find and go to local maximum or minimum (either within currently displayed
         % image or currently selected zoom region inside current image,
@@ -3521,7 +3520,6 @@ end
         drawPlots;
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function projCallback(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         %Update projection method
@@ -3854,7 +3852,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function buttonDownGuiHist(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         switch get(gui,'SelectionType')
@@ -3907,7 +3904,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function meanPlots(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         if varargin{1} == -1
@@ -4045,7 +4041,6 @@ end
         end
         if debugMatVis > 1, debugMatVisFcn(2); end
     end
-
     function px = pixelLocation(px,varargin)
         if debugMatVis > 1, debugMatVisFcn(1); end
         if nargin == 1 % Default xy case
@@ -4159,7 +4154,6 @@ end
         end
         if debugMatVis > 1, debugMatVisFcn(2); end
     end
-
     function out = pointInArea(point,rect)
         if debugMatVis > 1, debugMatVisFcn(1); end
         out = 0;
@@ -4234,7 +4228,6 @@ end
         end
         if debugMatVis > 1, debugMatVisFcn(2); end
     end
-
     function buttonDownGui(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         %Check for mouse position to enable fake 'button
@@ -4881,7 +4874,7 @@ end
     end
 
 %Function for rgb map for stretched RGB mode
-    function rgbV=rgbValue(col, exp)
+    function rgbV = rgbValue(col, exp)
         if col<0
             rgbV=[ 0 0 1];
         elseif col<1/4
@@ -4896,7 +4889,6 @@ end
             rgbV=[1 0 0];
         end
     end
-
     function updateContrastSel(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         currContrastSel = get(popContrastSel, 'Value');
@@ -4923,7 +4915,7 @@ end
         updateGamma(0,0,'sld','data');
         if debugMatVis, debugMatVisFcn(2); end
     end
-    function  updateLinkContrast(varargin)
+    function updateLinkContrast(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         linkContrastSettings = get(tb_linkContrastAdjustments, 'Value');
         if linkContrastSettings
@@ -5489,7 +5481,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function out = rgbContrastAdjust(in, relMin, relMax)
         if debugMatVis, debugMatVisFcn(1); end
         % Contrast adjustment: simply scaling and cutting the
@@ -5530,22 +5521,15 @@ end
         out = reshape(out, sz);
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function out = applyGamma(in,contrastMinMax, gammaVal, gammaSign)
         if debugMatVis, debugMatVisFcn(1); end
         in = double(in);
         % Stretch data inside the contrast range to the interval [0 1]
-        in(in<contrastMinMax(1)) = contrastMinMax(1);
-        in(in>contrastMinMax(2)) = contrastMinMax(2);
-        inMax = max(in(:));
-        inMin = min(in(:));
-        out = scaleMinMax(in);
-        %out = scaleMinMax(in,0, 1, contrastMinMax(1), contrastMinMax(2), 1);
+        out = scaleMinMax(in,0, 1, contrastMinMax(1), contrastMinMax(2), 1);
         % Apply gamma
         out = out.^(gammaVal^gammaSign);
         % Stretch to original range
-        out = out*(contrastMinMax(2)-contrastMinMax(1))+contrastMinMax(1);
-        %out = scaleMinMax(in,contrastMinMax(1), contrastMinMax(2), 0, 1, 1);
+        out = scaleMinMax(out,contrastMinMax(1), contrastMinMax(2), 0, 1, 1);
         if debugMatVis, debugMatVisFcn(2); end
     end
 
@@ -5571,7 +5555,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function updateGuiHist(h,varargin)
         if debugMatVis, debugMatVisFcn(1); end
         % if get(bt_zoomProj, 'Value') size(h,1) might be smaller than length(histAxPlot)
@@ -5597,7 +5580,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function state = updateGuiHistState
         state = (isPlaying && get(tb_playHist, 'Value')) || (dragging && get(tb_moveHist,'Value')) || (~isPlaying && ~dragging);
     end
@@ -5724,7 +5706,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function setAxisDir(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         % Set directoin of image/zoom axis (Callback of buttons bt_XDir and
@@ -6223,7 +6204,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function  colors = plotColors(nColors)
         if debugMatVis, debugMatVisFcn(1); end
 %         if exist('color_map.m','file')
@@ -6354,7 +6334,6 @@ end
 %Adjust Colormap
     function updateColormap(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        
         %Get Slider Values in Manual Mode
         if (~(any(get(bg_colormap, 'SelectedObject') == [cmManual cmThresh])) && ~rgbCount)
             set(sldMin, 'Enable', 'off');
@@ -6850,7 +6829,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function updateAlphaContrast(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         if nargin && strcmp(varargin{3},'etxt')
@@ -6880,21 +6858,18 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
-    function  updateInvertMode(varargin)
+    function updateInvertMode(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         updateColormap;
         updateImages;
         if debugMatVis, debugMatVisFcn(2); end
     end
-
-    function  updateFlipMode(varargin)
+    function updateFlipMode(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         updateColormap;
         updateImages;
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function res = color_map(map_size, fun_type, exp)
         if debugMatVis, debugMatVisFcn(1); end
         % Function kindly provided by André Zeug (last modified 21.03.2006).
@@ -7001,8 +6976,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
-
     function updateGamma(h,e,source,type)    %#ok
         if debugMatVis, debugMatVisFcn(1); end
         if strcmp(type,'data')
@@ -7204,7 +7177,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function setWinScale(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         % Set the factor used to scale the data pixels to screen pixels
@@ -7213,7 +7185,6 @@ end
         set100Pct;
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function adjustGuiSize(guiHandle,pwr)
         if debugMatVis, debugMatVisFcn(1); end
         switch os(1:2)
@@ -7248,7 +7219,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function set100Pct(varargin) %#ok
         if debugMatVis, debugMatVisFcn(1); end
         set(zoomWin, 'ResizeFcn','');
@@ -7265,7 +7235,6 @@ end
         resizeWin(0,0,'zoom');
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function scalingFct = screenSizeScaling
         % Determine and return scaling due to OS settings (e.g. Windows
         % font scaling affects the way Matlab reports screen resolution)
@@ -7278,7 +7247,6 @@ end
         scalingFct = matlabScreensize(3)/actualScreensize(1);
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function updateAspRatio(hObject, event)    %#ok
         if debugMatVis, debugMatVisFcn(1); end
         if myGcf == tempWin  %Called from aspect ratio window
@@ -7307,7 +7275,6 @@ end
         updateZoom
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function updatePlotLim(hObject, event, xy)    %#ok
         if debugMatVis, debugMatVisFcn(1); end
         set(tempWin, 'HandleVisibility', 'on');
@@ -7567,7 +7534,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function showHist(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         if isempty(globalHist)
@@ -7584,7 +7550,6 @@ end
         calculatingGlobalHist = 0;
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function updateSldLim(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         if nargin && any(varargin{1} == [sldLimMin sldLimMax])
@@ -7612,7 +7577,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function updateGlobalHist(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         set(tbHist, 'Enable','off');
@@ -7691,8 +7655,6 @@ end
         %         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
-
     function update2DHist(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         % Create and update 2D histogram
@@ -9596,7 +9558,6 @@ end
         drawPlots;
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function copyRoi(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         copyRoiIdx = get(roiListbox, 'Value');
@@ -10584,28 +10545,31 @@ end
         if debugMatVis > 1, debugMatVisFcn(2); end
     end
     function out = scaleMinMax(in,scaleMin, scaleMax, minIn, maxIn, trunc)
-        if debugMatVis > 1, debugMatVisFcn(1); end
-        if nargin == 1
-            scaleMin = 0;
-            scaleMax = 1;
+      % scaleMin, scaleMax: final scale limits 
+      % minIn, maxIn:       source scale limits
+      % trunc:              truncation switch, false: no truncation, 1: truncation to scale limits, -1: outlayers are replaced by NaN
+      if debugMatVis > 1, debugMatVisFcn(1); end
+      if nargin == 1
+        scaleMin = 0;
+        scaleMax = 1;
+      end
+      if nargin < 4 || isempty(minIn)
+        minIn = min(in(:));
+        maxIn = max(in(:));
+      end
+      
+      out = (in-minIn) / (maxIn-minIn) * (scaleMax - scaleMin) + scaleMin;
+      
+      if nargin == 6 && trunc
+        switch trunc
+          case -1
+            out(out<scaleMin | out>scaleMax) = NaN;
+          case 1
+            out(out<scaleMin) = scaleMin;
+            out(out>scaleMax) = scaleMax;
         end
-        if nargin < 4 || isempty(minIn)
-          minIn = min(in(:));
-          maxIn = max(in(:));
-        end
-
-        out = (in-minIn) / (maxIn-minIn) * (scaleMax - scaleMin) + scaleMin;
-        
-        if nargin == 6 && trunc
-          switch trunc
-            case -1
-              out(out<scaleMin | out>scaleMax) = NaN;
-            case 1
-              out(out<scaleMin) = scaleMin;
-              out(out>scaleMax) = scaleMax;
-          end
-        end
-        if debugMatVis > 1, debugMatVisFcn(2); end
+      end
+      if debugMatVis > 1, debugMatVisFcn(2); end
     end
     function myGcf = myGcf
         if debugMatVis > 2, debugMatVisFcn(1); end
