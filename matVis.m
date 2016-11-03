@@ -2960,7 +2960,8 @@ cb_showHist = uicontrol('Parent', panel_imageControls, 'Style', 'checkbox','Unit
 
 hold(histAxGui,'on');
 histXData = linspace(minVal(1),maxVal(1),256);
-histAxPlot = bar(histXData, zeros(1,numel(histXData)),'Parent',histAxGui, 'BaseValue',0,'BarWidth',1,'EdgeColor','k');
+histXDataBin = histXData(1:end-1)+.5*diff(histXData(1:2));
+histAxPlot = bar(histXDataBin, zeros(1,numel(histXDataBin)),'Parent',histAxGui, 'BaseValue',0,'BarWidth',1,'EdgeColor','k');
 set(histAxGui,'XLim',[minVal(1) maxVal(1)],'Color','none','XTick',[],'YTick',[],'YColor',get(gui,'Color'));
 set([histAxGui get(histAxGui,'Children')'], 'ButtonDownFcn', @buttonDownGuiHist);
 txt_linlog = text(1,1, 'lin','Parent',histAxGui, 'FontSize',8, 'units','pixel','Position',[-13 15],'Rotation',90);
@@ -2975,7 +2976,7 @@ tb_moveHist = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton','
 set(txt_linlog, 'Visible','on','Position',get(txt_linlog,'Position')+[5 3 0]);
 % Display image for contrast slider
 contrastAx = axes('Parent', panel_imageControls,'Units','pixel','Position', [72 79 176 3]);
-contrastSldIm = imagesc(histXData,1,linspace(minVal(1),maxVal(1),numel(histXData)) ,'Parent',contrastAx);  %#ok
+contrastSldIm = imagesc(histXDataBin,1,linspace(minVal(1),maxVal(1),numel(histXDataBin)) ,'Parent',contrastAx);  %#ok
 set(contrastAx, 'Tag','Current colormap.','Visible','off');
 
 %Slider RGB Stretch
@@ -3244,7 +3245,7 @@ end
 histWin = figure('Units', 'Pixel', 'Name', ['Histogram (',varName{1},') - Click: lin / log'], ...
     'MenuBar', 'none', 'NumberTitle', 'off', 'Visible', 'off', 'HandleVisibility', 'off','WindowStyle','normal', ...
     'WindowButtonDownFcn', {@updateHist,1}, 'CloseRequestFcn', {@showHist,1}, 'UserData', 0);
-histAx(1) = axes('Parent',histWin);
+histAx(1) = axes('Parent',histWin, 'Box', 'on');
 histAx(2) = axes('Parent',histWin ,'Position',get(histAx,'Position'),'Visible','off'); %Axis for contrast lines  ,'Position',get(histAx,'Position')
 hold(histAx(1), 'on');
 hold(histAx(2), 'on');
@@ -3888,10 +3889,10 @@ end
                 if ~rgbCount
                     if strcmp(get(histAxGui, 'UserData'),'gamma')
                         set(histAxGui, 'UserData','');
-                        histCDataGamma = applyGamma(linspace(minVal(1),maxVal(1),numel(histXData)),cmMinMax(currContrastSel,:),currGamma(currContrastSel),1);
+                        histCDataGamma = applyGamma(linspace(minVal(1),maxVal(1),numel(histXDataBin)),cmMinMax(currContrastSel,:),currGamma(currContrastSel),1);
                     else
                         set(histAxGui, 'UserData','gamma');
-                        histCDataGamma = linspace(minVal(1),maxVal(1),numel(histXData));
+                        histCDataGamma = linspace(minVal(1),maxVal(1),numel(histXDataBin));
                     end
                     set(contrastSldIm, 'CData',histCDataGamma);
                     updateGuiHistVal;
@@ -5265,9 +5266,9 @@ end
             % Set colorbar in between contrast sliders
             if ~strcmp(get(histAxGui, 'UserData'),'gamma')
                 if currGamma(currContrastSel) ~= 1
-                    histCDataGamma = applyGamma(linspace(histXData(1),histXData(end),numel(histXData)),cmMinMax(currContrastSel,:),currGamma(currContrastSel),1);
+                    histCDataGamma = applyGamma(linspace(histXDataBin(1),histXDataBin(end),numel(histXDataBin)),cmMinMax(currContrastSel,:),currGamma(currContrastSel),1);
                 else
-                    histCDataGamma = linspace(histXData(1),histXData(end),numel(histXData));
+                    histCDataGamma = linspace(histXDataBin(1),histXDataBin(end),numel(histXDataBin));
                 end
                 set(contrastSldIm, 'CData',histCDataGamma);
             end
@@ -5380,9 +5381,9 @@ end
                     % Set colorbar in between contrast sliders
                     if strcmp(get(histAxGui, 'UserData'),'gamma')
                         if currGamma(currContrastSel)
-                            histCDataGamma = applyGamma(linspace(histXData(1),histXData(end),numel(histXData)),cmMinMax(currContrastSel,:),currGamma(currContrastSel),1);
+                            histCDataGamma = applyGamma(linspace(histXDataBin(1),histXDataBin(end),numel(histXDataBin)),cmMinMax(currContrastSel,:),currGamma(currContrastSel),1);
                         else
-                            histCDataGamma = linspace(histXData(1),histXData(end),numel(histXData));
+                            histCDataGamma = linspace(histXDataBin(1),histXDataBin(end),numel(histXDataBin));
                         end
                         set(contrastSldIm, 'CData',histCDataGamma);
                     end
@@ -5539,10 +5540,12 @@ end
         inMax = max(in(:));
         inMin = min(in(:));
         out = scaleMinMax(in);
+        %out = scaleMinMax(in,0, 1, contrastMinMax(1), contrastMinMax(2), 1);
         % Apply gamma
         out = out.^(gammaVal^gammaSign);
         % Stretch to original range
-        out = out*(inMax-inMin)+inMin;
+        out = out*(contrastMinMax(2)-contrastMinMax(1))+contrastMinMax(1);
+        %out = scaleMinMax(in,contrastMinMax(1), contrastMinMax(2), 0, 1, 1);
         if debugMatVis, debugMatVisFcn(2); end
     end
 
@@ -5555,7 +5558,7 @@ end
             else
                 guiHistVal = histcounts(single(currImVal{currContrastSel}(:)),histXData);
             end
-            set(histAxPlot, 'YData', guiHistVal, 'XData',histXData);
+            set(histAxPlot, 'YData', guiHistVal, 'XData',histXDataBin);
             updateGuiHist(guiHistVal);
         else
             % For RGB modes, histogram values are determined in updateCurrIm
@@ -5573,10 +5576,10 @@ end
         if debugMatVis, debugMatVisFcn(1); end
         % if get(bt_zoomProj, 'Value') size(h,1) might be smaller than length(histAxPlot)
         for ii = 1:size(h,1) % length(histAxPlot)
-            set(histAxPlot(ii), 'YData', h(ii,:), 'XData',histXData,'Visible','on');
+            set(histAxPlot(ii), 'YData', h(ii,:), 'XData',histXDataBin,'Visible','on');
         end
         for ii = size(h,1)+1:length(histAxPlot)
-          set(histAxPlot(ii), 'YData', ones(1,256), 'XData',histXData,'Visible','off');
+          set(histAxPlot(ii), 'YData', ones(1,256), 'XData',histXDataBin,'Visible','off');
         end
 
         y0 = strcmp(get(histAxGui, 'YScale'),'log');
@@ -5613,7 +5616,7 @@ end
             hold(histAxGui,'on');
             pCol = plotColors(n);
             for ii=1:n
-                histAxPlot(ii) = plot(histXData,zeros(1,numel(histXData)),'Parent',histAxGui,'Color', pCol(ii,:));
+                histAxPlot(ii) = plot(histXDataBin,zeros(1,numel(histXDataBin)),'Parent',histAxGui,'Color', pCol(ii,:));
             end
             set(histAxPlot, 'ButtonDownFcn', @buttonDownGuiHist);
             
@@ -5624,7 +5627,7 @@ end
             hold(histAxGui,'on');
             if n == 1
               ii = 1;
-              histAxPlot(ii) = bar(histXData,zeros(1,numel(histXData)),'Parent',histAxGui,...
+              histAxPlot(ii) = bar(histXDataBin,zeros(1,numel(histXDataBin)),'Parent',histAxGui,...
                 'FaceColor', round(n/3) * [ii==1 ii==2 ii==3],...
                 'EdgeColor', round(n/3) * [ii==1 ii==2 ii==3],...
                 'BarWidth',1,'BaseValue',0.9*strcmp(get(histAxGui, 'YScale'), 'log'));
@@ -5632,8 +5635,8 @@ end
             else
               pCol = [1 0 0;0 1 0;0 0 1];
               for ii=1:n
-                histAxPlot(ii) = plot(histXData,ones(1,numel(histXData)),'Parent',histAxGui,'Color', pCol(ii,:));
-                %histAxPlot(ii) = bar(histXData,zeros(1,numel(histXData)),'Parent',histAxGui,'FaceColor', round(n/3) * [ii==1 ii==2 ii==3],'EdgeColor',round(n/3) * [ii==1 ii==2 ii==3],'BarWidth',1,'BaseValue',0.9*strcmp(get(histAxGui, 'YScale'), 'log'));
+                histAxPlot(ii) = plot(histXDataBin,ones(1,numel(histXDataBin)),'Parent',histAxGui,'Color', pCol(ii,:));
+                %histAxPlot(ii) = bar(histXDataBin,zeros(1,numel(histXDataBin)),'Parent',histAxGui,'FaceColor', round(n/3) * [ii==1 ii==2 ii==3],'EdgeColor',round(n/3) * [ii==1 ii==2 ii==3],'BarWidth',1,'BaseValue',0.9*strcmp(get(histAxGui, 'YScale'), 'log'));
               end
                 %hap_bl = get(histAxPlot,'BaseLine');
                 %set([hap_bl{:}],'LineStyle','none');
@@ -6416,7 +6419,7 @@ end
                     case 'triangle'  % Method from Zack GW, Rogers WE, Latt SA (1977)
                         % Dipimage implementation
                         if withDipimage
-                            [o cmMinMax(currContrastSel,1)] = threshold(currImVal{1},'triangle');
+                            [~, cmMinMax(currContrastSel,1)] = threshold(currImVal{1},'triangle');
                         else
                             % Implementation adopted from file exchange
                             % submission by Dr B. Panneton (triangle_th.m):
@@ -6424,15 +6427,15 @@ end
                             % dipimage implementation!
                             %   Find maximum of histogram and its location along the x axis
                             guiHistVal = histcounts(currImVal{1}(:), histXData);
-                            [h,xmax]=max(guiHistVal);
-                            num_bins = numel(histXData);
-                            xmax=round(mean(xmax));   %can have more than a single value!
-                            h=guiHistVal(xmax);
+                            [~,xmax] = max(guiHistVal);
+                            num_bins = numel(histXDataBin);
+                            xmax = round(mean(xmax));   %can have more than a single value!
+                            h = guiHistVal(xmax);
                             %   Find location of first and last non-zero values.
                             %   Values<h/10000 are considered zeros.
-                            indi=find(guiHistVal>h/10000);
-                            fnz=indi(1);
-                            lnz=indi(end);
+                            indi = find(guiHistVal>h/10000);
+                            fnz  = indi(1);
+                            lnz  = indi(end);
                             %   Pick side as side with longer tail. Assume one tail is longer.
                             lspan=xmax-fnz;
                             rspan=lnz-xmax;
@@ -6465,7 +6468,7 @@ end
                                 thresh=num_bins-thresh+1;
                             end
                             thresh = thresh/num_bins;
-                            cmMinMax(currContrastSel,1)= histXData(1)+(histXData(end)-histXData(1))*thresh;
+                            cmMinMax(currContrastSel,1)= histXDataBin(1)+(histXDataBin(end)-histXDataBin(1))*thresh;
                         end
                     case 'otsu'
                         % Dipimage implementation
@@ -6525,7 +6528,7 @@ end
                     case 'isodata'
                         % Dipimage implementation
                         if withDipimage
-                            [o cmMinMax(currContrastSel,1)] = threshold(currImVal{1},'isodata');
+                            [o, cmMinMax(currContrastSel,1)] = threshold(currImVal{1},'isodata');
                         else
                             % Isodata algorithm from  Ridler and Calvard;
                             % implementation adopted from Jing Tian's file
@@ -6533,7 +6536,7 @@ end
                             % produce slightly different results than
                             % Dipimage implementation
                             % STEP 1: Compute mean intensity of image from histogram, set T(1) = mean(I)
-                            [counts N] = histcounts(currImVal{1}(:),histXData);
+                            [counts, N] = histcounts(currImVal{1}(:),histXData);
                             ct = 1;
                             mu1 = cumsum(counts);
                             T(ct) = (sum(N.*counts)) / mu1(end);
@@ -7029,7 +7032,7 @@ end
             % yticks of the colorbar in the image window are NOT updated in
             % updateCurrIm, so they have to be updated here.
             if currGamma(currContrastSel) == 1
-                set(contrastSldIm, 'CData',histXData);
+                set(contrastSldIm, 'CData',histXDataBin);
                 if get(tbColorbar, 'Value') == 1
                     for ii=1:nMat
                         cb = findobj(imageWin(ii), 'Tag','Colorbar');
@@ -7621,18 +7624,18 @@ end
         drawnow;
         cla(histAx(1));
         cla(histAx(2));
-        xx = histXData(:)';
-        binwidth = [diff(xx) 0];
-        xx = [xx(1)-binwidth(1)/2 xx+binwidth/2];
+        %xx = histXData(:)';
+        %binwidth = [diff(xx) 0];
+        %xx = [xx(1)-binwidth(1)/2 xx+binwidth/2];
         % Shift bins so the interval is ( ] instead of [ ).
-        bins = xx + eps(xx);
+        %bins = xx + eps(xx);
         ii = 1;
         dataInt = 500000;
-        globalHist = zeros(ceil(prod(dim)/dataInt),numel(histXData)+2);
+        globalHist = zeros(ceil(prod(dim)/dataInt),numel(histXData)-1);
         while  ((ii-1)*dataInt <=  prod(dim))
             clear w;
             set(tbHist, 'CData',[],'String', [num2str(min(100,round(100*ii*dataInt/prod(dim)))) '%']);drawnow;
-            globalHist(ii,:) = histc(data{1}((ii-1)*dataInt+1:min(prod(dim),ii*dataInt))',[-inf bins],1);
+            globalHist(ii,:) = histcounts(data{1}((ii-1)*dataInt+1:min(prod(dim),ii*dataInt))',histXData);
             ii = ii + 1;
             if shuttingDown  % Leave loop when matVis is being closed
                 return
@@ -7640,9 +7643,9 @@ end
         end
         globalHist = (sum(globalHist,1))';
         % Combine first bin with 2nd bin and last bin with next to last bin
-        globalHist(2,:) = globalHist(2,:)+globalHist(1,:);
-        globalHist(end-1,:) = globalHist(end-1,:)+globalHist(end,:);
-        globalHist = globalHist(2:end-1,:);
+        %globalHist(2,:) = globalHist(2,:)+globalHist(1,:);
+        %globalHist(end-1,:) = globalHist(end-1,:)+globalHist(end,:);
+        %globalHist = globalHist(2:end-1,:);
         if isinteger(data{1})
             cI = single(currIm{1});
         else
@@ -7652,11 +7655,11 @@ end
         histVal(1  ,:) = histcounts(cI(:),histXData) * prod(dim) / dim(xySel(1)) / dim(xySel(2));
         histVal(2,:) = histcounts(cZ(:),histXData)/zoomValXY(3)/zoomValXY(4)*prod(dim);
         histVal(3,:) = globalHist;
-        histPlots = stairs(histXData, histVal','Parent',histAx(1));
+        histPlots = stairs(histXDataBin, histVal','Parent',histAx(1));
         set(histPlots(1), 'Color','c');
         set(histPlots(2), 'Color','m');
         set(histPlots(3), 'Color','k');
-        %         transferVal(1  ,:) = histXData;
+        %         transferVal(1  ,:) = histXDataBin;
         %         transferVal(2,:) = histXData.^currGamma;
         %         transferVal(2,:) = (transferVal(2,:)-min(transferVal(2,:)))/(max(transferVal(2,:))-min(transferVal(2,:)))*max(histVal(:));
         %         blackPt = find(transferVal(1  ,:)>histXData(1),1);
