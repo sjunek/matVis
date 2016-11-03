@@ -5331,7 +5331,11 @@ end
                         case cmGlobal       %Global (all data points)
                             % Get values for histogram
                             if (forceUpdateGuiHist || updateGuiHistState) && ii==1  % Disable update of histogram when necessary
-                                histValCurrIm = histcounts(single(reshape(currIm{ii}(:,:,1:min(dim(rgbDim),sz(3))),[prod(sz(1:2)) min(dim(rgbDim),sz(3))])),histXData)';
+                              X = single(currIm{ii}(:,:,1:min(dim(rgbDim),sz(3))));
+                              histValCurrIm = [];
+                              for nX = 1: size(X,3)
+                                histValCurrIm(nX,:) = histcounts(X(:,:,nX),histXData);
+                              end
                             end
                         case cmImage        %Image (each of the three images individual).  Before: Channel (by selected rgb-dimension) (see below)
                             currIm{ii} = double(currIm{ii});
@@ -5349,7 +5353,11 @@ end
                             end
                             % Get values for histogram
                             if ii==1 %(forceUpdateGuiHist || updateGuiHistState) && ii==1
-                                histValCurrIm = histcounts(single(reshape(currIm{ii}(:,:,1:min(dim(rgbDim),sz(3))),[prod(sz(1:2)) min(dim(rgbDim),sz(3))])),histXData)';
+                              X = single(currIm{ii}(:,:,1:min(dim(rgbDim),sz(3))));
+                              histValCurrIm = [];
+                              for nX = 1: size(X,3)
+                                histValCurrIm(nX,:) = histcounts(X(:,:,nX),histXData);
+                              end
                             end
                             if colDim == 2      %otherwise channel 3 remains constant
                                 currIm{ii}(:,:,3) = 0;
@@ -5413,7 +5421,11 @@ end
                     end
                     if (forceUpdateGuiHist || updateGuiHistState) && ii==1 
                       if get(cb_showHist,'Value')
-                        histValCurrIm = histcounts(single(reshape(currStack,[prod(sz(1:2)) sz(3)])),histXData)'; %
+                        histValCurrIm = [];
+                        for nX = 1: size(currStack,3)
+                          histValCurrIm(nX,:) = histcounts(single(currStack(:,:,nX)),histXData);
+                        end
+                        %histValCurrIm = histcounts(single(reshape(currStack,[prod(sz(1:2)) sz(3)])),histXData)'; %
                       else
                         histValCurrIm = ones(sz(3), numel(histXData));
                       end
