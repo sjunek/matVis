@@ -876,7 +876,10 @@ movdata.fastCaptureMode = true; %false; % use 'hardcopy' instead of 'export_fig'
 
 % Ensure root units are pixels and get the size of the screen
 set(0,'Units','pixels')
-scnSize = get(0,'ScreenSize'); %get(0,'MonitorPosition')
+scnSize = get(0,'ScreenSize'); %
+monSize = get(0,'MonitorPosition');
+monSizeMin = min(monSize(:,[1 2]));         % min x y position
+monSizeMax = [max(sum(monSize(:,[1 3]),2)-1) max(sum(monSize(:,[2 4]),2)-1)]; % max x y position
 
 % Create main gui already here to be able to find the correct width of the
 % window borders (depend on OS)
@@ -4393,6 +4396,10 @@ end
                 startPosWins(1,ii,:) = get(imageWin(ii),'Position');
                 startPosWins(2,ii,:) = get(zoomWin(ii),'Position');
                 startPosWins(3,ii,:) = get(plotWin(ii),'Position');
+                if ~isempty(histWin);         startPosWins(4,ii,:) = get(histWin,'Position');         end
+                if ~isempty(roiWin);          startPosWins(5,ii,:) = get(roiWin,'Position');          end
+                if ~isempty(profileWin);      startPosWins(6,ii,:) = get(profileWin,'Position');      end
+                if ~isempty(profileTraceWin); startPosWins(7,ii,:) = get(profileTraceWin,'Position'); end
             end
         end
         if debugMatVis, debugMatVisFcn(2); end
@@ -4404,6 +4411,10 @@ end
                 set(imageWin(iii),'Position', squeeze(startPosWins(1,iii,:))' + [p2-p1 0 0]);
                 set(zoomWin(iii),'Position', squeeze(startPosWins(2,iii,:))' + [p2-p1 0 0]);
                 set(plotWin(iii),'Position',squeeze(startPosWins(3,iii,:))' + [p2-p1 0 0]);
+                if ~isempty(histWin);         set(histWin,'Position',squeeze(startPosWins(4,iii,:))' + [p2-p1 0 0]);         end
+                if ~isempty(roiWin);          set(roiWin,'Position',squeeze(startPosWins(5,iii,:))' + [p2-p1 0 0]);          end
+                if ~isempty(profileWin);      set(profileWin,'Position',squeeze(startPosWins(6,iii,:))' + [p2-p1 0 0]);      end
+                if ~isempty(profileTraceWin); set(profileTraceWin,'Position',squeeze(startPosWins(7,iii,:))' + [p2-p1 0 0]); end
             end
         end
         function releaseMiddleClickGui(varargin)
@@ -5574,7 +5585,7 @@ end
             set(histAxPlot(ii), 'YData', h(ii,:), 'XData',histXDataBin,'Visible','on');
         end
         for ii = size(h,1)+1:length(histAxPlot)
-          set(histAxPlot(ii), 'YData', ones(1,256), 'XData',histXDataBin,'Visible','off');
+          set(histAxPlot(ii), 'YData', ones(1,length(histXDataBin)), 'XData',histXDataBin,'Visible','off');
         end
 
         y0 = strcmp(get(histAxGui, 'YScale'),'log');
@@ -7837,10 +7848,16 @@ end
         set(tbMenuBars, 'Value', config.menuBarVis);            %Default: 0
         toggleMenuBars;
         %For one data set
-        for ii=1:nMat
-            set(imageWin(ii), 'Position', config.winPos.imageWin(ii,:));       %Default: [337, 545,  450, 450];
-            set(zoomWin(ii), 'Position', config.winPos.zoomWin(ii,:));       %Default: [800, 545,  450, 450];
-            set(plotWin(ii), 'Position', config.winPos.plotWin(ii,:));       %Default: [5,    10, 1250, 500];
+        monSizeMin
+        if monSizeMin(1) <= min([config.winPos.imageWin(:,1); config.winPos.zoomWin(:,1); config.winPos.plotWin(:,1)]) && ...
+          monSizeMin(2) <= min([config.winPos.imageWin(:,2); config.winPos.zoomWin(:,2); config.winPos.plotWin(:,2)]) && ...
+          monSizeMax(1) >= max(sum([config.winPos.imageWin(:,[1 3]);config.winPos.zoomWin(:,[1 3]);config.winPos.plotWin(:,[1 3])],2)) && ...
+          monSizeMax(2) >= max(sum([config.winPos.imageWin(:,[2 4]);config.winPos.zoomWin(:,[2 4]);config.winPos.plotWin(:,[2 4])],2))
+          for ii=1:nMat
+            set(imageWin(ii), 'Position', config.winPos.imageWin(ii,:));      %Default: [337, 545,  450, 450];
+            set(zoomWin(ii),  'Position', config.winPos.zoomWin(ii,:));       %Default: [800, 545,  450, 450];
+            set(plotWin(ii),  'Position', config.winPos.plotWin(ii,:));       %Default: [5,    10, 1250, 500];
+          end
         end
         % Image and Zoom Window Options
         %Aspect Ratio 1:1
@@ -8089,10 +8106,10 @@ end
         profileStruct.trace.inwork = 0;
         %Create profile GuiWindow (only during first call)
         if isempty(profileWin)
-            % Profile trace window
-            profileTraceWin = figure('Position',[ 347    92   560   420], 'Name', 'Profile view', 'MenuBar', 'none', 'NumberTitle', 'off');
-            %profile Manager Window with text
             gp = get(gui,'Position');
+            % Profile trace window
+            profileTraceWin = figure('Position',[ gp(1)+140  gp(2)-452   560   420], 'Name', 'Profile view', 'MenuBar', 'none', 'NumberTitle', 'off');
+            %profile Manager Window with text
             profileWin =  figure('Units', 'Pixel', 'Name', 'Profile Manager',...
                 'MenuBar', 'none', 'NumberTitle', 'off','CloseRequestFcn', {@profileGui,0}, 'HandleVisibility', 'off',...
                 'WindowStyle','normal', 'Position', [gp(1) gp(2)-362 130 330]);
@@ -8213,7 +8230,6 @@ end
             profileStruct.show.colors = [1 0 0]; % see SPECTRUM functions
             profileStruct.instance = 1; % not clear what this is used for
             profileStruct.gui.bgcolor = [.9 .9 .9];
-          if debugMatVis, debugMatVisFcn(2); end
         end
         function resizeProfileWin(varargin)
           if debugMatVis, debugMatVisFcn(1); end
