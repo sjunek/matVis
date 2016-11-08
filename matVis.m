@@ -4858,7 +4858,7 @@ end
             if (get(tbProfile,'Value') && nProfiles)
                updateProfileProperties; 
             end
-            if get(tbRoi,'Value') && nRois && rgbCount~=dimNum
+            if get(tbRoi,'Value') & nRois & rgbCount~=dimNum
               updateRoiSelection(get(roiListbox, 'Value')); % updateRoiProperties(0);
             end
         end
@@ -5438,7 +5438,7 @@ end
                         end
                         %histValCurrIm = histcounts(single(reshape(currStack,[prod(sz(1:2)) sz(3)])),histXData)'; %
                       else
-                        histValCurrIm = ones(sz(3), numel(histXData));
+                        histValCurrIm = ones(sz(3), numel(histXDataBin));
                       end
                     end
                     rgbVal = [];
@@ -7589,7 +7589,7 @@ end
             set(sldMax, 'Value', histXData(end));
         end
         set([sldMin sldMax], 'Min', histXData(1), 'Max', histXData(end));
-        set([histAxPlot contrastSldIm], 'XData', histXData);
+        set([histAxPlot contrastSldIm], 'XData', histXDataBin);
         set([contrastAx histAxGui], 'XLim', [histXData(1) histXData(end)]);
         set(contrastSldIm, 'CData', linspace(histXData(1),histXData(end),255));
         updateColormap;
@@ -7848,7 +7848,6 @@ end
         set(tbMenuBars, 'Value', config.menuBarVis);            %Default: 0
         toggleMenuBars;
         %For one data set
-        monSizeMin
         if monSizeMin(1) <= min([config.winPos.imageWin(:,1); config.winPos.zoomWin(:,1); config.winPos.plotWin(:,1)]) && ...
           monSizeMin(2) <= min([config.winPos.imageWin(:,2); config.winPos.zoomWin(:,2); config.winPos.plotWin(:,2)]) && ...
           monSizeMax(1) >= max(sum([config.winPos.imageWin(:,[1 3]);config.winPos.zoomWin(:,[1 3]);config.winPos.plotWin(:,[1 3])],2)) && ...
