@@ -5856,10 +5856,8 @@ end
         if get(tbWin(2), 'Value') == 1
             if oldMATLAB
                 rectPlotArea_Zoom = []; %#ok
-                %rectPlotArea_Im = []; %#ok
             else
                 rectPlotArea_Zoom = matlab.graphics.primitive.Rectangle.empty;
-                %rectPlotArea_Im = matlab.graphics.primitive.Rectangle.empty;
             end
             for ii = 1:nMat
                 set(0,'CurrentFigure',zoomWin(ii)); %axes(zoomAx);
