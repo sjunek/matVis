@@ -878,8 +878,8 @@ movdata.fastCaptureMode = true; %false; % use 'hardcopy' instead of 'export_fig'
 set(0,'Units','pixels')
 scnSize = get(0,'ScreenSize'); %
 monSize = get(0,'MonitorPosition');
-monSizeMin = min(monSize(:,[1 2]));         % min x y position
-monSizeMax = [max(sum(monSize(:,[1 3]),2)-1) max(sum(monSize(:,[2 4]),2)-1)]; % max x y position
+monSizeMin = min(monSize(:,[1 2]),[],1);         % min x y position
+monSizeMax = [max(sum(monSize(:,[1 3]),2)-1,[],1) max(sum(monSize(:,[2 4]),2)-1,[],1)]; % max x y position
 
 % Create main gui already here to be able to find the correct width of the
 % window borders (depend on OS)
@@ -3416,14 +3416,16 @@ end
         xNew = get(pop(1), 'Value');
         yNew = get(pop(2), 'Value');
         if xNew == xySel(1) && yNew == xySel(2)
-            return
+          if debugMatVis, debugMatVisFcn(2); end
+          return
         end
         if xNew ~= yNew
             %Selected Rois will be lost after changing xySel
             if ~isempty(roiList)
                 q = questdlg('All Roi information will be lost after changing x/y dimension. Continue anyway?','','Continue','Cancel','Cancel');
                 if strcmp(q,'Cancel')
-                    return
+                  if debugMatVis, debugMatVisFcn(2); end
+                  return
                 end
             end
             %Update string of projection popup and projection display
@@ -4196,6 +4198,7 @@ end
         set(myGcf,'Pointer','custom','PointerShapeCData',hand, 'PointerShapeHotSpot',[9 9]);
         if nargin == 3
             set(myGcf, 'WindowButtonMotionFcn', @mouseMotion);
+            if debugMatVis > 1, debugMatVisFcn(2); end
             return;
         end
         currWin = myGcf;
@@ -4328,6 +4331,7 @@ end
                         'String',['[',num2str(plotYLim(ii,1),'%6.2f'),'   ',num2str(plotYLim(ii,2),'%6.2f'),']'],...
                         'HorizontalAlignment', 'center', 'Callback', {@updatePlotLim,'y'});
                 end
+                if debugMatVis, debugMatVisFcn(2); end
                 return
                 %Right click on meanPlot button: Reduce setting mode by 1
             elseif pointInArea(p1, btPosMean)
@@ -4504,6 +4508,7 @@ end
               p2 = ceil(p2);
               set(myGcf, 'HandleVisibility', 'off');
               if p1 == p2
+                if debugMatVis, debugMatVisFcn(2); end
                 return;
               end
               if any(currWin == plotWin) && ~isempty(plotDim)
@@ -4522,12 +4527,14 @@ end
                     zoomVal(plotDim(subPlot),2) = max(p1(1  ,1),p2(1  ,1)) - min(p1(1  ,1),p2(1  ,1)) + 1;
                     updateZoom;
                   end
+                  if debugMatVis, debugMatVisFcn(2); end
                   return;
                 end
               end
               coord(1  ,:)    = round(p1(1  ,1:2));
               coord(2,:)    = round(p2(1  ,1:2));
               if coord(1  ,1) == coord(2,1) || coord(1  ,2) == coord(2,2)
+                if debugMatVis, debugMatVisFcn(2); end
                 return;
               end
               if coord(1  ,1) > coord(2,1)
@@ -4664,6 +4671,7 @@ end
     function zoomKeyReleaseFcn(src,evt,fcnHndl) %#ok
         if debugMatVis, debugMatVisFcn(1); end
         if strcmp(func2str(get(zoomWin(1), 'WindowButtonMotionFcn')), 'matVis/panWindow')
+            if debugMatVis, debugMatVisFcn(2); end
             return
         end
         %         set(src, 'WindowButtonDownFcn', @buttonDownCallback);
@@ -4728,7 +4736,8 @@ end
         end
         if any(myGcf == zoomWin)
             if any(p < zoomValXY(1:2)) || any(p > zoomValXY(1:2) + zoomValXY(3:4))
-                return
+              if debugMatVis, debugMatVisFcn(2); end
+              return
             end
             mousePos = p - zoomValXY(1:2);
             relMousePos = mousePos ./ zoomValXY(3:4);
@@ -4745,6 +4754,7 @@ end
             zoomValXY(1:2) = p - zoomValXY(3:4) .* relMousePos;
         else
             if any(p < [1 1]) || any(p > [size(currIm{1},2) size(currIm{1},1)])
+                if debugMatVis, debugMatVisFcn(2); end
                 return
             end
             zoomValXY(3:4) = 1.1^z * zoomValXY(3:4);
@@ -4836,7 +4846,7 @@ end
         else
             % Other calls
             imageUpdated = 0;
-            if (numel(dimNum) > 1) ||(numel(dimNum) == 1 && ~any(xySel == dimNum))
+            if numel(unique([xySel dimNum]))>2 %(numel(dimNum) > 1) ||(numel(dimNum) == 1 && ~any(xySel == dimNum))
                 updateImages;%(dimNum)
                 imageUpdated = 1;
                 if ~isempty(globalHist) && strcmp(get(tbHist, 'Enable'),'on') && ~calculatingGlobalHist
@@ -5493,7 +5503,9 @@ end
                 if get(tbInvert, 'Value')
                     currIm{ii} = 1 - currIm{ii};
                 end
-                updateGuiHist(histValCurrIm);
+                if max(histValCurrIm(:))>1
+                  updateGuiHist(histValCurrIm);
+                end
                 set(contrastAx, 'CLim',[cmMinMax(currContrastSel,1) cmMinMax(currContrastSel,2)]);
                 currImVal = currIm;
             end
@@ -5590,7 +5602,7 @@ end
 
         y0 = strcmp(get(histAxGui, 'YScale'),'log');
         try
-            set(histAxGui, 'YLim', [0 1.05*max(max(h(:,2:end-1)))]);
+            set(histAxGui, 'YLim', [0 1.05*max(h(:))]);
             set(histAxBg, 'Position', [cmMinMax(currContrastSel,1) y0 cmMinMax(currContrastSel,2)-cmMinMax(currContrastSel,1) 1.1*max(max(h(:,2:end-1)))]);  % [cmMinMax(currContrastSel,1) 1 cmMinMax(currContrastSel,2)-cmMinMax(currContrastSel,1) max(max(h(:,2:end-1)))]
         catch    %#ok
             set(histAxGui, 'YLim', [0 1.05*max(h(:))]);
@@ -7628,6 +7640,7 @@ end
             globalHist(ii,:) = histcounts(data{1}((ii-1)*dataInt+1:min(prod(dim),ii*dataInt))',histXData);
             ii = ii + 1;
             if shuttingDown  % Leave loop when matVis is being closed
+                if debugMatVis, debugMatVisFcn(2); end
                 return
             end
         end
@@ -8382,7 +8395,7 @@ end
             if debugMatVis, debugMatVisFcn(2); end
         end
         function imgTraceMove(varargin)
-            if debugMatVis > 1, debugMatVisFcn(1); end
+            if debugMatVis, debugMatVisFcn(1); end
             mousepos = get(myGca,'CurrentPoint');
             mousepos = mousepos(1,1:2);
 %             set(myGca,'Units','Pixels');
@@ -8394,7 +8407,7 @@ end
 %             Yval = interp1([axpos(2) axpos(2)+axpos(4)],fliplr(Ypos),mousepos(2),'linear');
 %             mousepos = round([Xval Yval])
             imgTraceUpdate([profileStruct.trace.points; mousepos])
-            if debugMatVis > 1, debugMatVisFcn(2); end
+            if debugMatVis, debugMatVisFcn(2); end
         end
         function changeProfileWidth(varargin)
             if debugMatVis, debugMatVisFcn(1); end
@@ -8633,7 +8646,8 @@ end
                 elseif strcmp(q, 'To File')
                     [f,p] = uiputfile('.mat','Choose folder and filename to save profiles!');
                     if f == 0
-                        return
+                      if debugMatVis, debugMatVisFcn(2); end
+                      return
                     end
                     matVisProfileExport =  profileListExp(profileSel); %#ok
                     save([p,f],'matVisProfileExport');
@@ -8647,12 +8661,14 @@ end
             if debugMatVis, debugMatVisFcn(1); end
             [f,p] = uigetfile('.mat','Choose file to load profiles!');
             if isequal(f,0)
-                return
+              if debugMatVis, debugMatVisFcn(2); end
+              return
             end
             try
                 matVisProfileExport = cell2mat(struct2cell(load([p,f])));
             catch    %#ok
                 errordlg('Chosen file does not contain profiles exported using matVis (''matVisProfileExport'')!');
+                if debugMatVis, debugMatVisFcn(2); end
                 return
             end
 %             if customDimScale
@@ -8800,12 +8816,13 @@ end
                         profileStruct.trace.profh{nt} = plot(profileStruct.show.profile(:,nt),'Parent',profileStruct.gui.profile.ax,'Color',profileStruct.show.colors(nt,:)*.8,'tag',sprintf('traceplot_%.0f',profileStruct.instance));
                     end
                 end
-                profileStruct.trace.imgh = imagesc(profileStruct.trace.RGB,'Parent',profileStruct.gui.traceim.ax,'tag',sprintf('traceplot_%.0f',profileStruct.instance));
+                profileStruct.trace.imgh = imagesc(profileStruct.trace.img,'Parent',profileStruct.gui.traceim.ax,'tag',sprintf('traceplot_%.0f',profileStruct.instance));%profileStruct.trace.RGB
                 if withAlpha
                   set(profileStruct.trace.imgh,'AlphaData',profileStruct.trace.imgA);
+                  set(profileStruct.gui.traceim.ax,'Color','k');
                 end
             end
-            set(profileStruct.gui.traceim.ax,'box','on','YTickLabel',(profileStruct.show.width-1)/2:-1:-1*(profileStruct.show.width-1)/2,'Color',profileStruct.gui.bgcolor,'XLim',[.5 length(tracepoints)-.5],'YLim',[.5 profileStruct.show.width+.5]);
+            set(profileStruct.gui.traceim.ax,'box','on','YTickLabel',(profileStruct.show.width-1)/2:-1:-1*(profileStruct.show.width-1)/2,'XLim',[.5 length(tracepoints)-.5],'YLim',[.5 profileStruct.show.width+.5]);%,'Color',profileStruct.gui.bgcolor
             set(profileStruct.gui.profile.ax,'box','on','XTickLabel',[],'Color',profileStruct.gui.bgcolor,'XLim',[.5 length(tracepoints)-.5],'YLim',[0 max(profileStruct.show.profile(:))]);
         end
         if debugMatVis, debugMatVisFcn(2); end
@@ -8879,7 +8896,6 @@ end
             if get(roiBtRename, 'Value')
               set(tempRoiPropWin, 'Visible','off');
             end
-
             if debugMatVis, debugMatVisFcn(2); end
             return
         end
@@ -9093,6 +9109,7 @@ end
                             set(tb_newRoi, 'Value', 0);
                             set(tb_newRoi(ii), 'Value', 1);
                             getNewRoi(0,0,ii);
+                            if debugMatVis, debugMatVisFcn(2); end
                             return
                         end
                     end
@@ -9114,7 +9131,7 @@ end
                     'String',num2str(newRoiSize),'FontWeight', 'bold',...
                     'HorizontalAlignment', 'center', 'Callback', @updateRoiSize);
             end
-			if debugMatVis, debugMatVisFcn(2); end
+            if debugMatVis, debugMatVisFcn(2); end
         end
         
         function updateRoiSize(varargin)
@@ -9132,6 +9149,7 @@ end
                     set([zoomWin imageWin],'WindowButtonMotionFcn',@mouseMotion);
                     set([zoomWin imageWin],'WindowButtonDownFcn',@buttonDownCallback);
                     set([zoomWin imageWin],'WindowButtonUpFcn','');
+                    if debugMatVis, debugMatVisFcn(2); end
                     return
                 end
                 set(tb_newRoi, 'Value', 0);
@@ -9260,7 +9278,8 @@ end
                     w = abs(p(1)-p1(1));
                     h = abs(p(2)-p1(2));
                     if w == 0 || h == 0
-                        return
+                      if debugMatVis, debugMatVisFcn(2); end
+                      return
                     end
                     set(tempEllipse, 'Position',[x y w h]);
                     set(tempRect, 'Position',[x y w h]);
@@ -9295,7 +9314,8 @@ end
             function selectPolyRoi(varargin)
                 if debugMatVis, debugMatVisFcn(1); end
                 if ~any(myGcf==[imageWin zoomWin])
-                    return
+                  if debugMatVis, debugMatVisFcn(2); end
+                  return
                 end
                 set(myGcf,'WindowButtonMotionFcn',@freeDraw);
                 set(myGcf,'WindowButtonUpFcn',@stopFreeDraw);
@@ -9326,7 +9346,8 @@ end
                     % when the mouse is moved over the plotWin during ROI
                     % selection.
                     if ~any(myGcf==[imageWin zoomWin])
-                        return
+                      if debugMatVis, debugMatVisFcn(2); end
+                      return
                     end
                     if strcmp(get(myGcf,'SelectionType'),'normal')
                         set(myGcf,'WindowButtonMotionFcn',@updateLine);
@@ -9452,6 +9473,7 @@ end
                 
                 end
             end
+            if debugMatVis, debugMatVisFcn(2); end
             return
         end
         %Calculate index of each pixel in xySel plane
@@ -9723,6 +9745,7 @@ end
             set(roiLine.zoom, 'LineWidth',1,'Color','w');
             set(roiText.im, 'FontWeight', 'normal','Color','w');
             set(roiText.zoom, 'FontWeight', 'normal','Color','w');
+            if debugMatVis, debugMatVisFcn(2); end
             return
         end
         %Set roi name above roiAxes
@@ -9888,16 +9911,17 @@ end
         function shiftRoiWithKeyboard(src,evnt)  %#ok
             if debugMatVis > 1, debugMatVisFcn(1); end
             switch evnt.Key
-                case 'uparrow'
-                    shiftVector = [0 -1];
-                case 'downarrow'
-                    shiftVector = [0 1];
-                case 'leftarrow'
-                    shiftVector = [-1 0];
-                case 'rightarrow'
-                    shiftVector = [1 0];
-                otherwise
-                    return
+              case 'uparrow'
+                shiftVector = [0 -1];
+              case 'downarrow'
+                shiftVector = [0 1];
+              case 'leftarrow'
+                shiftVector = [-1 0];
+              case 'rightarrow'
+                shiftVector = [1 0];
+              otherwise
+                if debugMatVis, debugMatVisFcn(2); end
+                return
             end
             if ~isempty(evnt.Modifier)
                 switch evnt.Modifier{1}
@@ -10211,7 +10235,8 @@ end
             elseif strcmp(q, 'To File')
                 [f,p] = uiputfile('.mat','Choose folder and filename to save rois!');
                 if f == 0
-                    return
+                  if debugMatVis, debugMatVisFcn(2); end
+                  return
                 end
                 matVisRoiExport =  roiListExp(roiSel); %#ok
                 save([p,f],'matVisRoiExport');
@@ -10225,12 +10250,14 @@ end
         if debugMatVis, debugMatVisFcn(1); end
         [f,p] = uigetfile('.mat','Choose file to load rois!');
         if isequal(f,0)
-            return
+          if debugMatVis, debugMatVisFcn(2); end
+          return
         end
         try
             matVisRoiExport = cell2mat(struct2cell(load([p,f])));
         catch    %#ok
             errordlg('Chosen file does not contain rois exported using matVis (''matVisRoiExport'')!');
+            if debugMatVis, debugMatVisFcn(2); end
             return
         end
         if customDimScale
@@ -10660,7 +10687,8 @@ end
                     case questString{2}
                         urlwrite('http://www.colors-and-contrasts.com/Documents/matVis.m',[mvDir filesep 'matVis.m']);
                     case questString{3}
-                        return;
+                      if debugMatVis, debugMatVisFcn(2); end
+                      return;
                 end
                 % Opening data in updated matVis does not work for some reasons
                 % (works though using breakpoints).
@@ -11719,6 +11747,7 @@ end
                     movdata.mov = VideoWriter(movdata.set.movstring,movprofile); % initiate movie object
                 catch erms
                     warndlg(['Moviefile could not be generated: ]' erms.message '. Select different file/folder name.']);
+                    if debugMatVis, debugMatVisFcn(2); end
                     return
                 end
                 movdata.mov.FrameRate = movdata.set.movFrameRate; % set framerate
