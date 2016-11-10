@@ -5838,6 +5838,11 @@ end
                     lineHorIm(ii) = line([currPos(xySel(2)) currPos(xySel(2))],get(myGca, 'YLim'), 'Color', 'w');
                     lineVertIm(ii) = line(get(myGca, 'XLim'), [currPos(xySel(1)) currPos(xySel(1))], 'Color', 'w');
                 end
+                if oldMATLAB
+                  rectPlotArea_Im = []; %#ok
+                else
+                  rectPlotArea_Im = matlab.graphics.primitive.Rectangle.empty;
+                end
                 for jj=3:-1:1
                     if customDimScale
                         rectPlotArea_Im(ii,jj) = rectangle('Position',[currLoc(2)-jj*pxWidth(xySel(2)) currLoc(1)-jj*pxWidth(xySel(1)) 2*jj*pxWidth(xySel(2)) 2*jj*pxWidth(xySel(1))],'EdgeColor',[jj==1 jj==2 jj==3],'Parent',imAx(ii),'Visible','off');
@@ -5851,10 +5856,10 @@ end
         if get(tbWin(2), 'Value') == 1
             if oldMATLAB
                 rectPlotArea_Zoom = []; %#ok
-                rectPlotArea_Im = []; %#ok
+                %rectPlotArea_Im = []; %#ok
             else
                 rectPlotArea_Zoom = matlab.graphics.primitive.Rectangle.empty;
-                rectPlotArea_Im = matlab.graphics.primitive.Rectangle.empty;
+                %rectPlotArea_Im = matlab.graphics.primitive.Rectangle.empty;
             end
             for ii = 1:nMat
                 set(0,'CurrentFigure',zoomWin(ii)); %axes(zoomAx);
