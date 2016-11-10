@@ -5825,36 +5825,41 @@ end
     function drawObjects(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         if get(tbWin(1), 'Value') == 1 || projMethod == 6
-            for ii = 1:nMat
-                set(0,'CurrentFigure',imageWin(ii)); %axes(imAx);
-                set(imageWin(ii), 'HandleVisibility', 'on');
-                if customDimScale
-                    zoomReg(ii) = rectangle('Position',zoomPxXY-[pxWidth(xySel([2 1])) 0 0]/2, 'EdgeColor', 'r');
-                    currLoc = scaledLocation(currPos(xySel));
-                    lineHorIm(ii) = line(currLoc(2)*[1 1],get(myGca, 'YLim'), 'Color', 'w');
-                    lineVertIm(ii) = line(get(myGca, 'XLim'), currLoc(1)*[1 1], 'Color', 'w');
-                else
-                    zoomReg(ii) = rectangle('Position',zoomValXY-[.5 .5 0 0], 'EdgeColor', 'r');
-                    lineHorIm(ii) = line([currPos(xySel(2)) currPos(xySel(2))],get(myGca, 'YLim'), 'Color', 'w');
-                    lineVertIm(ii) = line(get(myGca, 'XLim'), [currPos(xySel(1)) currPos(xySel(1))], 'Color', 'w');
-                end
-                for jj=3:-1:1
-                    if customDimScale
-                        rectPlotArea_Im(ii,jj) = rectangle('Position',[currLoc(2)-jj*pxWidth(xySel(2)) currLoc(1)-jj*pxWidth(xySel(1)) 2*jj*pxWidth(xySel(2)) 2*jj*pxWidth(xySel(1))],'EdgeColor',[jj==1 jj==2 jj==3],'Parent',imAx(ii),'Visible','off');
-                    else
-                        rectPlotArea_Im(ii,jj) = rectangle('Position',[currPos(xySel(2))-jj currPos(xySel(1))-jj currPos(xySel(2))+jj 2*jj],'EdgeColor',[jj==1 jj==2 jj==3],'Parent',imAx(ii),'Visible','off');
-                    end
-                end
-                set(imageWin(ii), 'HandleVisibility', 'off');
+          if oldMATLAB
+            rectPlotArea_Im = []; %#ok
+          else
+            rectPlotArea_Im = matlab.graphics.primitive.Rectangle.empty;
+          end
+          for ii = 1:nMat
+            set(0,'CurrentFigure',imageWin(ii)); %axes(imAx);
+            set(imageWin(ii), 'HandleVisibility', 'on');
+            if customDimScale
+              zoomReg(ii) = rectangle('Position',zoomPxXY-[pxWidth(xySel([2 1])) 0 0]/2, 'EdgeColor', 'r');
+              currLoc = scaledLocation(currPos(xySel));
+              lineHorIm(ii) = line(currLoc(2)*[1 1],get(myGca, 'YLim'), 'Color', 'w');
+              lineVertIm(ii) = line(get(myGca, 'XLim'), currLoc(1)*[1 1], 'Color', 'w');
+            else
+              zoomReg(ii) = rectangle('Position',zoomValXY-[.5 .5 0 0], 'EdgeColor', 'r');
+              lineHorIm(ii) = line([currPos(xySel(2)) currPos(xySel(2))],get(myGca, 'YLim'), 'Color', 'w');
+              lineVertIm(ii) = line(get(myGca, 'XLim'), [currPos(xySel(1)) currPos(xySel(1))], 'Color', 'w');
             end
+            for jj=3:-1:1
+              if customDimScale
+                rectPlotArea_Im(ii,jj) = rectangle('Position',[currLoc(2)-jj*pxWidth(xySel(2)) currLoc(1)-jj*pxWidth(xySel(1)) 2*jj*pxWidth(xySel(2)) 2*jj*pxWidth(xySel(1))],'EdgeColor',[jj==1 jj==2 jj==3],'Parent',imAx(ii),'Visible','off');
+              else
+                rectPlotArea_Im(ii,jj) = rectangle('Position',[currPos(xySel(2))-jj currPos(xySel(1))-jj currPos(xySel(2))+jj 2*jj],'EdgeColor',[jj==1 jj==2 jj==3],'Parent',imAx(ii),'Visible','off');
+              end
+            end
+            set(imageWin(ii), 'HandleVisibility', 'off');
+          end
         end
         if get(tbWin(2), 'Value') == 1
             if oldMATLAB
                 rectPlotArea_Zoom = []; %#ok
-                rectPlotArea_Im = []; %#ok
+                %rectPlotArea_Im = []; %#ok
             else
                 rectPlotArea_Zoom = matlab.graphics.primitive.Rectangle.empty;
-                rectPlotArea_Im = matlab.graphics.primitive.Rectangle.empty;
+                %rectPlotArea_Im = matlab.graphics.primitive.Rectangle.empty;
             end
             for ii = 1:nMat
                 set(0,'CurrentFigure',zoomWin(ii)); %axes(zoomAx);
