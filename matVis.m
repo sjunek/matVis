@@ -5422,6 +5422,9 @@ end
                 if get(tbInvert, 'Value')
                     currIm{ii} = 1 - currIm{ii};
                 end
+                if get(tbFlip, 'Value') 
+                  currIm{ii} = flipdim(currIm{ii},3); 
+                end
                 %                 if (forceUpdateGuiHist || updateGuiHistState)
                 updateGuiHist(histValCurrIm);
                 %                 end
@@ -5593,10 +5596,23 @@ end
     function updateGuiHist(h,varargin)
         if debugMatVis, debugMatVisFcn(1); end
         % if get(bt_zoomProj, 'Value') size(h,1) might be smaller than length(histAxPlot)
-        for ii = 1:size(h,1) % length(histAxPlot)
-            set(histAxPlot(ii), 'YData', h(ii,:), 'XData',histXDataBin,'Visible','on');
+        n = size(h,1);
+        if n >1
+          pCol = plotColors(n);
+          if rgbCount && ~any(get(bg_colormap, 'SelectedObject') ==  [cmStretchRGBMean cmStretchRGBMax])
+            % Channel RGB-mode requires switching of RGB
+            pCol = flipdim(pCol,2);
+          end
+          if get(tbFlip, 'Value') % flip colormap
+            pCol = flipdim(pCol,2);
+          end
+          for ii = 1:n
+            set(histAxPlot(ii), 'YData', h(ii,:), 'XData',histXDataBin,'Color', pCol(ii,:),'Visible','on');
+          end
+        else
+          set(histAxPlot, 'YData', h, 'XData',histXDataBin,'Visible','on');
         end
-        for ii = size(h,1)+1:length(histAxPlot)
+        for ii = n+1:length(histAxPlot)
           set(histAxPlot(ii), 'YData', ones(1,length(histXDataBin)), 'XData',histXDataBin,'Visible','off');
         end
 
@@ -6490,7 +6506,7 @@ end
                     case 'otsu'
                         % Dipimage implementation
                         if withDipimage
-                            [o cmMinMax(currContrastSel,1)] = threshold(currImVal{1},'otsu');
+                            [~, cmMinMax(currContrastSel,1)] = threshold(currImVal{1},'otsu');
                         else
                             % Matlab implementation
                             thresh = graythresh(scaleMinMax(currImVal{1})); % Matlab implementation of Otsu's algorithm
@@ -6545,7 +6561,7 @@ end
                     case 'isodata'
                         % Dipimage implementation
                         if withDipimage
-                            [o, cmMinMax(currContrastSel,1)] = threshold(currImVal{1},'isodata');
+                            [~, cmMinMax(currContrastSel,1)] = threshold(currImVal{1},'isodata');
                         else
                             % Isodata algorithm from  Ridler and Calvard;
                             % implementation adopted from Jing Tian's file
@@ -6587,10 +6603,10 @@ end
                         end
                     case 'minerror'
                         % Dipimage implementation
-                        [o cmMinMax(currContrastSel,1)] = threshold(currImVal{1},'minerror');
+                        [~,cmMinMax(currContrastSel,1)] = threshold(currImVal{1},'minerror');
                     case 'background'
                         % Dipimage implementation
-                        [o cmMinMax(currContrastSel,1)] = threshold(currImVal{1},'background');
+                        [~,cmMinMax(currContrastSel,1)] = threshold(currImVal{1},'background');
                 end
                 if cmMinMax(currContrastSel,2) <= cmMinMax(currContrastSel,1)
                     if isinteger(data{currContrastSel})
