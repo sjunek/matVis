@@ -12096,9 +12096,11 @@ end
               fctCount.(fctName).countCallFct = fctCount.(fctName).countCallFct + 1;
             end
           end
+          fctNameHLp = regexp(fctName,'_');
+          if isempty(fctNameHLp), fctNameHL=fctName; else fctNameHL=fctName(fctNameHLp+1:end); end
           fctCount.(fctName).time  = tic;
           timeStr = [];
-          fctNameStr = sprintf('<a href="matlab:matlab.desktop.editor.openAndGoToFunction(which(''matVis.m''),''%s'');">%s</a>',fctName, fctName);%fctName
+          fctNameStr = sprintf('<a href="matlab:matlab.desktop.editor.openAndGoToFunction(which(''matVis.m''),''%s'');">%s</a>',fctNameHL, fctName);%fctName
           if fctLevel > 1
             fctNameStr = sprintf('%s/<a href="matlab:matlab.desktop.editor.openAndGoToLine(which(''matVis.m''),%d);">line%d</a>',fctNameStr,ST(3).line,ST(3).line);
           end
