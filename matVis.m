@@ -170,7 +170,11 @@ macScaleFactor = [1.05 1.05]; % Scaling factor to adjust width and height of GUI
 %% Read Data ...
 % ... from Files
 if nargin == 0 || ischar(varargin{1})
-    if nargin == 0
+  debugMatVis = 0;
+  if strcmp(varargin{1},'debug') && (islogical(varargin{2}) || isscalar(varargin{2}))
+    debugMatVis = varargin{2};
+  end
+    if nargin == 0 || strcmp(varargin{1},'debug')
         %Choose files
         [f,p] = uigetfile( '*.mat;*.tif;*.tiff; *.jpg; *.bmp; *.gif; *.png; *.lsm; *.da; *.dat',...
             'Select one or more files of identical dimension!', 'MultiSelect', 'on');
@@ -459,7 +463,6 @@ if nargin == 0 || ischar(varargin{1})
         end
     end
     withAlpha = 0;
-    debugMatVis = 0;
     startPar = [];
     numberOptionalArgs = 0;
     % ... from Arguments
@@ -7974,7 +7977,7 @@ end
     function exportData(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         function exportNow(varargin)
-			if debugMatVis, debugMatVisFcn(1); end
+          if debugMatVis, debugMatVisFcn(1); end
             ind = [];
             for iii = 1:nDim
                 ind{iii} = eval(get(exportTxt(iii), 'String'));    %#ok
@@ -8003,7 +8006,7 @@ end
             delete(exportWin);
             exportWin = [];
             set(btExport, 'Value', 0);
-			if debugMatVis, debugMatVisFcn(2); end
+            if debugMatVis, debugMatVisFcn(2); end
         end
         function newMatVis(varargin)
 			if debugMatVis, debugMatVisFcn(1); end
