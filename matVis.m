@@ -7975,100 +7975,163 @@ end
 
 %Data export to workspace
     function exportData(varargin)
+      if debugMatVis, debugMatVisFcn(1); end
+      exportWin = figure('Units', 'Pixel', 'Position', [300 300 200 25*nDim+150], 'Name', 'Export Data',...
+        'MenuBar', 'none', 'Resize', 'off', 'NumberTitle', 'off', 'HandleVisibility', 'off');
+      uicontrol(exportWin, 'Style', 'Text', 'Position', [30 25*nDim+105 140 40], ...
+        'String','Specify intervals of data to be exported!','FontWeight', 'bold',...
+        'BackgroundColor', get(exportWin, 'Color'), 'HorizontalAlignment', 'center');
+      uicontrol(exportWin, 'Style', 'Text', 'Position', [30 25*nDim+75 140 40], ...
+        'String','Use '':'' for colon operator.',...
+        'BackgroundColor', get(exportWin, 'Color'), 'HorizontalAlignment', 'center');
+      for ii = 1:nDim
+        uicontrol(exportWin, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(exportWin, 'Color'),...
+          'Position', [30 25*nDim-(ii-2)*25+40 30 17], 'String', dimNames(ii), ...
+          'HorizontalAlignment', 'left' );
+        exportTxt(ii) = uicontrol(exportWin, 'Style', 'Edit', 'Units', 'Pixel', ...
+          'Position', [90 25*nDim-(ii-2)*25+40 80 20], 'String', ['[' num2str(zoomVal(ii,1)) ':' num2str(sum(zoomVal(ii,:))-1) ']']);    %#ok
+      end
+      uicontrol(exportWin, 'Style', 'Text', 'Position', [30 55 50 17], 'String','Var Name',...
+        'BackgroundColor', get(exportWin, 'Color'), 'HorizontalAlignment', 'left');
+      exportName = uicontrol(exportWin, 'Style', 'Edit',  'String', 'matVisExport',...
+        'Position', [90 55 80 20]);
+      exportBt = uicontrol(exportWin, 'Style', 'Pushbutton', 'Units', 'Pixel', ...
+        'Position', [30 25 140 20], 'String', {'Export to Workspace'},'Callback',@exportNow);
+      % newMatVisBt:
+      uicontrol(exportWin, 'Style', 'Pushbutton', 'Units', 'Pixel', ...
+        'Position', [30 5 140 20], 'String', 'Open in new matVis','Callback',@newMatVis);
+      if debugMatVis, debugMatVisFcn(2); end
+      function exportNow(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        function exportNow(varargin)
-          if debugMatVis, debugMatVisFcn(1); end
-            ind = [];
-            for iii = 1:nDim
-                ind{iii} = eval(get(exportTxt(iii), 'String'));    %#ok
-            end
-            assignin('base', [get(exportName, 'String'),'_index'], ind);
-            if nMat == 1
-                d = data{1}(ind{:});
-                assignin('base', get(exportName, 'String'), d);
+        ind = []; indC = false(1,nDim);
+        for iii = 1:nDim
+          ind{iii} = eval(get(exportTxt(iii), 'String'));    %#ok
+          indC(iii) = length(ind{iii})==1;
+        end
+        assignin('base', [get(exportName, 'String'),'_index'], ind);
+        expProp = [];lEA = 1;
+        if ~isempty(dimScale)
+          expProp{lEA} = 'dimScale';
+          for iii=1:length(ind)
+            expProp{lEA+1}(iii,:) = dimScale(iii,1) + diff(dimScale(iii,:))/(dim(iii)-1)*(ind{iii}([1 end])-1);
+          end
+          expProp{lEA+1}(indC,:) = [];
+          lEA = lEA+2;
+        end
+        if ~isempty(dimNames)
+          expProp{lEA} = 'dimNames';
+          expProp{lEA+1} = dimNames;
+          expProp{lEA+1}(indC) = [];
+          lEA = lEA+2;
+        end
+        if ~isempty(dimUnits)
+          expProp{lEA} = 'dimUnits';
+          expProp{lEA+1} = dimUnits;
+          expProp{lEA+1}(indC) = [];
+          lEA = lEA+2;
+        end
+        if ~isempty(allNames)
+          expProp{lEA} = 'matNames';
+          expProp{lEA+1} = {allNames};
+          lEA = lEA+2;
+        end
+        assignin('base', [get(exportName, 'String'),'_props'], expProp);
+        if nMat == 1
+          d = data{1}(ind{:});
+          assignin('base', get(exportName, 'String'), d);
+        else
+          for iii = 1:nMat
+            d = data{iii}(ind{:});
+            if isempty(varName{iii})
+              assignin('base', [get(exportName, 'String') '_set' num2str(iii,'%02d')] , d);
             else
-                for iii = 1:nMat
-                    d = data{iii}(ind{:});
-                    if isempty(varName{iii})
-                        assignin('base', [get(exportName, 'String') '_set' num2str(iii,'%02d')] , d);
-                    else
-                        if fromFile
-                            [pn vn] = fileparts(varName{iii});
-                        else
-                            vn = varName({iii});
-                        end
-                        assignin('base', [get(exportName, 'String') '_' vn] , d);
-                    end
-                end
+              if fromFile
+                [pn vn] = fileparts(varName{iii});
+              else
+                vn = varName({iii});
+              end
+              assignin('base', [get(exportName, 'String') '_' vn] , d);
             end
-            exportCount = exportCount + 1;
-            clear d;
-            delete(exportWin);
-            exportWin = [];
-            set(btExport, 'Value', 0);
-            if debugMatVis, debugMatVisFcn(2); end
+          end
         end
-        function newMatVis(varargin)
-			if debugMatVis, debugMatVisFcn(1); end
-            for iii = 1:nDim
-                expInd{iii} = eval(get(exportTxt(iii), 'String'));    %#ok
-            end
-            for iii = 1:numel(data)
-                inputArg{iii} = data{iii}(expInd{:});
-            end
-            for iii = 1:numberOptionalArgs
-                switch  optionalArgIdentifier{iii}
-                    case 'alphaMap'
-                        inputArg{end+1} = 'alphaMap';
-                        inputArg{end+1} = alphaMap{1}(expInd{:});
-                    case 'dimNames'
-                        inputArg{end+1} = 'dimNames';
-                        inputArg{end+1} = dimNames;
-                    case 'dimUnits'
-                        inputArg{end+1} = 'dimUnits';
-                        inputArg{end+1} = dimUnits;
-                    case 'matNames'
-                        inputArg{end+1} = 'matNames';
-                        inputArg{end+1} = matNames;
-                    case 'startPar'
-                        inputArg{end+1} = 'startPar';
-                        inputArg{end+1} = startPar;
-                    case 'dimScale'
-                        inputArg{end+1} = 'dimScale';
-                        inputArg{end+1} = dimScale;
-                end
-            end
-            matVis(inputArg{:});
-            delete(exportWin);
-            exportWin = [];
-			if debugMatVis, debugMatVisFcn(2); end
-        end
-        exportWin = figure('Units', 'Pixel', 'Position', [300 300 200 25*nDim+150], 'Name', 'Export Data',...
-            'MenuBar', 'none', 'Resize', 'off', 'NumberTitle', 'off', 'HandleVisibility', 'off');
-        uicontrol(exportWin, 'Style', 'Text', 'Position', [30 25*nDim+105 140 40], ...
-            'String','Specify intervals of data to be exported!','FontWeight', 'bold',...
-            'BackgroundColor', get(exportWin, 'Color'), 'HorizontalAlignment', 'center');
-        uicontrol(exportWin, 'Style', 'Text', 'Position', [30 25*nDim+75 140 40], ...
-            'String','Use '':'' for colon operator.',...
-            'BackgroundColor', get(exportWin, 'Color'), 'HorizontalAlignment', 'center');
-        for ii = 1:nDim
-            uicontrol(exportWin, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(exportWin, 'Color'),...
-                'Position', [30 25*nDim-(ii-2)*25+40 30 17], 'String', dimNames(ii), ...
-                'HorizontalAlignment', 'left' );
-            exportTxt(ii) = uicontrol(exportWin, 'Style', 'Edit', 'Units', 'Pixel', ...
-                'Position', [90 25*nDim-(ii-2)*25+40 80 20], 'String', ['[' num2str(zoomVal(ii,1)) ':' num2str(sum(zoomVal(ii,:))-1) ']']);    %#ok
-        end
-        uicontrol(exportWin, 'Style', 'Text', 'Position', [30 55 50 17], 'String','Var Name',...
-            'BackgroundColor', get(exportWin, 'Color'), 'HorizontalAlignment', 'left');
-        exportName = uicontrol(exportWin, 'Style', 'Edit',  'String', 'matVisExport',...
-            'Position', [90 55 80 20]);
-        exportBt = uicontrol(exportWin, 'Style', 'Pushbutton', 'Units', 'Pixel', ...
-            'Position', [30 25 140 20], 'String', {'Export to Workspace'},'Callback',@exportNow);
-        % newMatVisBt:
-        uicontrol(exportWin, 'Style', 'Pushbutton', 'Units', 'Pixel', ...
-            'Position', [30 5 140 20], 'String', 'Open in new matVis','Callback',@newMatVis);
+        exportCount = exportCount + 1;
+        clear d;
+        delete(exportWin);
+        exportWin = [];
+        set(btExport, 'Value', 0);
         if debugMatVis, debugMatVisFcn(2); end
-    end
+      end
+      function newMatVis(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        ind = []; indC = false(1,nDim);
+        for iii = 1:nDim
+          ind{iii} = eval(get(exportTxt(iii), 'String'));    %#ok
+          indC(iii) = length(ind{iii})==1;
+        end
+        for iii = 1:numel(data)
+          inputArg{iii} = data{iii}(ind{:});
+        end
+        if withAlpha
+          inputArg{end+1} = 'alphaMap';
+          inputArg{end+1} = alphaMap{1}(ind{:});
+        end
+        if ~isempty(dimScale)
+          inputArg{end+1} = 'dimScale';
+          lIA = length(inputArg)+1;
+          for iii=1:length(ind)
+            inputArg{lIA}(iii,:) = dimScale(iii,1) + diff(dimScale(iii,:))/(dim(iii)-1)*(ind{iii}([1 end])-1);
+          end
+          inputArg{lIA}(indC,:) = [];
+        end
+        if ~isempty(dimNames)
+          inputArg{end+1} = 'dimNames';
+          inputArg{end+1} = dimNames;
+          inputArg{end}(indC) = [];
+        end
+        if ~isempty(dimUnits)
+          inputArg{end+1} = 'dimUnits';
+          inputArg{end+1} = dimUnits;
+          inputArg{end}(indC) = [];
+        end
+        if ~isempty(allNames)
+          inputArg{end+1} = 'matNames';
+          inputArg{end+1} = {allNames};
+        end
+        %         for iii = 1:numberOptionalArgs
+        %           switch  optionalArgIdentifier{iii}
+        %             case 'alphaMap'
+        %               inputArg{end+1} = 'alphaMap';
+        %               inputArg{end+1} = alphaMap{1}(ind{:});
+        %             case 'dimNames'
+        %               inputArg{end+1} = 'dimNames';
+        %               inputArg{end+1} = dimNames;
+        %               inputArg{end+1}(indC) = [];
+        %             case 'dimUnits'
+        %               inputArg{end+1} = 'dimUnits';
+        %               inputArg{end+1} = dimUnits;
+        %               inputArg{end+1}(indC) = [];
+        %             case 'matNames'
+        %               inputArg{end+1} = 'matNames';
+        %               inputArg{end+1} = allNames;
+        %               inputArg{end+1}(indC) = [];
+        %             case 'startPar'
+        %               inputArg{end+1} = 'startPar';
+        %               inputArg{end+1} = startPar;
+        %             case 'dimScale'
+        %               inputArg{end+1} = 'dimScale';
+        %               lIA = length(inputArg)+1;
+        %               for n = 1:length(ind)
+        %                 inputArg{lIA}(n,:) = dimScale(n,1) + diff(dimScale(n,:))/(dim(n)-1)*(ind{iiii}([1 end])-1);
+        %               end
+        %               inputArg{lIA}(indC,:) = [];
+        %           end
+        %         end
+        matVis(inputArg{:});
+        delete(exportWin);
+        exportWin = [];
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+   end
 %% Line-profile manager
 %     nProfiles: actual number of profiles
 %     The structure roiList contains information for all Rois:
