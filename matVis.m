@@ -171,7 +171,7 @@ macScaleFactor = [1.05 1.05]; % Scaling factor to adjust width and height of GUI
 % ... from Files
 if nargin == 0 || ischar(varargin{1})
   debugMatVis = 0;
-  if strcmp(varargin{1},'debug') && (islogical(varargin{2}) || isscalar(varargin{2}))
+  if nargin && strcmp(varargin{1},'debug') && (islogical(varargin{2}) || isscalar(varargin{2}))
     debugMatVis = varargin{2};
   end
     if nargin == 0 || strcmp(varargin{1},'debug')
