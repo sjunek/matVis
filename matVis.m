@@ -890,6 +890,11 @@ monSizeMax = [max(sum(monSize(:,[1 3]),2)-1,[],1) max(sum(monSize(:,[2 4]),2)-1,
 % size is not changed when showing/hiding the menu bar unless in debug mode
 
 gui = figure('Menubar','none');
+%Window Visibility
+defaultConfig.winVis.imageWin = 1;       %Default: 1
+defaultConfig.winVis.zoomWin  = 1;       %Default: 1
+defaultConfig.winVis.plotWin  = 1;       %Default: 1
+
 % borderWidthMenuBars = get(gui,'OuterPosition') - get(gui, 'Position');
 set(gui,'Visible','off','Menubar','none');
 borderWidth = get(gui,'OuterPosition') - get(gui, 'Position');
@@ -899,45 +904,41 @@ winWidthTop  = borderWidth(4)-winWidthSide;
 winWidthMenuBar = 48;
 dimHeight     = 40; %Height used for control elements of each dimension in the gui (in pixel)
 guiSize = [320 nDim*dimHeight+460];
-sz = ([...                                             %  add 'min' before bracket to enable square windows
-    floor((scnSize(3)-(guiSize(1)+6*winWidthSide))/2)...      % (screen width - GUI) / 2 for Image and Zoom wim
-    floor((scnSize(4)-2*(winWidthSide+winWidthTop))/2)]);   % screen hight / 2 first line: Image+zoom, second line: Plot win
-winSize = sz;
-%Window Visibility
-defaultConfig.winVis.imageWin = 1;       %Default: 1
-defaultConfig.winVis.zoomWin  = 1;       %Default: 1
-defaultConfig.winVis.plotWin  = 1;       %Default: 1
 
 %Window Position
-%For one data set
-defaultConfig.winPos.one.imageWin = ...
+if nMat == 1 %For one data set
+  sz = ([...                                             %  add 'min' before bracket to enable square windows
+    floor((scnSize(3)-(guiSize(1)+6*winWidthSide))/2)...      % (screen width - GUI) / 2 for Image and Zoom wim
+    floor((scnSize(4)-2*(winWidthSide+winWidthTop))/2)]);   % screen hight / 2 first line: Image+zoom, second line: Plot win
+  winSize = sz;
+  
+  defaultConfig.winPos.imageWin = ...
     [guiSize(1) + 3*winWidthSide, scnSize(4) - winSize(2) - winWidthTop,  winSize];       %Default: [337, 545,  450, 450];
-defaultConfig.winPos.one.zoomWin  = ...
+  defaultConfig.winPos.zoomWin  = ...
     [guiSize(1) + 5*winWidthSide + winSize(1), scnSize(4) - winSize(2) - winWidthTop,  winSize];       %Default: [800, 545,  450, 450];
-defaultConfig.winPos.one.plotWin  = ...
+  defaultConfig.winPos.plotWin  = ...
     [guiSize(1) + 3*winWidthSide, scnSize(4)-2*(winSize(2)+ winWidthTop) - winWidthSide , 2*(winSize(1) + winWidthSide), winSize(2)];       %Default: [5,    10, 1250, 500];
-%For multiple data sets
-sz = ([...                                             % add 'min' before brackat to enable square windows
+  % defaultConfig.winPos.gui  = [5 815-nDim*20 320 nDim*20+180];       %Default: [5 815-nDim*20 320 nDim*20+180]);
+  defaultConfig.winPos.gui  = [winWidthSide scnSize(4)-guiSize(2)-winWidthTop guiSize];       %Default: [5 815-nDim*20 320 nDim*20+180]);
+else %For multiple data sets
+  sz = ([...                                             % add 'min' before brackat to enable square windows
     floor((scnSize(3)-(guiSize(1)+8*winWidthSide))/4)...      % (screen width - GUI) / 2 for Image and Zoom wim
     floor((scnSize(4)-nMat*(winWidthSide+winWidthTop))/nMat)]);   % screen hight / 2 first line: Image+zoom, second line: Plot win
-winSize = sz;
-
-% winWidth = round(900 / nMat);
-% winHeight = 200;
-% plotHeight = round((540-nMat*30) / nMat);
-for i =  1:nMat
-    defaultConfig.winPos.mult.imageWin(i,:) = ... [337+(i-1)*(winWidth+8), 794, winWidth,  winHeight]; %Default:[337+(i-1)*(winWidth+8), 794, winWidth,  winHeight];
-        [guiSize(1) + 3*winWidthSide, scnSize(4) - i*(winSize(2) + winWidthTop + winWidthSide) + winWidthSide,  winSize];
-    defaultConfig.winPos.mult.zoomWin(i,:) = ... [337+(i-1)*(winWidth+8), 555, winWidth,  winHeight];  %Default:[337+(i-1)*(winWidth+8), 555, winWidth,  winHeight];
-        [guiSize(1) + 5*winWidthSide + winSize(1), scnSize(4) - i*(winSize(2) + winWidthTop + winWidthSide) + winWidthSide,  winSize];
-    defaultConfig.winPos.mult.plotWin(i,:) =  ... [5, 10+(i-1)*(plotHeight+30),     1250, plotHeight];   %Default:[5, 10+(i-1)*(plotHeight+30),     1250, plotHeight];
-        [guiSize(1) + 7*winWidthSide + 2*winSize(1), scnSize(4) - i*(winSize(2) + winWidthTop + winWidthSide) + winWidthSide,  2*(winSize(1)), winSize(2)];
+  winSize = sz;
+  % winWidth = round(900 / nMat);
+  % winHeight = 200;
+  % plotHeight = round((540-nMat*30) / nMat);
+  for i =  1:nMat
+    defaultConfig.winPos.imageWin(i,:) = ... [337+(i-1)*(winWidth+8), 794, winWidth,  winHeight]; %Default:[337+(i-1)*(winWidth+8), 794, winWidth,  winHeight];
+      [guiSize(1) + 3*winWidthSide, scnSize(4) - i*(winSize(2) + winWidthTop + winWidthSide) + winWidthSide,  winSize];
+    defaultConfig.winPos.zoomWin(i,:) = ... [337+(i-1)*(winWidth+8), 555, winWidth,  winHeight];  %Default:[337+(i-1)*(winWidth+8), 555, winWidth,  winHeight];
+      [guiSize(1) + 5*winWidthSide + winSize(1), scnSize(4) - i*(winSize(2) + winWidthTop + winWidthSide) + winWidthSide,  winSize];
+    defaultConfig.winPos.plotWin(i,:) =  ... [5, 10+(i-1)*(plotHeight+30),     1250, plotHeight];   %Default:[5, 10+(i-1)*(plotHeight+30),     1250, plotHeight];
+      [guiSize(1) + 7*winWidthSide + 2*winSize(1), scnSize(4) - i*(winSize(2) + winWidthTop + winWidthSide) + winWidthSide,  2*(winSize(1)), winSize(2)];
+  end
+  % defaultConfig.winPos.gui = [5 815-nDim*20 320 nDim*20+180];       %Default: [5 815-nDim*20 320 nDim*20+180]);
+  defaultConfig.winPos.gui = [winWidthSide scnSize(4)-guiSize(2)-winWidthTop guiSize];       %Default: [5 815-nDim*20 320 nDim*20+180]);
 end
-% defaultConfig.winPos.mult.gui = [5 815-nDim*20 320 nDim*20+180];       %Default: [5 815-nDim*20 320 nDim*20+180]);
-% defaultConfig.winPos.one.gui  = [5 815-nDim*20 320 nDim*20+180];       %Default: [5 815-nDim*20 320 nDim*20+180]);
-defaultConfig.winPos.mult.gui = [winWidthSide scnSize(4)-guiSize(2)-winWidthTop guiSize];       %Default: [5 815-nDim*20 320 nDim*20+180]);
-defaultConfig.winPos.one.gui  = [winWidthSide scnSize(4)-guiSize(2)-winWidthTop guiSize];       %Default: [5 815-nDim*20 320 nDim*20+180]);
-
 % Image and Zoom Window Options
 %Aspect Ratio 1:1
 defaultConfig.aspectRatio = 1;           %Default: 1
@@ -975,12 +976,6 @@ defaultConfig.marker = 0;                %Default: 0
 defaultConfig.plotMean = 0;              %Default: 0 (no averaging)
 % Tooltips
 defaultConfig.tooltips = 1;              %Default: 1 (display tooltips)
-
-if nMat == 1
-    defaultConfig.winPos = defaultConfig.winPos.one;
-else
-    defaultConfig.winPos = defaultConfig.winPos.mult;
-end
 
 [matVisPath,f,e] = fileparts(which('matVis.m'));
 compName = strtrim(getenv('Computername'));
@@ -2552,7 +2547,6 @@ try
     gui_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_matVis))));
 catch    %#ok
 end
-
 panel_positionControls = uipanel(gui, 'units','pixel','Position', [-1 customConfig.winPos.gui(4)-150-(nDim-1)*40 customConfig.winPos.gui(4)+2 130+(nDim-1)*40],...
     'BackgroundColor',get(gui, 'Color'),'BorderType','none');
 
@@ -7858,22 +7852,6 @@ end
 %Set configuration
     function setConfig(config)
         if debugMatVis, debugMatVisFcn(1); end
-        % Window Properties
-        guiPos = get(gui,'Position');
-        if (~config.tooltips && get(tbTooltips, 'Value')) || config.tooltips && ~get(tbTooltips, 'Value')
-            shiftGui = 1;
-        else
-            shiftGui = 0;
-        end
-        set(gui, 'Position', [config.winPos.gui(1) config.winPos.gui(2)+shiftGui*(config.winPos.gui(4)-guiPos(4)) guiPos(3) guiPos(4)]);  %
-        % Resize GUI if necessary
-        if get(tbTooltips, 'Value') && ~config.tooltips
-            set(tbTooltips, 'Value',0);
-            toggleTooltipDisplay;
-        elseif ~get(tbTooltips, 'Value') && config.tooltips
-            set(tbTooltips, 'Value',1);
-            toggleTooltipDisplay;
-        end
         %Window Visibility
         set(tbWin(1), 'Value', config.winVis.imageWin);      %Default: 1
         set(tbWin(2), 'Value', config.winVis.zoomWin);       %Default: 1
@@ -7882,16 +7860,45 @@ end
         %Menu Bar
         set(tbMenuBars, 'Value', config.menuBarVis);            %Default: 0
         toggleMenuBars;
-        %For one data set
+        % Checks if customCinfig.winPos fits to monSize
         if monSizeMin(1) <= min([config.winPos.imageWin(:,1); config.winPos.zoomWin(:,1); config.winPos.plotWin(:,1)]) && ...
-          monSizeMin(2) <= min([config.winPos.imageWin(:,2); config.winPos.zoomWin(:,2); config.winPos.plotWin(:,2)]) && ...
-          monSizeMax(1) >= max(sum([config.winPos.imageWin(:,[1 3]);config.winPos.zoomWin(:,[1 3]);config.winPos.plotWin(:,[1 3])],2)) && ...
-          monSizeMax(2) >= max(sum([config.winPos.imageWin(:,[2 4]);config.winPos.zoomWin(:,[2 4]);config.winPos.plotWin(:,[2 4])],2))
+            monSizeMin(2) <= min([config.winPos.imageWin(:,2); config.winPos.zoomWin(:,2); config.winPos.plotWin(:,2)]) && ...
+            monSizeMax(1) >= max(sum([config.winPos.imageWin(:,[1 3]);config.winPos.zoomWin(:,[1 3]);config.winPos.plotWin(:,[1 3])],2)) && ...
+            monSizeMax(2) >= max(sum([config.winPos.imageWin(:,[2 4]);config.winPos.zoomWin(:,[2 4]);config.winPos.plotWin(:,[2 4])],2))
+          % at this moment position is alerady set to customConfig
+          set(gui, 'Position',config.winPos.gui);
           for ii=1:nMat
             set(imageWin(ii), 'Position', config.winPos.imageWin(ii,:));      %Default: [337, 545,  450, 450];
             set(zoomWin(ii),  'Position', config.winPos.zoomWin(ii,:));       %Default: [800, 545,  450, 450];
             set(plotWin(ii),  'Position', config.winPos.plotWin(ii,:));       %Default: [5,    10, 1250, 500];
           end
+        else
+          % does not reflect tooltips
+          gp = customConfig.winPos.gui;
+          gp(1:2) = defaultConfig.winPos.gui(1:2);
+          set(gui, 'Position',gp);
+          for ii=1:nMat
+            set(imageWin(ii), 'Position', defaultConfig.winPos.imageWin(ii,:));      %Default: [337, 545,  450, 450];
+            set(zoomWin(ii),  'Position', defaultConfig.winPos.zoomWin(ii,:));       %Default: [800, 545,  450, 450];
+            set(plotWin(ii),  'Position', defaultConfig.winPos.plotWin(ii,:));       %Default: [5,    10, 1250, 500];
+          end
+        end
+        % Window Properties
+        guiPos = get(gui,'Position');
+        if (~config.tooltips && get(tbTooltips, 'Value')) || config.tooltips && ~get(tbTooltips, 'Value')
+            shiftGui = 1;
+        else
+            shiftGui = 0;
+        end
+        %set(gui, 'Position', [config.winPos.gui(1) config.winPos.gui(2)+shiftGui*(config.winPos.gui(4)-guiPos(4)) guiPos(3) guiPos(4)]);  %
+        set(gui, 'Position', [guiPos(1) guiPos(2)+shiftGui*(guiPos(4)-guiPos(4)) guiPos(3) guiPos(4)]);  %
+        % Resize GUI if necessary
+        if get(tbTooltips, 'Value') && ~config.tooltips
+            set(tbTooltips, 'Value',0);
+            toggleTooltipDisplay;
+        elseif ~get(tbTooltips, 'Value') && config.tooltips
+            set(tbTooltips, 'Value',1);
+            toggleTooltipDisplay;
         end
         % Image and Zoom Window Options
         %Aspect Ratio 1:1
