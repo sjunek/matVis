@@ -7866,7 +7866,12 @@ end
             monSizeMax(1) >= max(sum([config.winPos.imageWin(:,[1 3]);config.winPos.zoomWin(:,[1 3]);config.winPos.plotWin(:,[1 3])],2)) && ...
             monSizeMax(2) >= max(sum([config.winPos.imageWin(:,[2 4]);config.winPos.zoomWin(:,[2 4]);config.winPos.plotWin(:,[2 4])],2))
           % at this moment position is alerady set to customConfig
-          set(gui, 'Position',config.winPos.gui);
+          gp = customConfig.winPos.gui;
+          gp(1:2) = defaultConfig.winPos.gui(1:2);
+          if ~get(tbTooltips, 'Value') && config.tooltips
+            gp([2 4]) = gp([2 4])-f*[-130 130];
+          end
+          set(gui, 'Position',gp);
           for ii=1:nMat
             set(imageWin(ii), 'Position', config.winPos.imageWin(ii,:));      %Default: [337, 545,  450, 450];
             set(zoomWin(ii),  'Position', config.winPos.zoomWin(ii,:));       %Default: [800, 545,  450, 450];
@@ -9859,15 +9864,16 @@ end
         set(roiText.zoom, 'FontWeight', 'normal','Color','w');   %'Color', 'b');
         set(roiText.im(:,numberRoi), 'FontWeight', 'bold'); %'Color','r');
         set(roiText.zoom(:,numberRoi),'FontWeight', 'bold'); % 'Color','r');
-        if numel(numberRoi) == 1 
+        if numel(numberRoi) == 1 && isfield(roiList(numberRoi),'centerOfGravity') && ~isempty(roiList(numberRoi).centerOfGravity)
           if customDimScale
             set(roiCenterIndicator(:),'Visible','on','Position',[roiList(numberRoi).centerOfGravity([2 1]).*pxWidth(xySel([2 1])),0]);
           else
             set(roiCenterIndicator(:),'Visible','on','Position',[roiList(numberRoi).centerOfGravity([2 1]),0]);
           end
         else
-            set(roiCenterIndicator(:),'Visible','off');
+          set(roiCenterIndicator(:),'Visible','off');
         end
+        
         % Color for selected ROIs
         colorcodePlots = plotColors(numel(numberRoi));
         for ii = 1:numel(numberRoi)
@@ -9936,8 +9942,8 @@ end
           matchDims = find([ROIPos(1:matchDims)>dim(1:matchDims) 1],1,'first')-1; % checks if saved ROIpos is larger than data dimension and reduces MATCHDIMS, in case
           currPos(1:matchDims) = ROIPos(1:matchDims);
           currPos(currPos(1:matchDims)>dim(1:matchDims))=1;
-          zoomVal(1:matchDims) = roiList(numberRoi).settings.zoomVal(1:matchDims); % checks if saved zoomVals are larger than data dimension and reduces MATCHDIMS, in case
-          zoomVal(zoomVal((1:matchDims),2) > dim(1:matchDims)',1) = 1; 
+          zoomVal(1:matchDims,:) = roiList(numberRoi).settings.zoomVal(1:matchDims,:); % checks if saved zoomVals are larger than data dimension and reduces MATCHDIMS, in case
+          zoomVal(sum(zoomVal((1:matchDims),:),2) > dim(1:matchDims)',1) = 1; 
           zoomVal(zoomVal((1:matchDims),2) > dim(1:matchDims)',2) = dim(zoomVal((1:matchDims),2)' > dim(1:matchDims));
           updateZoom(1,1,1:nDim,'ROIupdate');
           updateSelection(1:length(currPos));
