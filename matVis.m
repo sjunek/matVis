@@ -3671,7 +3671,7 @@ end
                 pauseCallback;
             end
         end
-        if debugMatVis, debugMatVisFcn(1); end
+        if debugMatVis, debugMatVisFcn(2); end
     end
 
 %Callback for pause button
@@ -7869,6 +7869,9 @@ end
           gp = customConfig.winPos.gui;
           gp(1:2) = defaultConfig.winPos.gui(1:2);
           if ~get(tbTooltips, 'Value') && config.tooltips
+            if strcmp(os(1:3),'MAC'); f = macScaleFactor(2);
+            else;                     f = 1;
+            end
             gp([2 4]) = gp([2 4])-f*[-130 130];
           end
           set(gui, 'Position',gp);
@@ -8022,7 +8025,7 @@ end
         end
         assignin('base', [get(exportName, 'String'),'_index'], ind);
         expProp = [];lEA = 1;
-        if ~isempty(dimScale)
+        if exist('dimScale','var') && ~isempty(dimScale)
           expProp{lEA} = 'dimScale';
           for iii=1:length(ind)
             expProp{lEA+1}(iii,:) = dimScale(iii,1) + diff(dimScale(iii,:))/(dim(iii)-1)*(ind{iii}([1 end])-1);
@@ -8030,19 +8033,19 @@ end
           expProp{lEA+1}(indC,:) = [];
           lEA = lEA+2;
         end
-        if ~isempty(dimNames)
+        if exist('dimNames','var') && ~isempty(dimNames)
           expProp{lEA} = 'dimNames';
           expProp{lEA+1} = dimNames;
           expProp{lEA+1}(indC) = [];
           lEA = lEA+2;
         end
-        if ~isempty(dimUnits)
+        if exist('dimUnits','var') && ~isempty(dimUnits)
           expProp{lEA} = 'dimUnits';
           expProp{lEA+1} = dimUnits;
           expProp{lEA+1}(indC) = [];
           lEA = lEA+2;
         end
-        if ~isempty(allNames)
+        if exist('allNames','var') && ~isempty(allNames)
           expProp{lEA} = 'matNames';
           expProp{lEA+1} = {allNames};
           lEA = lEA+2;
@@ -8087,7 +8090,7 @@ end
           inputArg{end+1} = 'alphaMap';
           inputArg{end+1} = alphaMap{1}(ind{:});
         end
-        if ~isempty(dimScale)
+        if exist('dimScale','var') && ~isempty(dimScale)
           inputArg{end+1} = 'dimScale';
           lIA = length(inputArg)+1;
           for iii=1:length(ind)
@@ -8095,17 +8098,17 @@ end
           end
           inputArg{lIA}(indC,:) = [];
         end
-        if ~isempty(dimNames)
+        if exist('dimNames','var') && ~isempty(dimNames)
           inputArg{end+1} = 'dimNames';
           inputArg{end+1} = dimNames;
           inputArg{end}(indC) = [];
         end
-        if ~isempty(dimUnits)
+        if exist('dimUnits','var') && ~isempty(dimUnits)
           inputArg{end+1} = 'dimUnits';
           inputArg{end+1} = dimUnits;
           inputArg{end}(indC) = [];
         end
-        if ~isempty(allNames)
+        if exist('allNames','var') && ~isempty(allNames)
           inputArg{end+1} = 'matNames';
           inputArg{end+1} = {allNames};
         end
@@ -11976,8 +11979,8 @@ end
         hh.ZTicks = make_cell(get(hh.Hlims, 'ZTickMode'));
         
         % Set all axes limit modes to manual, so the limits can't change
-        set(hh.Hlims, 'XLimMode', 'manual', 'YLimMode', 'manual', 'ZLimMode', 'manual');
-        set(hh.Hlims, 'XTickMode', 'manual', 'YTickMode', 'manual', 'ZTickMode', 'manual');
+        %set(hh.Hlims, 'XLimMode', 'manual', 'YLimMode', 'manual', 'ZLimMode', 'manual');
+        %set(hh.Hlims, 'XTickMode', 'manual', 'YTickMode', 'manual', 'ZTickMode', 'manual');
         
         % Set to print exactly what is there
         hh.old_IH_mode = get(hh.handle, 'InvertHardcopy');
