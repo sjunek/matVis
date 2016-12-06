@@ -4594,7 +4594,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function placePosLine(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         currWin = myGcf;
@@ -4664,7 +4663,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     function zoomKeyReleaseFcn(src,evt,fcnHndl) %#ok
         if debugMatVis, debugMatVisFcn(1); end
         if strcmp(func2str(get(zoomWin(1), 'WindowButtonMotionFcn')), 'matVis/panWindow')
@@ -6258,7 +6256,7 @@ end
     function  colors = plotColors(nColors)
         if debugMatVis, debugMatVisFcn(1); end
 %         if exist('color_map.m','file')
-            colors = color_map(nColors,3,1);
+            colors = colorMap(nColors,3,1);
 %         else
 %             if nColors == 1
 %                 colors = [1 0 0];
@@ -6632,7 +6630,7 @@ end
             case 'Gray'
                 cmap = gray(255);
             case 'Gray (Range)'
-                cmap = color_map(255, 5);
+                cmap = colorMap(255, 5);
             case '4 x Gray'
                 cmap = repmat(gray(64),[4 1]);
             case 'Parula'
@@ -6674,7 +6672,7 @@ end
                 cmap(129:255,2:3) = repmat(linspace(0,1,127)',[1,2]);
                 cmap = circshift(cmap,[0 2]);
             case {'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4'}
-                cmap = color_map(255, str2double(lutStr{get(popLut, 'Value')}(8)));
+                cmap = colorMap(255, str2double(lutStr{get(popLut, 'Value')}(8)));
             case {'Blue-Gray-Red (0 centered)';'Blue-Gray-Yellow (0 centered)';'Magenta-Gray-Green (0 centered)'}
                 mn = cmMinMax(currContrastSel,1); %minScale
                 mx = cmMinMax(currContrastSel,2); %maxScale
@@ -6921,12 +6919,12 @@ end
         updateImages;
         if debugMatVis, debugMatVisFcn(2); end
     end
-    function res = color_map(map_size, fun_type, exp)
+    function res = colorMap(map_size, fun_type, exp)
         if debugMatVis, debugMatVisFcn(1); end
         % Function kindly provided by André Zeug (last modified 21.03.2006).
         % This function creates a colormap (n x 3 array of RGB triples between 0
         % and 1). It can be used analogously to 'gray', 'jet', 'hsv' etc. in
-        % colormap( color_map(map_size, fun_type, exp) ).
+        % colormap( colorMap(map_size, fun_type, exp) ).
         
         if nargin < 3
             exp=1;
@@ -9534,14 +9532,14 @@ end
         if exist('inpoly','file') == 3  % Check if mex-version (from Sebastien Paris) is available on path
             inregion = inpoly(cat(2,Y(:),X(:))',roi([2 1],:));
         else  % otherwise use "normal" inpoly.m function ( which I copied as a nested function into matVis (see below, including credits)
-            inregion = inpoly_mv(cat(2,Y(:),X(:)),roi([2 1],:)');
+            inregion = inpolyMv(cat(2,Y(:),X(:)),roi([2 1],:)');
         end
         % Didn't get this - supposedly faster - version to run (Matlab crashes). Maybe try again
         % later.
         % if exist('insidepoly','file') == 2  % Check if version of Bruno Luong is available on path
         %      inregion = insidepoly_sglengine(cat(2,Y(:),X(:))',roi([2 1],:));
         % else  % otherwise use "normal" inpoly.m function ( which I copied as a nested function into matVis (see below, including credits)
-        %      inregion = inpoly_mv(cat(2,Y(:),X(:)),roi([2 1],:)');
+        %      inregion = inpolyMv(cat(2,Y(:),X(:)),roi([2 1],:)');
         % end
         roiList(numberRoi).mask = false(dim(xySel(1)),dim(xySel(2)));
         roiList(numberRoi).mask(inregion) = 1;
@@ -10468,7 +10466,7 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-    function [cn,on] = inpoly_mv(p,node,edge,TOL)
+    function [cn,on] = inpolyMv(p,node,edge,TOL)
         if debugMatVis > 1, debugMatVisFcn(1); end
         % Function of Darren Engwirda from Matlab File exchange server. See below for credit.
         %  INPOLY: Point-in-polygon testing.
@@ -10994,830 +10992,820 @@ end
         newOutputStrct = out;
         if debugMatVis, debugMatVisFcn(2); end
     end
-%% Movie recording functions
+    %% Movie recording functions
     function vidGenerator(varargin)
-        if debugMatVis, debugMatVisFcn(1); end
-        if ~get(tbRecord, 'Value')
-            set(tbPlotsYLim, 'Value',0);
-            vidGenerator_showHide(0,0,'hide');
-            set(tbLinkWin, 'Enable','on');
-            if get(tbLinkWin, 'Value')
-                set(imageWin, 'ResizeFcn', {@resizeWin, 'image'});
-                set(zoomWin, 'ResizeFcn', {@resizeWin, 'zoom'});
-                set(plotWin, 'ResizeFcn', {@resizeWin, 'plot'});
-            end
-        elseif ~isfield(movdata,'gui');
-            % Some general paramters
-            gp = get(gui, 'Position');
-            pos0=[gp(1)+gp(3)+20 gp(2)]; % Position of vidGenerator windows x0 y0
-            res = 3; % internal parameter print resolution for 'hardcopy'
-            set([imageWin, zoomWin, plotWin], 'ResizeFcn','');
-            set(tbLinkWin, 'Enable','off');
-            set(tbPlotsYLim, 'Value',1);
-            vidGenerator_initialize;
-        else
-            set([imageWin, zoomWin, plotWin], 'ResizeFcn','');
-            set(tbLinkWin, 'Enable','off');
-            set(tbPlotsYLim, 'Value',1);
-            vidGenerator_showHide(0,0,'show');
+      if debugMatVis, debugMatVisFcn(1); end
+      if ~get(tbRecord, 'Value')
+        set(tbPlotsYLim, 'Value',0);
+        vidGeneratorShowHide(0,0,'hide');
+        set(tbLinkWin, 'Enable','on');
+        if get(tbLinkWin, 'Value')
+          set(imageWin, 'ResizeFcn', {@resizeWin, 'image'});
+          set(zoomWin, 'ResizeFcn', {@resizeWin, 'zoom'});
+          set(plotWin, 'ResizeFcn', {@resizeWin, 'plot'});
         end
-            
-        
-        function vidGenerator_initialize
-            if debugMatVis, debugMatVisFcn(1); end
-            % Test for available movdata.codecs
-            profiles=VideoWriter.getProfiles();
-            movdata.codecs=[];
-            for iii=1:length(profiles);
-                movdata.codecs{iii,1}=profiles(iii).Name;
-            end
-            
-            % Test for ffmpeg
-            [status,result] = system('ffmpeg');
-            if ~strcmp(result(1:14),'ffmpeg version');
-                hffmpegwarn = questdlg({'Could not find FFMPEG in the system path.';'Codecs will be limited to the ones which come with Matlab.';'Press Ok to visit Source.'},'FFMPEG Warning','Ok','Skip Information','Ok');
-                switch hffmpegwarn
-                    case 'Ok'
-                        [status result] = system('start http://www.ffmpeg.org');
-                end
-            else
-                if ~any(strcmp(movdata.codecs,'MPEG-4'));
-                    movdata.codecs{end+1,1}='FFMPEG > MPEG-4';
-                end
-                movdata.codecs{end+1,1}='FFMPEG > Theora';
-            end
-            
-            % Test for export_fig
-            % Stephan: Not clear what's it for, since export_fig is not
-            % used !?
-%             exitstartup = false;
-%             if ~exist('export_fig','file');
-%                 hexport_figwarn = msgbox({'export_fig.m is required for VidGenerator.';'Press Ok to visit Source.'},'export_fig Warning','warn');
-%                 uiwait(hexport_figwarn);
-%                 [status result] = system('start http://www.mathworks.se/matlabcentral/fileexchange/23629-exportfig');
-%                 exitstartup = true;
-%             end
-            
-            % Set movdata.FilterSpecs
-            movdata.FilterSpec = [];
-            if any(strcmp(movdata.codecs,'Archival'));movdata.FilterSpec{end+1,1}='*.mj2';movdata.FilterSpec{end,2}='Archival (*.mj2)';end
-            if any(strcmp(movdata.codecs,'Motion JPEG 2000'));movdata.FilterSpec{end+1,1}='*.mj2';movdata.FilterSpec{end,2}='Motion JPEG 2000 (*.mj2)';end
-            if any(strcmp(movdata.codecs,'Uncompressed AVI'));movdata.FilterSpec{end+1,1}='*.avi';movdata.FilterSpec{end,2}='Uncompressed AVI (*.avi)';end
-            if any(strcmp(movdata.codecs,'Motion JPEG AVI'));movdata.FilterSpec{end+1,1}='*.avi';movdata.FilterSpec{end,2}='Motion JPEG AVI (*.avi)';end
-            if any(strcmp(movdata.codecs,'MPEG-4'));movdata.FilterSpec{end+1,1}='*.mp4';movdata.FilterSpec{end,2}='MPEG-4 (*.mp4)';end
-            if any(strcmp(movdata.codecs,'FFMPEG > MPEG-4'));movdata.FilterSpec{end+1,1}='*.mp4';movdata.FilterSpec{end,2}='MPEG-4 (*.mp4)';end
-            if any(strcmp(movdata.codecs,'FFMPEG > Theora'));movdata.FilterSpec{end+1,1}='*.ogg';movdata.FilterSpec{end,2}='Theora (*.ogg)';end
-            
-            % Set File Name from presettings
-            if ~isfield(movdata,'set.movname'); movdata.set.movname = 'movie_file_name';end
-            if ~isfield(movdata,'set.movdir'); movdata.set.movdir = pwd;end
-            if ~isfield(movdata,'set.movcodec'); movdata.set.movcodec = 'Uncompressed AVI';end
-            movdata.set.fileext = [];
-            for iii=1:length(movdata.FilterSpec);
-                if regexp(movdata.FilterSpec{iii,2},movdata.set.movcodec,'ONCE')==1;
-                    movdata.set.fileext = movdata.FilterSpec{iii,1}(2:end);
-                    break
-                end
-            end
-            movdata.set.movstring=[movdata.set.movdir '\' movdata.set.movname movdata.set.fileext];
-            
-            % Set used codec from presettings
-            if ~isfield(movdata,'set.codecval');
-                for iii=1:length(movdata.codecs);
-                    if ~isempty(regexp(movdata.codecs{iii},movdata.set.movcodec,'ONCE'));
-                        movdata.set.codecval = iii;
-                        break
-                    end
-                end
-            end
-            if strcmp(movdata.set.movcodec,'Uncompressed AVI'); movdata.set.movquality = 100; end
-            
-            % set Quality/compression from presettings
-            if strcmp(movdata.set.movcodec,'Motion JPEG 2000') || strcmp(movdata.set.movcodec,'Archival');
-                movdata.set.qualstring = 'Compress:';
-                movdata.set.qualval = movdata.set.movcompress;
-            else
-                movdata.set.qualstring = 'Quality [%]:';
-                movdata.set.qualval = movdata.set.movquality;
-            end
-            vidGenerator_generateGUI;
-            if debugMatVis, debugMatVisFcn(2); end
-        end
-        function vidGenerator_generateGUI(varargin)
-          if debugMatVis, debugMatVisFcn(1); end
-            if isfield(movdata,'gui') && ~isempty(movdata.gui.hvidgen)
-                delete(movdata.gui.hvidgen);
-                delete(movdata.prev.hprev);
-                movdata.gui.hvidgen = [];
-            end
-            % Find visible windows
-            oldMovParts = movdata.parts;
-            movdata.parts = [];
-            for iii = 1:nMat
-                if get(tbWin(1), 'Value')
-                    movdata.parts(end+1) = imageWin(iii);
-                end
-                if get(tbWin(2), 'Value')
-                    movdata.parts(end+1) = zoomWin(iii);
-                end
-                if get(tbWin(3), 'Value')
-                    movdata.parts(end+1) = plotWin(iii);
-                end
-            end
-            if strcmp(get(histWin,'Visible'),'on')
-                movdata.parts(end+1) = histWin;
-            end
-            if with2DHist
-                if strcmp(get(matVis2DHist.figHandles.zoomWin,'Visible'),'on')
-                    movdata.parts(end+1) = matVis2DHist.figHandles.zoomWin;
-                end
-                if strcmp(get(matVis2DHist.figHandles.imageWin,'Visible'),'on')
-                    movdata.parts(end+1) = matVis2DHist.figHandles.imageWin;
-                end
-                if strcmp(get(matVis2DHist.figHandles.plotWin,'Visible'),'on')
-                    movdata.parts(end+1) = matVis2DHist.figHandles.plotWin;
-                end
-            end
-            if ~isequal(oldMovParts, movdata.parts)
-                movdata.set.parts = [];
-                for iii=1:length(movdata.parts);
-                    movdata.set.parts{iii}.handle = movdata.parts(iii); % include input figure handle in presetting structure
-                    movdata.set.parts{iii}.name = get(movdata.parts(iii),'name');
-                    movdata.set.parts{iii}.status = 1;
-                    set(movdata.set.parts{iii}.handle, 'Color',movdata.set.movPartsbg);
-                    for kkk=1:numel(movdata.set.parts)
-                        al = findobj(movdata.set.parts{kkk}.handle ,'Type','Axes');
-                        for jjj=1:numel(al)
-                            set(al(jjj),'XColor',movdata.set.movLabelColor,'YColor',movdata.set.movLabelColor);
-                            set(get(al(jjj),'XLabel'),'Color',movdata.set.movLabelColor);
-                            set(get(al(jjj),'YLabel'),'Color',movdata.set.movLabelColor);
-                        end
-                    end
-                end
-                nRows = ceil(length(movdata.parts)/2);
-                if length(movdata.parts)==1
-                    nCols = 1;
-                else
-                    nCols = 2;
-                end
-                ct = 0;
-                defaultTitleHeight = 0.9;
-                for kkk = 1:nRows
-                    for jjj=1:nCols
-                        ct = ct +1;
-                        movdata.set.parts{ct}.pos = [(jjj-1)/nCols defaultTitleHeight*(1-kkk/nRows) 1/nCols defaultTitleHeight/nRows];
-                    end
-                end
-                if mod(length(movdata.parts),2) && nRows > 1
-                    movdata.set.parts(ct) = [];
-                    movdata.set.parts{ct-1}.pos = [0 0 1 defaultTitleHeight/nRows];
-                end
-            end
-            %% Evaluate existing movie parts
-            for iii=1:length(movdata.parts);
-                set(movdata.parts(iii),'Units','pixels');
-                movdata.set.parts{iii}.origpos = get(movdata.parts(iii),'Position');
-            end
-           %% Open GUI
-           nparts=length(movdata.parts);
-           movdata.gui.hvidgen=figure('Units','pixels','Color',[.94 .94 .94],'MenuBar','none','HandleVisibility', 'off',...
-                'Name','Video Generator','NumberTitle','off','Position',[pos0(1) pos0(2) 495 259.3+nparts*15.6],...
-                'Resize','off','tag','movdata.gui.hvidgen', 'CloseRequestFcn', {@vidGenerator_showHide,'hide'});  %pos0(2)-(259.3+nparts*15.6)
-            % Stephan: Not sure about the function of exitstartup
-            %                 if exitstartup;
-            %                     vidGenerator_hide;
-            %                 else
-            % Movie Input Panel
-            movdata.gui.hinput=uipanel('Parent',movdata.gui.hvidgen,'Units','pixels','Title','Movie Input',...
-                'Position',[11 141.4 476 114.4+nparts*15.6],'tag','movdata.gui.hinput');
-            row1=85+nparts*15.6; % rowposition for panel 1
-            row2=65+nparts*15.6-3;
-            row3=45+nparts*15.6-3;
-            % Movie Size
-            movdata.gui.hinput1 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','HorizontalAlignment','left',...
-                'Position',[6 row1 141 13],'String','Movie Frame Size (in pixels):',...
-                'Style','text','tag','movdata.gui.hinput1');
-            movdata.gui.hinput2 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',[1 1 1],...
-                'Callback',@vidGenerator_preview,'HorizontalAlignment','right','Position',[151 row1-2.5 50 15.6],...
-                'String',movdata.set.movsize(1),'Style','edit','tag','movdata.gui.hinput2');
-            movdata.gui.hinput3 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','HorizontalAlignment','left',...
-                'Position',[201 row1 10 13],'String','x','Style','text','tag','movdata.gui.hinput3');
-            movdata.gui.hinput4 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',[1 1 1],...
-                'Callback',@vidGenerator_preview,'HorizontalAlignment','right','Position',[211 row1-2.5 50 15.6],...
-                'String',movdata.set.movsize(2),'Style','edit','tag','movdata.gui.hinput4');
-            % Parts background color
-            movdata.gui.hinput12 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','HorizontalAlignment','right',...
-                'Position',[310 row2-1.3+5 60 14.3],'String','Parts color:','Style','text','tag','movdata.gui.hinput5');
-            movdata.gui.hinput13 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',movdata.set.movPartsbg,...
-                'Callback',{@vidGenerator_bgcolor,'axes'},'Position',[456-80 row2-2.5+7 14 14],'String',[],'Style','pushbutton','tag','movdata.gui.hinput6');
-            % Figure background color
-            movdata.gui.hinput5 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','HorizontalAlignment','right',...
-                'Position',[310 row1-1.3 60 14.3],'String','Figure color:','Style','text','tag','movdata.gui.hinput5');
-            movdata.gui.hinput6 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',movdata.set.movbg,...
-                'Callback',{@vidGenerator_bgcolor,'figure'},'Position',[456-80 row1-2.5+2 14 14],'String',[],'Style','pushbutton','tag','movdata.gui.hinput6');
-            % Title color
-            movdata.gui.hinput14 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','HorizontalAlignment','right',...
-                'Position',[390 row1-1.3 60 14.3],'String','Title color:','Style','text','tag','movdata.gui.hinput5');
-            movdata.gui.hinput15 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',movdata.set.movTitleColor,...
-                'Callback',{@vidGenerator_bgcolor,'title'},'Position',[456 row1-2.5+2 14 14],'String',[],'Style','pushbutton','tag','movdata.gui.hinput6');
-            % Label color
-            movdata.gui.hinput16 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','HorizontalAlignment','right',...
-                'Position',[390 row2-1.3+5 60 14.3],'String','Label color:','Style','text','tag','movdata.gui.hinput5');
-            movdata.gui.hinput17 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',movdata.set.movLabelColor,...
-                'Callback',{@vidGenerator_bgcolor,'label'},'Position',[456 row2-2.5+7 14 14],'String',[],'Style','pushbutton','tag','movdata.gui.hinput6');
-            % Update preview
-            movdata.gui.hinput7 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','Callback',@vidGenerator_generateGUI,...
-                'Position',[370 row3-2.5+2 100 20],'String','Update preview','Style','pushbutton','tag','movdata.gui.hinput7','FontSize',8);
-            % Scaling
-            movdata.gui.hinput8 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','Position',[6 mean([row2,row3])+3 50 13],...
-                'String','Scaling:','Style','text','tag','movdata.gui.hinput8','HorizontalAlignment','left');
-            movdata.gui.hinput9 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',[1 1 1],...
-                'Callback',@vidGenerator_preview,'HorizontalAlignment','right','Position',[50 mean([row2,row3]) 60 20.8],...
-                'String',{'100 %';'75 %';'50 %'},'Style','popup','tag','movdata.gui.hinput9','value',movdata.set.prevscale);
-            % Units
-            movdata.gui.hinput10 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','HorizontalAlignment','left',...
-                'Position',[115 mean([row2,row3])+3 122 13],'String','Units for Movie Parts:','Style','text','tag','movdata.gui.hinput10');
-            movdata.gui.hinput11 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',[1 1 1],...
-                'Callback',@vidGenerator_preview,'Position',[225 mean([row2,row3]) 80 20.8],'String',{'normalized'},...
-                'Style','popup','tag','movdata.gui.hinput11','value',movdata.set.partunits);
-            
-            % Panel - movie parts
-            movdata.gui.hparts = uipanel('Parent',movdata.gui.hinput,'Units','pixels','Title','Available Movie Parts',...
-                'Position',[6 7.5 462.5 39+nparts*15.6],'tag','movdata.gui.hparts');
-            % input: title
-            coltitle=7.8+nparts*15.6;
-            if movdata.set.titlestatus==true;
-                enablestat = 'on';
-            else
-                enablestat = 'off';
-            end
-            movdata.gui.hparts1 = uicontrol('Parent',movdata.gui.hparts,'Units','pixels','Callback',@vidGenerator_enable,...
-                'Position',[9 coltitle-1.3 47 13],'String',[],...
-                'Style','checkbox','Value',movdata.set.titlestatus,'tag','movdata.gui.hparts1');
-            movdata.gui.hparts2 = uicontrol('Parent',movdata.gui.hparts,'BackgroundColor',[1 1 1],'Callback',@vidGenerator_preview,...
-                'Units','pixels','HorizontalAlignment','left','Position',[26 coltitle-2.5 130 15.6],...
-                'String',movdata.set.title,'Style','edit','tag','movdata.gui.hparts2','enable',enablestat);
-            movdata.gui.hparts3 = uicontrol('Parent',movdata.gui.hparts,'Units','pixels','enable',enablestat,...
-                'HorizontalAlignment','left','Position',[166 coltitle 93 13],...
-                'String','Position in Frame:','Style','text','tag','movdata.gui.hparts3');
-            movdata.gui.hparts4 = uicontrol('Parent',movdata.gui.hparts,'Units','pixels','BackgroundColor',[1 1 1],...
-                'Callback',@vidGenerator_preview,'HorizontalAlignment','right','Position',[253.5 coltitle-2.3 50 15.6],...
-                'String',movdata.set.titlepos(1),'Style','edit','tag','movdata.gui.hparts4','enable',enablestat);
-            movdata.gui.hparts5 = uicontrol('Parent',movdata.gui.hparts,'Units','pixels','BackgroundColor',[1 1 1],...
-                'Callback',@vidGenerator_preview,'HorizontalAlignment','right','Position',[303.5 coltitle-2.3 50 15.6],...
-                'String',movdata.set.titlepos(2),'Style','edit','tag','movdata.gui.hparts5','enable',enablestat);
-            movdata.gui.hparts6 = uicontrol('Parent',movdata.gui.hparts,'Units','pixels',...
-                'HorizontalAlignment','left','Position',[358.5 coltitle 80 13],...
-                'String','FontSize (pt):','Style','text','tag','movdata.gui.hparts6','enable',enablestat);
-            movdata.gui.hparts7 = uicontrol('Parent',movdata.gui.hparts,'Units','pixels','BackgroundColor',[1 1 1],...
-                'Callback',@vidGenerator_preview,'HorizontalAlignment','right','Position',[428.5 coltitle-2.3 25 15.6],...
-                'String',movdata.set.titlesize,'Style','edit','tag','movdata.gui.hparts7','enable',enablestat);
-            % Loop over image inputs
-            for iii=1:nparts;
-                col=coltitle-15.6*iii;
-                if movdata.set.parts{iii}.status==true;
-                    enablestat = 'on';
-                else
-                    enablestat = 'off';
-                end
-                movdata.gui.hpartsim1{iii} = uicontrol('Parent',movdata.gui.hparts,'Units','pixels','Callback',@vidGenerator_enable,...
-                    'Position',[9 col-1.3 47 13],'String',[],...
-                    'Style','checkbox','Value',movdata.set.parts{iii}.status,'tag',['movdata.gui.hpartsim1{' num2str(iii) '}']);
-                movdata.gui.hpartsim2{iii} = uicontrol('Parent',movdata.gui.hparts,'enable',enablestat,...
-                    'Units','pixels','HorizontalAlignment','left','Position',[26 col 130 13],...
-                    'String',movdata.set.parts{iii}.name,'Style','text','tag',['movdata.gui.hpartsim2{' num2str(iii) '}']);
-                movdata.gui.hpartsim3{iii} = uicontrol('Parent',movdata.gui.hparts,'enable',enablestat,'Units','pixels',...
-                    'HorizontalAlignment','left','Position',[166 col 93 13],...
-                    'String','Position in Frame:','Style','text','tag',['movdata.gui.hpartsim3{' num2str(iii) '}']);
-                movdata.gui.hpartsim4{iii} = uicontrol('Parent',movdata.gui.hparts,'enable',enablestat,'Units','pixels','BackgroundColor',[1 1 1],...
-                    'Callback',@vidGenerator_preview,'HorizontalAlignment','right','Position',[253.5 col-2.5 50 15.6],...
-                    'String',movdata.set.parts{iii}.pos(1),'Style','edit','tag',['movdata.gui.hpartsim4{' num2str(iii) '}']);
-                movdata.gui.hpartsim5{iii} = uicontrol('Parent',movdata.gui.hparts,'enable',enablestat,'Units','pixels','BackgroundColor',[1 1 1],...
-                    'Callback',@vidGenerator_preview,'HorizontalAlignment','right','Position',[303.5 col-2.5 50 15.6],...
-                    'String',movdata.set.parts{iii}.pos(2),'Style','edit','tag',['movdata.gui.hpartsim5{' num2str(iii) '}']);
-                movdata.gui.hpartsim6{iii} = uicontrol('Parent',movdata.gui.hparts,'enable',enablestat,'Units','pixels','BackgroundColor',[1 1 1],...
-                    'Callback',@vidGenerator_preview,'HorizontalAlignment','right','Position',[353.5 col-2.5 50 15.6],...
-                    'String',movdata.set.parts{iii}.pos(3),'Style','edit','tag',['movdata.gui.hpartsim6{' num2str(iii) '}']);
-                movdata.gui.hpartsim7{iii} = uicontrol('Parent',movdata.gui.hparts,'enable',enablestat,'Units','pixels','BackgroundColor',[1 1 1],...
-                    'Callback',@vidGenerator_preview,'HorizontalAlignment','right','Position',[403.5 col-2.5 50 15.6],...
-                    'String',movdata.set.parts{iii}.pos(4),'Style','edit','tag',['movdata.gui.hpartsim7{' num2str(iii) '}']);
-            end
-            % Movie Output Panel
-            movdata.gui.houtput=uipanel('Parent',movdata.gui.hvidgen,'Units','pixels','Title','Movie Output',...
-                'Position',[11 37.4 476 104],'tag','movdata.gui.houtput');
-            movdata.gui.houtput1 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','BackgroundColor',[1 1 1],...
-                'Callback',@vidGenerator_updatefile,'HorizontalAlignment','left','Position',[9 65 395 15.6],...
-                'String',[movdata.set.movdir '\' movdata.set.movname movdata.set.fileext],'Style','edit','tag','movdata.gui.houtput1');
-            movdata.gui.houtput2 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','Callback',@vidGenerator_savefile,...
-                'Position',[405 64.3 60 18],'String','Save as','Style','pushbutton','tag','movdata.gui.houtput2');
-            movdata.gui.houtput3 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','HorizontalAlignment','left',...
-                'Position',[10 42 38 13],'String','Codec:','Style','text','tag','movdata.gui.houtput3');
-            movdata.gui.houtput4 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','BackgroundColor',[1 1 1],...
-                'Callback',@vidGenerator_choosecodec,'Position',[49 39 202 20],'String',movdata.codecs,...
-                'Style','popup','tag','movdata.gui.houtput4','value',movdata.set.codecval);
-            movdata.gui.houtput5 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','HorizontalAlignment','left',...
-                'Position',[261 42 77 13],'String','FrameRate [f/s]:','Style','text','tag','movdata.gui.houtput5');
-            movdata.gui.houtput6 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','BackgroundColor',[1 1 1],...
-                'Callback',@vidGenerator_FCQ,'HorizontalAlignment','right','Position',[342 38 30 22],...
-                'String',movdata.set.movFrameRate,'Style','edit','tag','movdata.gui.houtput6');
-            movdata.gui.houtput7 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','HorizontalAlignment','left',...
-                'Position',[377 42 62 13],'String',movdata.set.qualstring,'Style','text','tag','movdata.gui.houtput7');
-            movdata.gui.houtput8 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','BackgroundColor',[1 1 1],...
-                'Callback',@vidGenerator_FCQ,'HorizontalAlignment','right','Position',[434 38 30 22],...
-                'String',movdata.set.qualval,'Style','edit','tag','movdata.gui.houtput8');
-            if strcmp(movdata.set.movcodec,'Uncompressed AVI');set([movdata.gui.houtput7 movdata.gui.houtput8],'String',num2str(100),'Enable','off');end
-            movdata.gui.houtput9 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','Enable','off',...
-                'HorizontalAlignment','left','Position',[10 15 70 13],'String','ffmpeg:',...
-                'Style','text','tag','movdata.gui.houtput9');
-            movdata.gui.houtput10 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','BackgroundColor',[1 1 1],...
-                'Callback',[],'Enable','off','HorizontalAlignment','left',...
-                'Position',[50 12.5 338 15.6],'String',[],'Style','edit','tag','movdata.gui.houtput10');
-            movdata.gui.houtput11 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','Callback',[],...
-                'Enable','off','Position',[395 11.5 70 18],'String','More Options',...
-                'Style','pushbutton','tag','movdata.gui.houtput11');
-            movdata.gui.hvidgen1 = uicontrol('Parent',movdata.gui.hvidgen,'Units','pixels','Callback',@vidGenerator_record,...
-                'CData',icon_Record,'Position',[10 10 22 22],'String',[],'Style','togglebutton','tag','movdata.gui.hvidgen1','value',movdata.rec);
-%             movdata.gui.hvidgen2 = uicontrol('Parent',movdata.gui.hvidgen,'Units','pixels','Callback',@vidGenerator_showHide,...
-%                 'Position',[60 10 50 22],'String','Hide','Style','pushbutton','tag','movdata.gui.hvidgen2');
-            movdata.gui.hvidgen3 = uicontrol('Parent',movdata.gui.hvidgen,'Units','pixels','HorizontalAlignment','left',...
-                'Position',[35 12 500 15],'String','Adjust settings, then press button to activate recording.',...
-                'Style','text','tag','movdata.gui.hvidgen3');
-            % %                 end
-            %             else
-            %                 vidGenerator_hide
-            adjustGuiSize(movdata.gui.hvidgen);
-            vidGenerator_preview; 
-            if debugMatVis, debugMatVisFcn(2); end
-        end
-        %% Draw Preview
-        function vidGenerator_preview(varargin)
-            if debugMatVis, debugMatVisFcn(1); end
-            movdata.set.partunits = get(movdata.gui.hinput11,'value');
-            prevunits = get(movdata.gui.hinput11,'String');
-            prevunits = prevunits{movdata.set.partunits};
-            movdata.set.movsize(1) = str2num(get(movdata.gui.hinput2,'String'));
-            movdata.set.movsize(2) = str2num(get(movdata.gui.hinput4,'String'));
-            movdata.set.prevscale = get(movdata.gui.hinput9,'Value');
-            switch movdata.set.prevscale
-                case 1
-                    prevscale=1;
-                case 2
-                    prevscale=.75;
-                case 3
-                    prevscale=.5;
-            end
-            movdata.set.movbg = get(movdata.gui.hinput6,'BackgroundColor');
-            scalestring = get(movdata.gui.hinput9,'String');
-            scalestring = scalestring{get(movdata.gui.hinput9,'Value')};
-            prevname = [movdata.set.movname ' - ' num2str(movdata.set.movsize(1)) ' x ' num2str(movdata.set.movsize(2)) ' - ' scalestring];
-            prevpos = [pos0(1)+512 pos0(2) movdata.set.movsize(1)*prevscale movdata.set.movsize(2)*prevscale];   %pos0(2)-movdata.set.movsize(2)*prevscale
-            
-%             if isfield(movdata.prev,hprev)
-%                 pos=get(movdata.prev.hprev,'Position');
-%                 prevpos(1)=pos(1);
-%                 prevpos(2)=pos(2)+pos(4)-movdata.set.movsize(2)*prevscale;
-%                 close(movdata.prev.hprev);
-%             end
-            % create preview window
-            if ~(isfield(movdata,'prev') && ishandle(movdata.prev.hax))
-                movdata.prev.hprev = figure('Position',prevpos,'Color',movdata.set.movbg,'MenuBar','none','HandleVisibility', 'off',...
-                    'Units','pixels','NumberTitle','off','Resize','off','Name',['Movie preview. File name: ' prevname],'tag','movdata.prev.hprev', 'CloseRequestFcn', {@vidGenerator_showHide,'hide'});
-                movdata.prev.hax = axes('Position',[0 0 1 1],'Color',movdata.set.movbg,'XTick',[],'YTick',[],'Parent',movdata.prev.hprev);
-                axis(movdata.prev.hax,'off');
-            end
-            
-            %         % create title line in preview
-            %         if get(movdata.gui.hparts1,'Value')==1;
-            %           movdata.set.title = get(movdata.gui.hparts2,'String');
-            %           movdata.set.titlepos = [str2num(get(movdata.gui.hparts4,'String')) str2num(get(movdata.gui.hparts5,'String'))];
-            %           movdata.set.titlesize = str2num(get(movdata.gui.hparts7,'String'));
-            %           prevtitlepos = [0 movdata.set.titlepos(2)-(movdata.set.titlesize*1.5/movdata.set.movsize(2))/2 1 (movdata.set.titlesize*1.5/movdata.set.movsize(2))];
-            %           movdata.prev.prevtitleaxes = axes('Parent',movdata.prev.hprev,'Position',prevtitlepos,'Color',movdata.set.movbg);
-            %           movdata.prev.prevtitletext = text('Position',[movdata.set.titlepos(1) .5],'Parent',movdata.prev.prevtitleaxes,'Color',1-movdata.set.movbg,'HorizontalAlignment','center','String',movdata.set.title,'FontSize',movdata.set.titlesize*prevscale);
-            %           axis off;
-            %         end
-            
-            % Create Title Data
-            if movdata.set.titlestatus == true;
-                movdata.titleframe.handle = figure('Position',[1 1 movdata.set.movsize(1) movdata.set.titlesize*1.5],...
-                    'MenuBar','none','Units','pixels','NumberTitle','off','Color',movdata.set.movbg,...
-                    'Resize','off','Name','Frame for Title','tag','movdata.frame','Visible','off');
-                movdata.titleframe.titleaxes = axes('Parent',movdata.titleframe.handle,'Position',[0 0 1 1],'Color',movdata.set.movbg);
-                movdata.titleframe.titletext = text('Parent',movdata.titleframe.titleaxes,'Position',[movdata.set.titlepos(1) .5],'Color', movdata.set.movTitleColor,'HorizontalAlignment','center','String',movdata.set.title,'FontSize',movdata.set.titlesize,'FontWeight','bold');
-                axis off;
-                drawnow;
-                if movdata.fastCaptureMode == true;
-                    movdata.titleframe = vidGenerator_myHardcopyFigureSet(movdata.titleframe, res);
-                    movdata.titleframe.CData = vidGenerator_myHardcopy(movdata.titleframe, res);
-                    vidGenerator_myHardcopyFigureReset(movdata.titleframe)
-                else
-                    movdata.titleframe.CData = export_fig(movdata.titleframe.handle,'-nocrop','-q100','-RGB');%,'-painters'
-                    if ndims(movdata.titleframe.CData)==2;
-                        movdata.titleframe.CData = repmat(movdata.titleframe.CData,[1 1 3]);
-                    end
-                end
-                close(movdata.titleframe.handle);
-            end
-            
-            %         % create parts in preview (and adjust original)
-            %         for nprevparts=1:nparts;
-            %           if get(movdata.gui.hpartsim1{nprevparts},'Value')==1;
-            %             movdata.set.parts{nprevparts}.pos = [str2num(get(movdata.gui.hpartsim4{nprevparts},'String'))...
-            %               str2num(get(movdata.gui.hpartsim5{nprevparts},'String'))...
-            %               str2num(get(movdata.gui.hpartsim6{nprevparts},'String'))...
-            %               str2num(get(movdata.gui.hpartsim7{nprevparts},'String'))];
-            %             if get(movdata.gui.hinput11,'Value') == 1;
-            %               part{nprevparts}.abs = movdata.set.parts{nprevparts}.pos.*[movdata.set.movsize(1) movdata.set.movsize(2) movdata.set.movsize(1) movdata.set.movsize(2)];
-            %             else
-            %               part{nprevparts}.abs = movdata.set.parts{nprevparts}.pos;
-            %             end
-            %             % reset figure Position
-            %             movdata.set.parts{nprevparts}.origpos = get(movdata.set.parts{nprevparts}.handle,'Position');
-            %             movdata.set.parts{nprevparts}.origpos(3:4) = part{nprevparts}.abs(3:4);
-            %             set(movdata.set.parts{nprevparts}.handle,'Units','pixels','Position',movdata.set.parts{nprevparts}.origpos);
-            %             figure(movdata.set.parts{nprevparts}.handle);
-            %             if movdata.fastCaptureMode == true;
-            %               movdata.set.parts{nprevparts} = vidGenerator_myHardcopyFigureSet(movdata.set.parts{nprevparts}, res);
-            %               movdata.set.parts{nprevparts}.CData = vidGenerator_myHardcopy(movdata.set.parts{nprevparts}, res);
-            %               vidGenerator_myHardcopyFigureReset(movdata.set.parts{nprevparts})
-            %             else
-            %               % get image
-            %               movdata.set.parts{nprevparts}.CData = export_fig(movdata.set.parts{nprevparts}.handle,'-nocrop','-q100','-RGB');
-            %             end
-            %             % draw preview
-            %             movdata.prev.hprevpart{nprevparts} = axes(...
-            %               'Units',prevunits,'Position',movdata.set.parts{nprevparts}.pos,...
-            %               'XColor',1-movdata.set.movbg,'YColor',1-movdata.set.movbg,...
-            %               'XTick',[],'YTick',[],'Box','on','Layer','Top',...
-            %               'Parent',movdata.prev.hprev,'Color',movdata.set.movbg);
-            %             image('Parent',movdata.prev.hprevpart{nprevparts},'CData',movdata.set.parts{nprevparts}.CData,'CDataMapping','scaled');
-            %             if ndims(movdata.set.parts{nprevparts}.CData)==2;
-            %               colormap(grey);
-            %             end
-            %             axis(movdata.prev.hprevpart{nprevparts},'ij');
-            %             axis(movdata.prev.hprevpart{nprevparts},'tight');
-            %           end
-            %         end
-            %         clear nprevparts
-            
-            % Create Parts Data
-            for np = 1:length(movdata.set.parts)
-                movdata.set.parts{np}.pos = [str2num(get(movdata.gui.hpartsim4{np},'String'))...
-                    str2num(get(movdata.gui.hpartsim5{np},'String'))...
-                    str2num(get(movdata.gui.hpartsim6{np},'String'))...
-                    str2num(get(movdata.gui.hpartsim7{np},'String'))];
-                if get(movdata.gui.hinput11,'Value') == 1;
-                    part{np}.abs = movdata.set.parts{np}.pos.*[movdata.set.movsize(1) movdata.set.movsize(2) movdata.set.movsize(1) movdata.set.movsize(2)];
-                else
-                    part{np}.abs = movdata.set.parts{np}.pos;
-                end
-                % reset figure Position
-                movdata.set.parts{np}.origpos = get(movdata.set.parts{np}.handle,'Position');
-                prevFigPos = get(movdata.prev.hprev,'Position');
-                movdata.set.parts{np}.origpos(1:2) = [prevFigPos(1)+prevFigPos(3)*movdata.set.parts{np}.pos(1) prevFigPos(2)-prevFigPos(4)-50++prevFigPos(4)*movdata.set.parts{np}.pos(2)];
-                movdata.set.parts{np}.origpos(3:4) = part{np}.abs(3:4);
-                % Font scaling as set in the settings of the OS has to be
-                % taken into account, as the getframe commad returns the
-                % scaled image (e.g. 1.25x larger than screen pixels dimensions), while get(h, 'Position') returns the image
-                % dimensions as if there was no scaling.
-                set(movdata.set.parts{np}.handle,'Units','pixels','Position',screenSizeScaling*movdata.set.parts{np}.origpos);
-                figure(movdata.set.parts{np}.handle);
-                %Get CData
-                if movdata.set.parts{np}.status == true;
-                    % two figure capture options are implemented
-                    % fast: directly uses 'hardcopy' and presets the figure
-                    % properies before scanning
-                    % slow: uses export_fig
-                    if movdata.fastCaptureMode == true;
-                        movdata.set.parts{np} = vidGenerator_myHardcopyFigureSet(movdata.set.parts{np}, res);
-                        movdata.set.parts{np}.CData = vidGenerator_myHardcopy(movdata.set.parts{np},res);
-                    else
-                        movdata.set.parts{np}.CData = export_fig(movdata.set.parts{np}.handle,'-nocrop','-q100','-RGB');%,'-painters'
-                        if ndims(movdata.set.parts{np}.CData)==2;
-                            movdata.set.parts{np}.CData = repmat(movdata.set.parts{np}.CData,[1 1 3]);
-                        end
-                    end
-                end
-            end
-            
-            % Create frame matrix
-            movdata.prev.CData = uint8(repmat(reshape(255*movdata.set.movbg,[1 1 3]),[movdata.set.movsize(2) movdata.set.movsize(1)]));
-            % fill in titleframe
-            if movdata.set.titlestatus == true;
-                movdata.set.title = get(movdata.gui.hparts2,'String');
-                movdata.set.titlepos = [str2num(get(movdata.gui.hparts4,'String')) str2num(get(movdata.gui.hparts5,'String'))];
-                movdata.set.titlesize = str2num(get(movdata.gui.hparts7,'String'));
-                movdata.titleframe.posy(1) = max([1,round(movdata.set.movsize(2)-(movdata.set.titlepos(2)*movdata.set.movsize(2)+size(movdata.titleframe.CData,1)))]);
-                movdata.titleframe.posy(2) = round(movdata.titleframe.posy(1)+size(movdata.titleframe.CData,1)-1);
-                movdata.prev.CData(movdata.titleframe.posy(1):movdata.titleframe.posy(2),:,:) = movdata.titleframe.CData;
-            end
-            % fill in movie parts
-            for np = 1:length(movdata.set.parts)
-                if movdata.set.parts{np}.status == true;
-                    movdata.set.parts{np}.posx(1) = round(movdata.set.parts{np}.pos(1)*movdata.set.movsize(1)+1);
-                    movdata.set.parts{np}.posx(2) = round(movdata.set.parts{np}.posx(1) + size(movdata.set.parts{np}.CData,2)-1);
-                    movdata.set.parts{np}.posy(1) = round(movdata.set.movsize(2)-(movdata.set.parts{np}.pos(2)*movdata.set.movsize(2)+size(movdata.set.parts{np}.CData,1))+1);
-                    movdata.set.parts{np}.posy(2) = round(movdata.set.parts{np}.posy(1) + size(movdata.set.parts{np}.CData,1)-1);
-                    movdata.prev.CData(movdata.set.parts{np}.posy(1):movdata.set.parts{np}.posy(2),movdata.set.parts{np}.posx(1):movdata.set.parts{np}.posx(2),:) = movdata.set.parts{np}.CData;
-                end
-            end
-            cla(movdata.prev.hax);
-            movdata.prev.himage = image(movdata.prev.CData,'Parent',movdata.prev.hax);
-            axis(movdata.prev.hax,'off');
-            figure(movdata.gui.hvidgen);
-			if debugMatVis, debugMatVisFcn(2); end
-        end
-        
-        %% Enable/Disable MovieParts
-        function vidGenerator_enable(varargin)
-          if debugMatVis, debugMatVisFcn(1); end
-            nparts=length(movdata.parts);
-            movdata.set.titlestatus = get(movdata.gui.hparts1,'Value');
-            if get(movdata.gui.hparts1,'Value')==1;
-                set(movdata.gui.hparts2,'Enable','on');
-                set(movdata.gui.hparts3,'Enable','on');
-                set(movdata.gui.hparts4,'Enable','on');
-                set(movdata.gui.hparts5,'Enable','on');
-                set(movdata.gui.hparts6,'Enable','on');
-                set(movdata.gui.hparts7,'Enable','on');
-            else
-                set(movdata.gui.hparts2,'Enable','off');
-                set(movdata.gui.hparts3,'Enable','off');
-                set(movdata.gui.hparts4,'Enable','off');
-                set(movdata.gui.hparts5,'Enable','off');
-                set(movdata.gui.hparts6,'Enable','off');
-                set(movdata.gui.hparts7,'Enable','off');
-            end
-            for nen=1:nparts;
-                movdata.set.parts{nen}.status = get(movdata.gui.hpartsim1{nen},'Value');
-                if get(movdata.gui.hpartsim1{nen},'Value')==1;
-                    set(movdata.gui.hpartsim2{nen},'Enable','on');
-                    set(movdata.gui.hpartsim3{nen},'Enable','on');
-                    set(movdata.gui.hpartsim4{nen},'Enable','on');
-                    set(movdata.gui.hpartsim5{nen},'Enable','on');
-                    set(movdata.gui.hpartsim6{nen},'Enable','on');
-                    set(movdata.gui.hpartsim7{nen},'Enable','on');
-                else
-                    set(movdata.gui.hpartsim2{nen},'Enable','off');
-                    set(movdata.gui.hpartsim3{nen},'Enable','off');
-                    set(movdata.gui.hpartsim4{nen},'Enable','off');
-                    set(movdata.gui.hpartsim5{nen},'Enable','off');
-                    set(movdata.gui.hpartsim6{nen},'Enable','off');
-                    set(movdata.gui.hpartsim7{nen},'Enable','off');
-                end
-            end
-            vidGenerator_preview
-            clear nen;
-            figure(movdata.gui.hvidgen);
-			if debugMatVis, debugMatVisFcn(2); end
-        end
-        
-        %% Choose BackgroundColor
-        function vidGenerator_bgcolor(varargin)
-          if debugMatVis, debugMatVisFcn(1); end
-            switch varargin{3}
-                case 'figure'
-                    movdata.set.movbg = uisetcolor(get(movdata.gui.hinput6,'BackgroundColor'),'Choose Color for Movie Background');
-                    set(movdata.gui.hinput6,'BackgroundColor',movdata.set.movbg);
-                case 'axes'
-                    movdata.set.movPartsbg = uisetcolor(get(movdata.gui.hinput13,'BackgroundColor'),'Choose Color for Movie Parts');
-                    set(movdata.gui.hinput13,'BackgroundColor',movdata.set.movPartsbg);
-                    for iii=1:numel(movdata.set.parts)
-                        set(movdata.set.parts{iii}.handle,'Color',movdata.set.movPartsbg);
-                    end
-                case 'title'
-                    movdata.set.movTitleColor = uisetcolor(get(movdata.gui.hinput15,'BackgroundColor'),'Choose Color for Movie Title');
-                    set(movdata.gui.hinput15,'BackgroundColor',movdata.set.movTitleColor);
-                case 'label'
-                    movdata.set.movLabelColor = uisetcolor(get(movdata.gui.hinput17,'BackgroundColor'),'Choose Color for Axes Labels');
-                    set(movdata.gui.hinput17,'BackgroundColor',movdata.set.movLabelColor);
-                    for iii=1:numel(movdata.set.parts)
-                        al = findobj(movdata.set.parts{iii}.handle ,'Type','Axes');
-                        for jjj=1:numel(al)
-                            set(al(jjj),'XColor',movdata.set.movLabelColor,'YColor',movdata.set.movLabelColor);
-                            set(get(al(jjj),'XLabel'),'Color',movdata.set.movLabelColor);
-                            set(get(al(jjj),'YLabel'),'Color',movdata.set.movLabelColor);
-                        end
-                    end
-            end
-            vidGenerator_preview
-            figure(movdata.gui.hvidgen);
-            if debugMatVis, debugMatVisFcn(2); end
-        end
-        
-        %% Choose File to write
-        function vidGenerator_savefile(varargin)
-          if debugMatVis, debugMatVisFcn(1); end
-            [movname,movdir,movtype]=uiputfile(movdata.FilterSpec,'Choose File for Movie Output',get(movdata.gui.houtput1,'String'));
-            movdata.set.movname = movname(1:end-4);
-            movdata.set.movdir = movdir(1:end-1);
-            movdata.set.fileext = movdata.FilterSpec{movtype,1}(2:end);
-            movdata.set.movstring = [movdir movname];
-            set(movdata.gui.houtput1,'String',movdata.set.movstring);
-            scalestring = get(movdata.gui.hinput9,'String');
-            scalestring = scalestring{get(movdata.gui.hinput9,'Value')};
-            set(movdata.prev.hprev,'name',[movdata.set.movname ' - (' num2str(movdata.set.movsize(1)) 'x' num2str(movdata.set.movsize(2)) ') - PREVIEW (' scalestring ')']);
-            
-            movdata.set.movcodec = movdata.FilterSpec{movtype,2}(1:end-8);
-            codecpopup = get(movdata.gui.houtput4,'String');
-            for iii = 1:length(codecpopup);
-                if strcmp(codecpopup{iii},movdata.set.movcodec) || strcmp(codecpopup{iii},['FFMPEG > ' movdata.set.movcodec]);
-                    setpopupvalue = iii;
-                    break
-                end
-            end
-            set(movdata.gui.houtput4,'Value',setpopupvalue);
-            switch movdata.set.movcodec
-                case 'Motion JPEG 2000'
-                    set(movdata.gui.houtput7,'String','Compress:','Enable','on');
-                    set(movdata.gui.houtput8,'String',num2str(10),'Enable','on');
-                case 'Archival'
-                    set(movdata.gui.houtput7,'String','Compress:','Enable','off');
-                    set(movdata.gui.houtput8,'String',num2str(10),'Enable','off');
-                case 'Uncompressed AVI'
-                    set(movdata.gui.houtput7,'String','Quality [%]:','Enable','off');
-                    set(movdata.gui.houtput8,'String',num2str(100),'Enable','off');
-                otherwise
-                    set(movdata.gui.houtput7,'String','Quality [%]:','Enable','on');
-                    set(movdata.gui.houtput8,'String',num2str(75),'Enable','on');
-            end
-            clear codecpopup setpopupvalue movname movdir movtype;
-            figure(movdata.gui.hvidgen);
-			if debugMatVis, debugMatVisFcn(2); end
-        end
-        
-        %% Update File String
-        function vidGenerator_updatefile(varargin)
-          if debugMatVis, debugMatVisFcn(1); end
-            movdata.set.movstring = get(movdata.gui.houtput1,'String');
-            dirpos = regexp(movdata.set.movstring,'\');
-            pointpos = regexp(movdata.set.movstring, '\.');
-            movdata.set.movname = movdata.set.movstring(dirpos(end)+1:pointpos(end)-1);
-            scalestring = get(movdata.gui.hinput9,'String');
-            scalestring = scalestring{get(movdata.gui.hinput9,'Value')};
-            set(movdata.prev.hprev,'name',[movdata.set.movname ' - (' num2str(movdata.set.movsize(1)) 'x' num2str(movdata.set.movsize(2)) ') - PREVIEW (' scalestring ')']);
-            if isempty(dirpos); dirpos = 0; end
-            if ~isdir(movdata.set.movstring(1:dirpos(end)));
-                movdata.set.movdir = pwd;
-                movdata.set.movstring = [pwd '\' movdata.set.movstring(dirpos(end)+1:end)];
-                set(movdata.gui.houtput1,'String',movdata.set.movstring);
-            end
-            pointpos = regexp(movdata.set.movstring, '\.');
-            if isempty(pointpos); pointpos = length(movdata.set.movstring); end
-            if length(movdata.set.movstring)-3~=pointpos(end);
-                movdata.set.fileext = '.avi';
-                movdata.set.movstring = [movdata.set.movstring(1:pointpos(end)-1) '.avi'];
-                set(movdata.gui.houtput1,'String',movdata.set.movstring);
-                pointpos = regexp(movdata.set.movstring, '\.');
-            end
-            movdata.set.fileext = movdata.set.movstring(pointpos:end);
-            movdata.set.movcodec = [];
-            for iii = 1:length(movdata.FilterSpec);
-                if regexp(movdata.FilterSpec{iii,1},movdata.set.fileext)==2;
-                    movdata.set.movcodec = movdata.FilterSpec{iii,2}(1:end-8);
-                    break
-                end
-            end
-            if isempty(movdata.set.movcodec);
-                movdata.set.movcodec = 'Uncompressed AVI';
-                movdata.set.fileext = '.avi';
-                movdata.set.movstring = strrep(movdata.set.movstring,movdata.set.fileext,'.avi');
-                set(movdata.gui.houtput1,'String',movdata.set.movstring);
-            end
-            codecpopup = get(movdata.gui.houtput4,'String');
-            for iii = 1:length(codecpopup);
-                if strcmp(codecpopup{iii},movdata.set.movcodec) || strcmp(codecpopup{iii},['FFMPEG > ' movdata.set.movcodec]);
-                    setpopupvalue = iii;
-                    break
-                end
-            end
-            set(movdata.gui.houtput4,'Value',setpopupvalue);
-            switch movdata.set.movcodec
-                case 'Motion JPEG 2000'
-                    set(movdata.gui.houtput7,'String','Compress:','Enable','on');
-                    set(movdata.gui.houtput8,'String',num2str(10),'Enable','on');
-                case 'Archival'
-                    set(movdata.gui.houtput7,'String','Compress:','Enable','off');
-                    set(movdata.gui.houtput8,'String',num2str(10),'Enable','off');
-                case 'Uncompressed AVI'
-                    set(movdata.gui.houtput7,'String','Quality [%]:','Enable','off');
-                    set(movdata.gui.houtput8,'String',num2str(100),'Enable','off');
-                otherwise
-                    set(movdata.gui.houtput7,'String','Quality [%]:','Enable','on');
-                    set(movdata.gui.houtput8,'String',num2str(75),'Enable','on');
-            end
-            figure(movdata.gui.hvidgen);
-			if debugMatVis, debugMatVisFcn(2); end
-        end
-        
-        %% Choose Codec
-        function vidGenerator_choosecodec(varargin)
-          if debugMatVis, debugMatVisFcn(1); end
-            popupvalue = get(movdata.gui.houtput4,'Value');
-            codecpopup = get(movdata.gui.houtput4,'String');
-            movdata.set.movcodec = codecpopup{popupvalue};
-            for iii = 1:length(movdata.FilterSpec);
-                if regexp(movdata.FilterSpec{iii,2},strrep(movdata.set.movcodec,'FFMPEG > ',''))==1;
-                    movdata.set.fileext = movdata.FilterSpec{iii,1}(2:end);
-                end
-            end
-            movdata.set.movstring = get(movdata.gui.houtput1,'String');
-            pointpos = regexp(movdata.set.movstring, '\.');
-            if length(movdata.set.movstring)-3==pointpos;
-                movdata.set.movstring = strrep(movdata.set.movstring,movdata.set.movstring(pointpos:end),movdata.set.fileext);
-            else
-                movdata.set.movstring = [movdata.set.movstring movdata.set.fileext];
-            end
-            set(movdata.gui.houtput1,'String',movdata.set.movstring);
-            switch movdata.set.movcodec
-                case 'Motion JPEG 2000'
-                    set(movdata.gui.houtput7,'String','Compress:','Enable','on');
-                    set(movdata.gui.houtput8,'String',num2str(10),'Enable','on');
-                case 'Archival'
-                    set(movdata.gui.houtput7,'String','Compress:','Enable','off');
-                    set(movdata.gui.houtput8,'String',num2str(10),'Enable','off');
-                case 'Uncompressed AVI'
-                    set(movdata.gui.houtput7,'String','Quality [%]:','Enable','off');
-                    set(movdata.gui.houtput8,'String',num2str(100),'Enable','off');
-                otherwise
-                    set(movdata.gui.houtput7,'String','Quality [%]:','Enable','on');
-                    set(movdata.gui.houtput8,'String',num2str(75),'Enable','on');
-            end
-            clear popupvalue codecpopup setcodec movstring pointpos
-            figure(movdata.gui.hvidgen);
-			if debugMatVis, debugMatVisFcn(2); end
-        end
-        
-        %% Set FrameRate/CompressionRate/Quality
-        function vidGenerator_FCQ(varargin)
-            if debugMatVis, debugMatVisFcn(1); end
-            movdata.set.movFrameRate = str2num(get(movdata.gui.houtput6,'String'));
-            switch movdata.set.movcodec
-                case 'Motion JPEG 2000'
-                    movdata.set.movcompress = str2num(get(movdata.gui.houtput8,'String'));
-                case 'Motion JPEG AVI'
-                    movdata.set.movquality = str2num(get(movdata.gui.houtput8,'String'));
-                case 'MPEG-4'
-            end
-			if debugMatVis, debugMatVisFcn(2); end
-        end
-        
-        %% Activate Record
-        function vidGenerator_record(varargin)
-            if debugMatVis, debugMatVisFcn(1); end
-            movdata.rec = get(movdata.gui.hvidgen1,'Value');
-            if movdata.rec
-                vidWriter('initiate');
-                set(movdata.gui.hvidgen1,'CData',icon_Stop);
-                set(btPlayAll , 'CData',0.9*icon_RecordAll);
-                set(btPlayZoom, 'CData',0.9*icon_RecordZoom);
-            else
-                vidWriter('terminate');
-                set(movdata.gui.hvidgen1,'CData',icon_Record);
-                set(btPlayAll , 'CData',arrowAll);
-                set(btPlayZoom , 'CData',arrowZoom);
-            end
-			if debugMatVis, debugMatVisFcn(2); end
-        end
-        
-        %% Close VidGenerator
-        function vidGenerator_showHide(varargin)
-            if debugMatVis, debugMatVisFcn(1); end
-            switch varargin{3}
-                case 'hide'
-                    set([movdata.gui.hvidgen movdata.prev.hprev], 'Visible','off');
-                    set(tbRecord, 'Value',0);
-                    if withAlpha
-                        c = [0 0 0];
-                    else
-                        c = get(0,'DefaultFigureColor');
-                    end
-                    for iii=1:length(movdata.parts);
-                        set(movdata.set.parts{iii}.handle, 'Color',c);
-                        al = findobj(movdata.set.parts{iii}.handle ,'Type','Axes');
-                        for jjj=1:numel(al)
-                            set(al(jjj),'XColor',movdata.set.movLabelColor,'YColor',movdata.set.movLabelColor);
-                            set(get(al(jjj),'XLabel'),'Color','k');
-                            set(get(al(jjj),'YLabel'),'Color','k');
-                        end
-                    end
-                case 'show'
-                    set([movdata.gui.hvidgen movdata.prev.hprev], 'Visible','on');
-                    set(tbRecord, 'Value',1);
-                    for iii=1:length(movdata.parts);
-                        set(movdata.set.parts{iii}.handle, 'Color',movdata.set.movPartsbg);
-                        al = findobj(movdata.set.parts{iii}.handle ,'Type','Axes');
-                        for jjj=1:numel(al)
-                            set(al(jjj),'XColor',movdata.set.movLabelColor,'YColor',movdata.set.movLabelColor);
-                            set(get(al(jjj),'XLabel'),'Color',movdata.set.movLabelColor);
-                            set(get(al(jjj),'YLabel'),'Color',movdata.set.movLabelColor);
-                        end
-                    end
-            end
-			if debugMatVis, debugMatVisFcn(2); end
-        end
-    end
+      elseif ~isfield(movdata,'gui');
+        % Some general paramters
+        gp = get(gui, 'Position');
+        pos0=[gp(1)+gp(3)+20 gp(2)]; % Position of vidGenerator windows x0 y0
+        res = 3; % internal parameter print resolution for 'hardcopy'
+        set([imageWin, zoomWin, plotWin], 'ResizeFcn','');
+        set(tbLinkWin, 'Enable','off');
+        set(tbPlotsYLim, 'Value',1);
+        vidGeneratorInitialize;
+      else
+        set([imageWin, zoomWin, plotWin], 'ResizeFcn','');
+        set(tbLinkWin, 'Enable','off');
+        set(tbPlotsYLim, 'Value',1);
+        vidGeneratorShowHide(0,0,'show');
+      end
 
+      function vidGeneratorInitialize
+        if debugMatVis, debugMatVisFcn(1); end
+        % Test for available movdata.codecs
+        profiles=VideoWriter.getProfiles();
+        movdata.codecs=[];
+        for iii=1:length(profiles);
+          movdata.codecs{iii,1}=profiles(iii).Name;
+        end
+
+        % Test for ffmpeg
+        [status,result] = system('ffmpeg');
+        if ~strcmp(result(1:14),'ffmpeg version');
+          hffmpegwarn = questdlg({'Could not find FFMPEG in the system path.';'Codecs will be limited to the ones which come with Matlab.';'Press Ok to visit Source.'},'FFMPEG Warning','Ok','Skip Information','Ok');
+          switch hffmpegwarn
+            case 'Ok'
+              [status result] = system('start http://www.ffmpeg.org');
+          end
+        else
+          if ~any(strcmp(movdata.codecs,'MPEG-4'));
+            movdata.codecs{end+1,1}='FFMPEG > MPEG-4';
+          end
+          movdata.codecs{end+1,1}='FFMPEG > Theora';
+        end
+
+        % Test for export_fig
+        % Stephan: Not clear what's it for, since export_fig is not
+        % used !?
+        %             exitstartup = false;
+        %             if ~exist('export_fig','file');
+        %                 hexport_figwarn = msgbox({'export_fig.m is required for VidGenerator.';'Press Ok to visit Source.'},'export_fig Warning','warn');
+        %                 uiwait(hexport_figwarn);
+        %                 [status result] = system('start http://www.mathworks.se/matlabcentral/fileexchange/23629-exportfig');
+        %                 exitstartup = true;
+        %             end
+
+        % Set movdata.FilterSpecs
+        movdata.FilterSpec = [];
+        if any(strcmp(movdata.codecs,'Archival'));movdata.FilterSpec{end+1,1}='*.mj2';movdata.FilterSpec{end,2}='Archival (*.mj2)';end
+        if any(strcmp(movdata.codecs,'Motion JPEG 2000'));movdata.FilterSpec{end+1,1}='*.mj2';movdata.FilterSpec{end,2}='Motion JPEG 2000 (*.mj2)';end
+        if any(strcmp(movdata.codecs,'Uncompressed AVI'));movdata.FilterSpec{end+1,1}='*.avi';movdata.FilterSpec{end,2}='Uncompressed AVI (*.avi)';end
+        if any(strcmp(movdata.codecs,'Motion JPEG AVI'));movdata.FilterSpec{end+1,1}='*.avi';movdata.FilterSpec{end,2}='Motion JPEG AVI (*.avi)';end
+        if any(strcmp(movdata.codecs,'MPEG-4'));movdata.FilterSpec{end+1,1}='*.mp4';movdata.FilterSpec{end,2}='MPEG-4 (*.mp4)';end
+        if any(strcmp(movdata.codecs,'FFMPEG > MPEG-4'));movdata.FilterSpec{end+1,1}='*.mp4';movdata.FilterSpec{end,2}='MPEG-4 (*.mp4)';end
+        if any(strcmp(movdata.codecs,'FFMPEG > Theora'));movdata.FilterSpec{end+1,1}='*.ogg';movdata.FilterSpec{end,2}='Theora (*.ogg)';end
+
+        % Set File Name from presettings
+        if ~isfield(movdata,'set.movname'); movdata.set.movname = 'movie_file_name';end
+        if ~isfield(movdata,'set.movdir'); movdata.set.movdir = pwd;end
+        if ~isfield(movdata,'set.movcodec'); movdata.set.movcodec = 'Uncompressed AVI';end
+        movdata.set.fileext = [];
+        for iii=1:length(movdata.FilterSpec);
+          if regexp(movdata.FilterSpec{iii,2},movdata.set.movcodec,'ONCE')==1;
+            movdata.set.fileext = movdata.FilterSpec{iii,1}(2:end);
+            break
+          end
+        end
+        movdata.set.movstring=[movdata.set.movdir '\' movdata.set.movname movdata.set.fileext];
+
+        % Set used codec from presettings
+        if ~isfield(movdata,'set.codecval');
+          for iii=1:length(movdata.codecs);
+            if ~isempty(regexp(movdata.codecs{iii},movdata.set.movcodec,'ONCE'));
+              movdata.set.codecval = iii;
+              break
+            end
+          end
+        end
+        if strcmp(movdata.set.movcodec,'Uncompressed AVI'); movdata.set.movquality = 100; end
+
+        % set Quality/compression from presettings
+        if strcmp(movdata.set.movcodec,'Motion JPEG 2000') || strcmp(movdata.set.movcodec,'Archival');
+          movdata.set.qualstring = 'Compress:';
+          movdata.set.qualval = movdata.set.movcompress;
+        else
+          movdata.set.qualstring = 'Quality [%]:';
+          movdata.set.qualval = movdata.set.movquality;
+        end
+        vidGeneratorGenerateGUI;
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+      function vidGeneratorGenerateGUI(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        if isfield(movdata,'gui') && ~isempty(movdata.gui.hvidgen)
+          delete(movdata.gui.hvidgen);
+          delete(movdata.prev.hprev);
+          movdata.gui.hvidgen = [];
+        end
+        % Find visible windows
+        oldMovParts = movdata.parts;
+        movdata.parts = [];
+        for iii = 1:nMat
+          if get(tbWin(1), 'Value')
+            movdata.parts(end+1) = imageWin(iii);
+          end
+          if get(tbWin(2), 'Value')
+            movdata.parts(end+1) = zoomWin(iii);
+          end
+          if get(tbWin(3), 'Value')
+            movdata.parts(end+1) = plotWin(iii);
+          end
+        end
+        if strcmp(get(histWin,'Visible'),'on')
+          movdata.parts(end+1) = histWin;
+        end
+        if with2DHist
+          if strcmp(get(matVis2DHist.figHandles.zoomWin,'Visible'),'on')
+            movdata.parts(end+1) = matVis2DHist.figHandles.zoomWin;
+          end
+          if strcmp(get(matVis2DHist.figHandles.imageWin,'Visible'),'on')
+            movdata.parts(end+1) = matVis2DHist.figHandles.imageWin;
+          end
+          if strcmp(get(matVis2DHist.figHandles.plotWin,'Visible'),'on')
+            movdata.parts(end+1) = matVis2DHist.figHandles.plotWin;
+          end
+        end
+        if ~isequal(oldMovParts, movdata.parts)
+          movdata.set.parts = [];
+          for iii=1:length(movdata.parts);
+            movdata.set.parts{iii}.handle = movdata.parts(iii); % include input figure handle in presetting structure
+            movdata.set.parts{iii}.name = get(movdata.parts(iii),'name');
+            movdata.set.parts{iii}.status = 1;
+            set(movdata.set.parts{iii}.handle, 'Color',movdata.set.movPartsbg);
+            for kkk=1:numel(movdata.set.parts)
+              al = findobj(movdata.set.parts{kkk}.handle ,'Type','Axes');
+              for jjj=1:numel(al)
+                set(al(jjj),'XColor',movdata.set.movLabelColor,'YColor',movdata.set.movLabelColor);
+                set(get(al(jjj),'XLabel'),'Color',movdata.set.movLabelColor);
+                set(get(al(jjj),'YLabel'),'Color',movdata.set.movLabelColor);
+              end
+            end
+          end
+          nRows = ceil(length(movdata.parts)/2);
+          if length(movdata.parts)==1
+            nCols = 1;
+          else
+            nCols = 2;
+          end
+          ct = 0;
+          defaultTitleHeight = 0.9;
+          for kkk = 1:nRows
+            for jjj=1:nCols
+              ct = ct +1;
+              movdata.set.parts{ct}.pos = [(jjj-1)/nCols defaultTitleHeight*(1-kkk/nRows) 1/nCols defaultTitleHeight/nRows];
+            end
+          end
+          if mod(length(movdata.parts),2) && nRows > 1
+            movdata.set.parts(ct) = [];
+            movdata.set.parts{ct-1}.pos = [0 0 1 defaultTitleHeight/nRows];
+          end
+        end
+        %% Evaluate existing movie parts
+        for iii=1:length(movdata.parts);
+          set(movdata.parts(iii),'Units','pixels');
+          movdata.set.parts{iii}.origpos = get(movdata.parts(iii),'Position');
+        end
+        %% Open GUI
+        nparts=length(movdata.parts);
+        movdata.gui.hvidgen=figure('Units','pixels','Color',[.94 .94 .94],'MenuBar','none','HandleVisibility', 'off',...
+          'Name','Video Generator','NumberTitle','off','Position',[pos0(1) pos0(2) 495 259.3+nparts*15.6],...
+          'Resize','off','tag','movdata.gui.hvidgen', 'CloseRequestFcn', {@vidGeneratorShowHide,'hide'});  %pos0(2)-(259.3+nparts*15.6)
+        % Stephan: Not sure about the function of exitstartup
+        %                 if exitstartup;
+        %                     vidGenerator_hide;
+        %                 else
+        % Movie Input Panel
+        movdata.gui.hinput=uipanel('Parent',movdata.gui.hvidgen,'Units','pixels','Title','Movie Input',...
+          'Position',[11 141.4 476 114.4+nparts*15.6],'tag','movdata.gui.hinput');
+        row1=85+nparts*15.6; % rowposition for panel 1
+        row2=65+nparts*15.6-3;
+        row3=45+nparts*15.6-3;
+        % Movie Size
+        movdata.gui.hinput1 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','HorizontalAlignment','left',...
+          'Position',[6 row1 141 13],'String','Movie Frame Size (in pixels):',...
+          'Style','text','tag','movdata.gui.hinput1');
+        movdata.gui.hinput2 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',[1 1 1],...
+          'Callback',@vidGeneratorPreview,'HorizontalAlignment','right','Position',[151 row1-2.5 50 15.6],...
+          'String',movdata.set.movsize(1),'Style','edit','tag','movdata.gui.hinput2');
+        movdata.gui.hinput3 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','HorizontalAlignment','left',...
+          'Position',[201 row1 10 13],'String','x','Style','text','tag','movdata.gui.hinput3');
+        movdata.gui.hinput4 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',[1 1 1],...
+          'Callback',@vidGeneratorPreview,'HorizontalAlignment','right','Position',[211 row1-2.5 50 15.6],...
+          'String',movdata.set.movsize(2),'Style','edit','tag','movdata.gui.hinput4');
+        % Parts background color
+        movdata.gui.hinput12 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','HorizontalAlignment','right',...
+          'Position',[310 row2-1.3+5 60 14.3],'String','Parts color:','Style','text','tag','movdata.gui.hinput5');
+        movdata.gui.hinput13 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',movdata.set.movPartsbg,...
+          'Callback',{@vidGeneratorBgColor,'axes'},'Position',[456-80 row2-2.5+7 14 14],'String',[],'Style','pushbutton','tag','movdata.gui.hinput6');
+        % Figure background color
+        movdata.gui.hinput5 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','HorizontalAlignment','right',...
+          'Position',[310 row1-1.3 60 14.3],'String','Figure color:','Style','text','tag','movdata.gui.hinput5');
+        movdata.gui.hinput6 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',movdata.set.movbg,...
+          'Callback',{@vidGeneratorBgColor,'figure'},'Position',[456-80 row1-2.5+2 14 14],'String',[],'Style','pushbutton','tag','movdata.gui.hinput6');
+        % Title color
+        movdata.gui.hinput14 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','HorizontalAlignment','right',...
+          'Position',[390 row1-1.3 60 14.3],'String','Title color:','Style','text','tag','movdata.gui.hinput5');
+        movdata.gui.hinput15 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',movdata.set.movTitleColor,...
+          'Callback',{@vidGeneratorBgColor,'title'},'Position',[456 row1-2.5+2 14 14],'String',[],'Style','pushbutton','tag','movdata.gui.hinput6');
+        % Label color
+        movdata.gui.hinput16 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','HorizontalAlignment','right',...
+          'Position',[390 row2-1.3+5 60 14.3],'String','Label color:','Style','text','tag','movdata.gui.hinput5');
+        movdata.gui.hinput17 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',movdata.set.movLabelColor,...
+          'Callback',{@vidGeneratorBgColor,'label'},'Position',[456 row2-2.5+7 14 14],'String',[],'Style','pushbutton','tag','movdata.gui.hinput6');
+        % Update preview
+        movdata.gui.hinput7 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','Callback',@vidGeneratorGenerateGUI,...
+          'Position',[370 row3-2.5+2 100 20],'String','Update preview','Style','pushbutton','tag','movdata.gui.hinput7','FontSize',8);
+        % Scaling
+        movdata.gui.hinput8 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','Position',[6 mean([row2,row3])+3 50 13],...
+          'String','Scaling:','Style','text','tag','movdata.gui.hinput8','HorizontalAlignment','left');
+        movdata.gui.hinput9 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',[1 1 1],...
+          'Callback',@vidGeneratorPreview,'HorizontalAlignment','right','Position',[50 mean([row2,row3]) 60 20.8],...
+          'String',{'100 %';'75 %';'50 %'},'Style','popup','tag','movdata.gui.hinput9','value',movdata.set.prevscale);
+        % Units
+        movdata.gui.hinput10 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','HorizontalAlignment','left',...
+          'Position',[115 mean([row2,row3])+3 122 13],'String','Units for Movie Parts:','Style','text','tag','movdata.gui.hinput10');
+        movdata.gui.hinput11 = uicontrol('Parent',movdata.gui.hinput,'Units','pixels','BackgroundColor',[1 1 1],...
+          'Callback',@vidGeneratorPreview,'Position',[225 mean([row2,row3]) 80 20.8],'String',{'normalized'},...
+          'Style','popup','tag','movdata.gui.hinput11','value',movdata.set.partunits);
+
+        % Panel - movie parts
+        movdata.gui.hparts = uipanel('Parent',movdata.gui.hinput,'Units','pixels','Title','Available Movie Parts',...
+          'Position',[6 7.5 462.5 39+nparts*15.6],'tag','movdata.gui.hparts');
+        % input: title
+        coltitle=7.8+nparts*15.6;
+        if movdata.set.titlestatus==true;
+          enablestat = 'on';
+        else
+          enablestat = 'off';
+        end
+        movdata.gui.hparts1 = uicontrol('Parent',movdata.gui.hparts,'Units','pixels','Callback',@vidGeneratorEnable,...
+          'Position',[9 coltitle-1.3 47 13],'String',[],...
+          'Style','checkbox','Value',movdata.set.titlestatus,'tag','movdata.gui.hparts1');
+        movdata.gui.hparts2 = uicontrol('Parent',movdata.gui.hparts,'BackgroundColor',[1 1 1],'Callback',@vidGeneratorPreview,...
+          'Units','pixels','HorizontalAlignment','left','Position',[26 coltitle-2.5 130 15.6],...
+          'String',movdata.set.title,'Style','edit','tag','movdata.gui.hparts2','enable',enablestat);
+        movdata.gui.hparts3 = uicontrol('Parent',movdata.gui.hparts,'Units','pixels','enable',enablestat,...
+          'HorizontalAlignment','left','Position',[166 coltitle 93 13],...
+          'String','Position in Frame:','Style','text','tag','movdata.gui.hparts3');
+        movdata.gui.hparts4 = uicontrol('Parent',movdata.gui.hparts,'Units','pixels','BackgroundColor',[1 1 1],...
+          'Callback',@vidGeneratorPreview,'HorizontalAlignment','right','Position',[253.5 coltitle-2.3 50 15.6],...
+          'String',movdata.set.titlepos(1),'Style','edit','tag','movdata.gui.hparts4','enable',enablestat);
+        movdata.gui.hparts5 = uicontrol('Parent',movdata.gui.hparts,'Units','pixels','BackgroundColor',[1 1 1],...
+          'Callback',@vidGeneratorPreview,'HorizontalAlignment','right','Position',[303.5 coltitle-2.3 50 15.6],...
+          'String',movdata.set.titlepos(2),'Style','edit','tag','movdata.gui.hparts5','enable',enablestat);
+        movdata.gui.hparts6 = uicontrol('Parent',movdata.gui.hparts,'Units','pixels',...
+          'HorizontalAlignment','left','Position',[358.5 coltitle 80 13],...
+          'String','FontSize (pt):','Style','text','tag','movdata.gui.hparts6','enable',enablestat);
+        movdata.gui.hparts7 = uicontrol('Parent',movdata.gui.hparts,'Units','pixels','BackgroundColor',[1 1 1],...
+          'Callback',@vidGeneratorPreview,'HorizontalAlignment','right','Position',[428.5 coltitle-2.3 25 15.6],...
+          'String',movdata.set.titlesize,'Style','edit','tag','movdata.gui.hparts7','enable',enablestat);
+        % Loop over image inputs
+        for iii=1:nparts;
+          col=coltitle-15.6*iii;
+          if movdata.set.parts{iii}.status==true;
+            enablestat = 'on';
+          else
+            enablestat = 'off';
+          end
+          movdata.gui.hpartsim1{iii} = uicontrol('Parent',movdata.gui.hparts,'Units','pixels','Callback',@vidGeneratorEnable,...
+            'Position',[9 col-1.3 47 13],'String',[],...
+            'Style','checkbox','Value',movdata.set.parts{iii}.status,'tag',['movdata.gui.hpartsim1{' num2str(iii) '}']);
+          movdata.gui.hpartsim2{iii} = uicontrol('Parent',movdata.gui.hparts,'enable',enablestat,...
+            'Units','pixels','HorizontalAlignment','left','Position',[26 col 130 13],...
+            'String',movdata.set.parts{iii}.name,'Style','text','tag',['movdata.gui.hpartsim2{' num2str(iii) '}']);
+          movdata.gui.hpartsim3{iii} = uicontrol('Parent',movdata.gui.hparts,'enable',enablestat,'Units','pixels',...
+            'HorizontalAlignment','left','Position',[166 col 93 13],...
+            'String','Position in Frame:','Style','text','tag',['movdata.gui.hpartsim3{' num2str(iii) '}']);
+          movdata.gui.hpartsim4{iii} = uicontrol('Parent',movdata.gui.hparts,'enable',enablestat,'Units','pixels','BackgroundColor',[1 1 1],...
+            'Callback',@vidGeneratorPreview,'HorizontalAlignment','right','Position',[253.5 col-2.5 50 15.6],...
+            'String',movdata.set.parts{iii}.pos(1),'Style','edit','tag',['movdata.gui.hpartsim4{' num2str(iii) '}']);
+          movdata.gui.hpartsim5{iii} = uicontrol('Parent',movdata.gui.hparts,'enable',enablestat,'Units','pixels','BackgroundColor',[1 1 1],...
+            'Callback',@vidGeneratorPreview,'HorizontalAlignment','right','Position',[303.5 col-2.5 50 15.6],...
+            'String',movdata.set.parts{iii}.pos(2),'Style','edit','tag',['movdata.gui.hpartsim5{' num2str(iii) '}']);
+          movdata.gui.hpartsim6{iii} = uicontrol('Parent',movdata.gui.hparts,'enable',enablestat,'Units','pixels','BackgroundColor',[1 1 1],...
+            'Callback',@vidGeneratorPreview,'HorizontalAlignment','right','Position',[353.5 col-2.5 50 15.6],...
+            'String',movdata.set.parts{iii}.pos(3),'Style','edit','tag',['movdata.gui.hpartsim6{' num2str(iii) '}']);
+          movdata.gui.hpartsim7{iii} = uicontrol('Parent',movdata.gui.hparts,'enable',enablestat,'Units','pixels','BackgroundColor',[1 1 1],...
+            'Callback',@vidGeneratorPreview,'HorizontalAlignment','right','Position',[403.5 col-2.5 50 15.6],...
+            'String',movdata.set.parts{iii}.pos(4),'Style','edit','tag',['movdata.gui.hpartsim7{' num2str(iii) '}']);
+        end
+        % Movie Output Panel
+        movdata.gui.houtput=uipanel('Parent',movdata.gui.hvidgen,'Units','pixels','Title','Movie Output',...
+          'Position',[11 37.4 476 104],'tag','movdata.gui.houtput');
+        movdata.gui.houtput1 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','BackgroundColor',[1 1 1],...
+          'Callback',@vidGeneratorUpdateFile,'HorizontalAlignment','left','Position',[9 65 395 15.6],...
+          'String',[movdata.set.movdir '\' movdata.set.movname movdata.set.fileext],'Style','edit','tag','movdata.gui.houtput1');
+        movdata.gui.houtput2 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','Callback',@vidGeneratorSaveFile,...
+          'Position',[405 64.3 60 18],'String','Save as','Style','pushbutton','tag','movdata.gui.houtput2');
+        movdata.gui.houtput3 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','HorizontalAlignment','left',...
+          'Position',[10 42 38 13],'String','Codec:','Style','text','tag','movdata.gui.houtput3');
+        movdata.gui.houtput4 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','BackgroundColor',[1 1 1],...
+          'Callback',@vidGeneratorChooseCodec,'Position',[49 39 202 20],'String',movdata.codecs,...
+          'Style','popup','tag','movdata.gui.houtput4','value',movdata.set.codecval);
+        movdata.gui.houtput5 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','HorizontalAlignment','left',...
+          'Position',[261 42 77 13],'String','FrameRate [f/s]:','Style','text','tag','movdata.gui.houtput5');
+        movdata.gui.houtput6 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','BackgroundColor',[1 1 1],...
+          'Callback',@vidGeneratorFCQ,'HorizontalAlignment','right','Position',[342 38 30 22],...
+          'String',movdata.set.movFrameRate,'Style','edit','tag','movdata.gui.houtput6');
+        movdata.gui.houtput7 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','HorizontalAlignment','left',...
+          'Position',[377 42 62 13],'String',movdata.set.qualstring,'Style','text','tag','movdata.gui.houtput7');
+        movdata.gui.houtput8 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','BackgroundColor',[1 1 1],...
+          'Callback',@vidGeneratorFCQ,'HorizontalAlignment','right','Position',[434 38 30 22],...
+          'String',movdata.set.qualval,'Style','edit','tag','movdata.gui.houtput8');
+        if strcmp(movdata.set.movcodec,'Uncompressed AVI');set([movdata.gui.houtput7 movdata.gui.houtput8],'String',num2str(100),'Enable','off');end
+        movdata.gui.houtput9 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','Enable','off',...
+          'HorizontalAlignment','left','Position',[10 15 70 13],'String','ffmpeg:',...
+          'Style','text','tag','movdata.gui.houtput9');
+        movdata.gui.houtput10 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','BackgroundColor',[1 1 1],...
+          'Callback',[],'Enable','off','HorizontalAlignment','left',...
+          'Position',[50 12.5 338 15.6],'String',[],'Style','edit','tag','movdata.gui.houtput10');
+        movdata.gui.houtput11 = uicontrol('Parent',movdata.gui.houtput,'Units','pixels','Callback',[],...
+          'Enable','off','Position',[395 11.5 70 18],'String','More Options',...
+          'Style','pushbutton','tag','movdata.gui.houtput11');
+        movdata.gui.hvidgen1 = uicontrol('Parent',movdata.gui.hvidgen,'Units','pixels','Callback',@vidGeneratorRecord,...
+          'CData',icon_Record,'Position',[10 10 22 22],'String',[],'Style','togglebutton','tag','movdata.gui.hvidgen1','value',movdata.rec);
+        %             movdata.gui.hvidgen2 = uicontrol('Parent',movdata.gui.hvidgen,'Units','pixels','Callback',@vidGeneratorShowHide,...
+        %                 'Position',[60 10 50 22],'String','Hide','Style','pushbutton','tag','movdata.gui.hvidgen2');
+        movdata.gui.hvidgen3 = uicontrol('Parent',movdata.gui.hvidgen,'Units','pixels','HorizontalAlignment','left',...
+          'Position',[35 12 500 15],'String','Adjust settings, then press button to activate recording.',...
+          'Style','text','tag','movdata.gui.hvidgen3');
+        % %                 end
+        %             else
+        %                 vidGenerator_hide
+        adjustGuiSize(movdata.gui.hvidgen);
+        vidGeneratorPreview;
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+      %% Draw Preview
+      function vidGeneratorPreview(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        movdata.set.partunits = get(movdata.gui.hinput11,'value');
+        prevunits = get(movdata.gui.hinput11,'String');
+        prevunits = prevunits{movdata.set.partunits};
+        movdata.set.movsize(1) = str2num(get(movdata.gui.hinput2,'String'));
+        movdata.set.movsize(2) = str2num(get(movdata.gui.hinput4,'String'));
+        movdata.set.prevscale = get(movdata.gui.hinput9,'Value');
+        switch movdata.set.prevscale
+          case 1
+            prevscale=1;
+          case 2
+            prevscale=.75;
+          case 3
+            prevscale=.5;
+        end
+        movdata.set.movbg = get(movdata.gui.hinput6,'BackgroundColor');
+        scalestring = get(movdata.gui.hinput9,'String');
+        scalestring = scalestring{get(movdata.gui.hinput9,'Value')};
+        prevname = [movdata.set.movname ' - ' num2str(movdata.set.movsize(1)) ' x ' num2str(movdata.set.movsize(2)) ' - ' scalestring];
+        prevpos = [pos0(1)+512 pos0(2) movdata.set.movsize(1)*prevscale movdata.set.movsize(2)*prevscale];   %pos0(2)-movdata.set.movsize(2)*prevscale
+
+        %             if isfield(movdata.prev,hprev)
+        %                 pos=get(movdata.prev.hprev,'Position');
+        %                 prevpos(1)=pos(1);
+        %                 prevpos(2)=pos(2)+pos(4)-movdata.set.movsize(2)*prevscale;
+        %                 close(movdata.prev.hprev);
+        %             end
+        % create preview window
+        if ~(isfield(movdata,'prev') && ishandle(movdata.prev.hax))
+          movdata.prev.hprev = figure('Position',prevpos,'Color',movdata.set.movbg,'MenuBar','none','HandleVisibility', 'off',...
+            'Units','pixels','NumberTitle','off','Resize','off','Name',['Movie preview. File name: ' prevname],'tag','movdata.prev.hprev', 'CloseRequestFcn', {@vidGeneratorShowHide,'hide'});
+          movdata.prev.hax = axes('Position',[0 0 1 1],'Color',movdata.set.movbg,'XTick',[],'YTick',[],'Parent',movdata.prev.hprev);
+          axis(movdata.prev.hax,'off');
+        end
+
+        %         % create title line in preview
+        %         if get(movdata.gui.hparts1,'Value')==1;
+        %           movdata.set.title = get(movdata.gui.hparts2,'String');
+        %           movdata.set.titlepos = [str2num(get(movdata.gui.hparts4,'String')) str2num(get(movdata.gui.hparts5,'String'))];
+        %           movdata.set.titlesize = str2num(get(movdata.gui.hparts7,'String'));
+        %           prevtitlepos = [0 movdata.set.titlepos(2)-(movdata.set.titlesize*1.5/movdata.set.movsize(2))/2 1 (movdata.set.titlesize*1.5/movdata.set.movsize(2))];
+        %           movdata.prev.prevtitleaxes = axes('Parent',movdata.prev.hprev,'Position',prevtitlepos,'Color',movdata.set.movbg);
+        %           movdata.prev.prevtitletext = text('Position',[movdata.set.titlepos(1) .5],'Parent',movdata.prev.prevtitleaxes,'Color',1-movdata.set.movbg,'HorizontalAlignment','center','String',movdata.set.title,'FontSize',movdata.set.titlesize*prevscale);
+        %           axis off;
+        %         end
+
+        % Create Title Data
+        if movdata.set.titlestatus == true;
+          movdata.titleframe.handle = figure('Position',[1 1 movdata.set.movsize(1) movdata.set.titlesize*1.5],...
+            'MenuBar','none','Units','pixels','NumberTitle','off','Color',movdata.set.movbg,...
+            'Resize','off','Name','Frame for Title','tag','movdata.frame','Visible','off');
+          movdata.titleframe.titleaxes = axes('Parent',movdata.titleframe.handle,'Position',[0 0 1 1],'Color',movdata.set.movbg);
+          movdata.titleframe.titletext = text('Parent',movdata.titleframe.titleaxes,'Position',[movdata.set.titlepos(1) .5],'Color', movdata.set.movTitleColor,'HorizontalAlignment','center','String',movdata.set.title,'FontSize',movdata.set.titlesize,'FontWeight','bold');
+          axis off;
+          drawnow;
+          if movdata.fastCaptureMode == true;
+            movdata.titleframe = vidGeneratorMyHardcopyFigureSet(movdata.titleframe, res);
+            movdata.titleframe.CData = vidGeneratorMyHardcopy(movdata.titleframe, res);
+            vidGeneratorMyHardcopyFigureReset(movdata.titleframe)
+          else
+            movdata.titleframe.CData = export_fig(movdata.titleframe.handle,'-nocrop','-q100','-RGB');%,'-painters'
+            if ndims(movdata.titleframe.CData)==2;
+              movdata.titleframe.CData = repmat(movdata.titleframe.CData,[1 1 3]);
+            end
+          end
+          close(movdata.titleframe.handle);
+        end
+
+        %         % create parts in preview (and adjust original)
+        %         for nprevparts=1:nparts;
+        %           if get(movdata.gui.hpartsim1{nprevparts},'Value')==1;
+        %             movdata.set.parts{nprevparts}.pos = [str2num(get(movdata.gui.hpartsim4{nprevparts},'String'))...
+        %               str2num(get(movdata.gui.hpartsim5{nprevparts},'String'))...
+        %               str2num(get(movdata.gui.hpartsim6{nprevparts},'String'))...
+        %               str2num(get(movdata.gui.hpartsim7{nprevparts},'String'))];
+        %             if get(movdata.gui.hinput11,'Value') == 1;
+        %               part{nprevparts}.abs = movdata.set.parts{nprevparts}.pos.*[movdata.set.movsize(1) movdata.set.movsize(2) movdata.set.movsize(1) movdata.set.movsize(2)];
+        %             else
+        %               part{nprevparts}.abs = movdata.set.parts{nprevparts}.pos;
+        %             end
+        %             % reset figure Position
+        %             movdata.set.parts{nprevparts}.origpos = get(movdata.set.parts{nprevparts}.handle,'Position');
+        %             movdata.set.parts{nprevparts}.origpos(3:4) = part{nprevparts}.abs(3:4);
+        %             set(movdata.set.parts{nprevparts}.handle,'Units','pixels','Position',movdata.set.parts{nprevparts}.origpos);
+        %             figure(movdata.set.parts{nprevparts}.handle);
+        %             if movdata.fastCaptureMode == true;
+        %               movdata.set.parts{nprevparts} = vidGeneratorMyHardcopyFigureSet(movdata.set.parts{nprevparts}, res);
+        %               movdata.set.parts{nprevparts}.CData = vidGeneratorMyHardcopy(movdata.set.parts{nprevparts}, res);
+        %               vidGeneratorMyHardcopyFigureReset(movdata.set.parts{nprevparts})
+        %             else
+        %               % get image
+        %               movdata.set.parts{nprevparts}.CData = export_fig(movdata.set.parts{nprevparts}.handle,'-nocrop','-q100','-RGB');
+        %             end
+        %             % draw preview
+        %             movdata.prev.hprevpart{nprevparts} = axes(...
+        %               'Units',prevunits,'Position',movdata.set.parts{nprevparts}.pos,...
+        %               'XColor',1-movdata.set.movbg,'YColor',1-movdata.set.movbg,...
+        %               'XTick',[],'YTick',[],'Box','on','Layer','Top',...
+        %               'Parent',movdata.prev.hprev,'Color',movdata.set.movbg);
+        %             image('Parent',movdata.prev.hprevpart{nprevparts},'CData',movdata.set.parts{nprevparts}.CData,'CDataMapping','scaled');
+        %             if ndims(movdata.set.parts{nprevparts}.CData)==2;
+        %               colormap(grey);
+        %             end
+        %             axis(movdata.prev.hprevpart{nprevparts},'ij');
+        %             axis(movdata.prev.hprevpart{nprevparts},'tight');
+        %           end
+        %         end
+        %         clear nprevparts
+
+        % Create Parts Data
+        for np = 1:length(movdata.set.parts)
+          movdata.set.parts{np}.pos = [str2num(get(movdata.gui.hpartsim4{np},'String'))...
+            str2num(get(movdata.gui.hpartsim5{np},'String'))...
+            str2num(get(movdata.gui.hpartsim6{np},'String'))...
+            str2num(get(movdata.gui.hpartsim7{np},'String'))];
+          if get(movdata.gui.hinput11,'Value') == 1;
+            part{np}.abs = movdata.set.parts{np}.pos.*[movdata.set.movsize(1) movdata.set.movsize(2) movdata.set.movsize(1) movdata.set.movsize(2)];
+          else
+            part{np}.abs = movdata.set.parts{np}.pos;
+          end
+          % reset figure Position
+          movdata.set.parts{np}.origpos = get(movdata.set.parts{np}.handle,'Position');
+          prevFigPos = get(movdata.prev.hprev,'Position');
+          movdata.set.parts{np}.origpos(1:2) = [prevFigPos(1)+prevFigPos(3)*movdata.set.parts{np}.pos(1) prevFigPos(2)-prevFigPos(4)-50++prevFigPos(4)*movdata.set.parts{np}.pos(2)];
+          movdata.set.parts{np}.origpos(3:4) = part{np}.abs(3:4);
+          % Font scaling as set in the settings of the OS has to be
+          % taken into account, as the getframe commad returns the
+          % scaled image (e.g. 1.25x larger than screen pixels dimensions), while get(h, 'Position') returns the image
+          % dimensions as if there was no scaling.
+          set(movdata.set.parts{np}.handle,'Units','pixels','Position',screenSizeScaling*movdata.set.parts{np}.origpos);
+          figure(movdata.set.parts{np}.handle);
+          %Get CData
+          if movdata.set.parts{np}.status == true;
+            % two figure capture options are implemented
+            % fast: directly uses 'hardcopy' and presets the figure
+            % properies before scanning
+            % slow: uses export_fig
+            if movdata.fastCaptureMode == true;
+              movdata.set.parts{np} = vidGeneratorMyHardcopyFigureSet(movdata.set.parts{np}, res);
+              movdata.set.parts{np}.CData = vidGeneratorMyHardcopy(movdata.set.parts{np},res);
+            else
+              movdata.set.parts{np}.CData = export_fig(movdata.set.parts{np}.handle,'-nocrop','-q100','-RGB');%,'-painters'
+              if ndims(movdata.set.parts{np}.CData)==2;
+                movdata.set.parts{np}.CData = repmat(movdata.set.parts{np}.CData,[1 1 3]);
+              end
+            end
+          end
+        end
+
+        % Create frame matrix
+        movdata.prev.CData = uint8(repmat(reshape(255*movdata.set.movbg,[1 1 3]),[movdata.set.movsize(2) movdata.set.movsize(1)]));
+        % fill in titleframe
+        if movdata.set.titlestatus == true;
+          movdata.set.title = get(movdata.gui.hparts2,'String');
+          movdata.set.titlepos = [str2num(get(movdata.gui.hparts4,'String')) str2num(get(movdata.gui.hparts5,'String'))];
+          movdata.set.titlesize = str2num(get(movdata.gui.hparts7,'String'));
+          movdata.titleframe.posy(1) = max([1,round(movdata.set.movsize(2)-(movdata.set.titlepos(2)*movdata.set.movsize(2)+size(movdata.titleframe.CData,1)))]);
+          movdata.titleframe.posy(2) = round(movdata.titleframe.posy(1)+size(movdata.titleframe.CData,1)-1);
+          movdata.prev.CData(movdata.titleframe.posy(1):movdata.titleframe.posy(2),:,:) = movdata.titleframe.CData;
+        end
+        % fill in movie parts
+        for np = 1:length(movdata.set.parts)
+          if movdata.set.parts{np}.status == true;
+            movdata.set.parts{np}.posx(1) = round(movdata.set.parts{np}.pos(1)*movdata.set.movsize(1)+1);
+            movdata.set.parts{np}.posx(2) = round(movdata.set.parts{np}.posx(1) + size(movdata.set.parts{np}.CData,2)-1);
+            movdata.set.parts{np}.posy(1) = round(movdata.set.movsize(2)-(movdata.set.parts{np}.pos(2)*movdata.set.movsize(2)+size(movdata.set.parts{np}.CData,1))+1);
+            movdata.set.parts{np}.posy(2) = round(movdata.set.parts{np}.posy(1) + size(movdata.set.parts{np}.CData,1)-1);
+            movdata.prev.CData(movdata.set.parts{np}.posy(1):movdata.set.parts{np}.posy(2),movdata.set.parts{np}.posx(1):movdata.set.parts{np}.posx(2),:) = movdata.set.parts{np}.CData;
+          end
+        end
+        cla(movdata.prev.hax);
+        movdata.prev.himage = image(movdata.prev.CData,'Parent',movdata.prev.hax);
+        axis(movdata.prev.hax,'off');
+        figure(movdata.gui.hvidgen);
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+      %% Enable/Disable MovieParts
+      function vidGeneratorEnable(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        nparts=length(movdata.parts);
+        movdata.set.titlestatus = get(movdata.gui.hparts1,'Value');
+        if get(movdata.gui.hparts1,'Value')==1;
+          set(movdata.gui.hparts2,'Enable','on');
+          set(movdata.gui.hparts3,'Enable','on');
+          set(movdata.gui.hparts4,'Enable','on');
+          set(movdata.gui.hparts5,'Enable','on');
+          set(movdata.gui.hparts6,'Enable','on');
+          set(movdata.gui.hparts7,'Enable','on');
+        else
+          set(movdata.gui.hparts2,'Enable','off');
+          set(movdata.gui.hparts3,'Enable','off');
+          set(movdata.gui.hparts4,'Enable','off');
+          set(movdata.gui.hparts5,'Enable','off');
+          set(movdata.gui.hparts6,'Enable','off');
+          set(movdata.gui.hparts7,'Enable','off');
+        end
+        for nen=1:nparts;
+          movdata.set.parts{nen}.status = get(movdata.gui.hpartsim1{nen},'Value');
+          if get(movdata.gui.hpartsim1{nen},'Value')==1;
+            set(movdata.gui.hpartsim2{nen},'Enable','on');
+            set(movdata.gui.hpartsim3{nen},'Enable','on');
+            set(movdata.gui.hpartsim4{nen},'Enable','on');
+            set(movdata.gui.hpartsim5{nen},'Enable','on');
+            set(movdata.gui.hpartsim6{nen},'Enable','on');
+            set(movdata.gui.hpartsim7{nen},'Enable','on');
+          else
+            set(movdata.gui.hpartsim2{nen},'Enable','off');
+            set(movdata.gui.hpartsim3{nen},'Enable','off');
+            set(movdata.gui.hpartsim4{nen},'Enable','off');
+            set(movdata.gui.hpartsim5{nen},'Enable','off');
+            set(movdata.gui.hpartsim6{nen},'Enable','off');
+            set(movdata.gui.hpartsim7{nen},'Enable','off');
+          end
+        end
+        vidGeneratorPreview
+        clear nen;
+        figure(movdata.gui.hvidgen);
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+      %% Choose BackgroundColor
+      function vidGeneratorBgColor(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        switch varargin{3}
+          case 'figure'
+            movdata.set.movbg = uisetcolor(get(movdata.gui.hinput6,'BackgroundColor'),'Choose Color for Movie Background');
+            set(movdata.gui.hinput6,'BackgroundColor',movdata.set.movbg);
+          case 'axes'
+            movdata.set.movPartsbg = uisetcolor(get(movdata.gui.hinput13,'BackgroundColor'),'Choose Color for Movie Parts');
+            set(movdata.gui.hinput13,'BackgroundColor',movdata.set.movPartsbg);
+            for iii=1:numel(movdata.set.parts)
+              set(movdata.set.parts{iii}.handle,'Color',movdata.set.movPartsbg);
+            end
+          case 'title'
+            movdata.set.movTitleColor = uisetcolor(get(movdata.gui.hinput15,'BackgroundColor'),'Choose Color for Movie Title');
+            set(movdata.gui.hinput15,'BackgroundColor',movdata.set.movTitleColor);
+          case 'label'
+            movdata.set.movLabelColor = uisetcolor(get(movdata.gui.hinput17,'BackgroundColor'),'Choose Color for Axes Labels');
+            set(movdata.gui.hinput17,'BackgroundColor',movdata.set.movLabelColor);
+            for iii=1:numel(movdata.set.parts)
+              al = findobj(movdata.set.parts{iii}.handle ,'Type','Axes');
+              for jjj=1:numel(al)
+                set(al(jjj),'XColor',movdata.set.movLabelColor,'YColor',movdata.set.movLabelColor);
+                set(get(al(jjj),'XLabel'),'Color',movdata.set.movLabelColor);
+                set(get(al(jjj),'YLabel'),'Color',movdata.set.movLabelColor);
+              end
+            end
+        end
+        vidGeneratorPreview
+        figure(movdata.gui.hvidgen);
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+      %% Choose File to write
+      function vidGeneratorSaveFile(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        [movname,movdir,movtype]=uiputfile(movdata.FilterSpec,'Choose File for Movie Output',get(movdata.gui.houtput1,'String'));
+        movdata.set.movname = movname(1:end-4);
+        movdata.set.movdir = movdir(1:end-1);
+        movdata.set.fileext = movdata.FilterSpec{movtype,1}(2:end);
+        movdata.set.movstring = [movdir movname];
+        set(movdata.gui.houtput1,'String',movdata.set.movstring);
+        scalestring = get(movdata.gui.hinput9,'String');
+        scalestring = scalestring{get(movdata.gui.hinput9,'Value')};
+        set(movdata.prev.hprev,'name',[movdata.set.movname ' - (' num2str(movdata.set.movsize(1)) 'x' num2str(movdata.set.movsize(2)) ') - PREVIEW (' scalestring ')']);
+
+        movdata.set.movcodec = movdata.FilterSpec{movtype,2}(1:end-8);
+        codecpopup = get(movdata.gui.houtput4,'String');
+        for iii = 1:length(codecpopup);
+          if strcmp(codecpopup{iii},movdata.set.movcodec) || strcmp(codecpopup{iii},['FFMPEG > ' movdata.set.movcodec]);
+            setpopupvalue = iii;
+            break
+          end
+        end
+        set(movdata.gui.houtput4,'Value',setpopupvalue);
+        switch movdata.set.movcodec
+          case 'Motion JPEG 2000'
+            set(movdata.gui.houtput7,'String','Compress:','Enable','on');
+            set(movdata.gui.houtput8,'String',num2str(10),'Enable','on');
+          case 'Archival'
+            set(movdata.gui.houtput7,'String','Compress:','Enable','off');
+            set(movdata.gui.houtput8,'String',num2str(10),'Enable','off');
+          case 'Uncompressed AVI'
+            set(movdata.gui.houtput7,'String','Quality [%]:','Enable','off');
+            set(movdata.gui.houtput8,'String',num2str(100),'Enable','off');
+          otherwise
+            set(movdata.gui.houtput7,'String','Quality [%]:','Enable','on');
+            set(movdata.gui.houtput8,'String',num2str(75),'Enable','on');
+        end
+        clear codecpopup setpopupvalue movname movdir movtype;
+        figure(movdata.gui.hvidgen);
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+      %% Update File String
+      function vidGeneratorUpdateFile(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        movdata.set.movstring = get(movdata.gui.houtput1,'String');
+        dirpos = regexp(movdata.set.movstring,'\');
+        pointpos = regexp(movdata.set.movstring, '\.');
+        movdata.set.movname = movdata.set.movstring(dirpos(end)+1:pointpos(end)-1);
+        scalestring = get(movdata.gui.hinput9,'String');
+        scalestring = scalestring{get(movdata.gui.hinput9,'Value')};
+        set(movdata.prev.hprev,'name',[movdata.set.movname ' - (' num2str(movdata.set.movsize(1)) 'x' num2str(movdata.set.movsize(2)) ') - PREVIEW (' scalestring ')']);
+        if isempty(dirpos); dirpos = 0; end
+        if ~isdir(movdata.set.movstring(1:dirpos(end)));
+          movdata.set.movdir = pwd;
+          movdata.set.movstring = [pwd '\' movdata.set.movstring(dirpos(end)+1:end)];
+          set(movdata.gui.houtput1,'String',movdata.set.movstring);
+        end
+        pointpos = regexp(movdata.set.movstring, '\.');
+        if isempty(pointpos); pointpos = length(movdata.set.movstring); end
+        if length(movdata.set.movstring)-3~=pointpos(end);
+          movdata.set.fileext = '.avi';
+          movdata.set.movstring = [movdata.set.movstring(1:pointpos(end)-1) '.avi'];
+          set(movdata.gui.houtput1,'String',movdata.set.movstring);
+          pointpos = regexp(movdata.set.movstring, '\.');
+        end
+        movdata.set.fileext = movdata.set.movstring(pointpos:end);
+        movdata.set.movcodec = [];
+        for iii = 1:length(movdata.FilterSpec);
+          if regexp(movdata.FilterSpec{iii,1},movdata.set.fileext)==2;
+            movdata.set.movcodec = movdata.FilterSpec{iii,2}(1:end-8);
+            break
+          end
+        end
+        if isempty(movdata.set.movcodec);
+          movdata.set.movcodec = 'Uncompressed AVI';
+          movdata.set.fileext = '.avi';
+          movdata.set.movstring = strrep(movdata.set.movstring,movdata.set.fileext,'.avi');
+          set(movdata.gui.houtput1,'String',movdata.set.movstring);
+        end
+        codecpopup = get(movdata.gui.houtput4,'String');
+        for iii = 1:length(codecpopup);
+          if strcmp(codecpopup{iii},movdata.set.movcodec) || strcmp(codecpopup{iii},['FFMPEG > ' movdata.set.movcodec]);
+            setpopupvalue = iii;
+            break
+          end
+        end
+        set(movdata.gui.houtput4,'Value',setpopupvalue);
+        switch movdata.set.movcodec
+          case 'Motion JPEG 2000'
+            set(movdata.gui.houtput7,'String','Compress:','Enable','on');
+            set(movdata.gui.houtput8,'String',num2str(10),'Enable','on');
+          case 'Archival'
+            set(movdata.gui.houtput7,'String','Compress:','Enable','off');
+            set(movdata.gui.houtput8,'String',num2str(10),'Enable','off');
+          case 'Uncompressed AVI'
+            set(movdata.gui.houtput7,'String','Quality [%]:','Enable','off');
+            set(movdata.gui.houtput8,'String',num2str(100),'Enable','off');
+          otherwise
+            set(movdata.gui.houtput7,'String','Quality [%]:','Enable','on');
+            set(movdata.gui.houtput8,'String',num2str(75),'Enable','on');
+        end
+        figure(movdata.gui.hvidgen);
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+      %% Choose Codec
+      function vidGeneratorChooseCodec(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        popupvalue = get(movdata.gui.houtput4,'Value');
+        codecpopup = get(movdata.gui.houtput4,'String');
+        movdata.set.movcodec = codecpopup{popupvalue};
+        for iii = 1:length(movdata.FilterSpec);
+          if regexp(movdata.FilterSpec{iii,2},strrep(movdata.set.movcodec,'FFMPEG > ',''))==1;
+            movdata.set.fileext = movdata.FilterSpec{iii,1}(2:end);
+          end
+        end
+        movdata.set.movstring = get(movdata.gui.houtput1,'String');
+        pointpos = regexp(movdata.set.movstring, '\.');
+        if length(movdata.set.movstring)-3==pointpos;
+          movdata.set.movstring = strrep(movdata.set.movstring,movdata.set.movstring(pointpos:end),movdata.set.fileext);
+        else
+          movdata.set.movstring = [movdata.set.movstring movdata.set.fileext];
+        end
+        set(movdata.gui.houtput1,'String',movdata.set.movstring);
+        switch movdata.set.movcodec
+          case 'Motion JPEG 2000'
+            set(movdata.gui.houtput7,'String','Compress:','Enable','on');
+            set(movdata.gui.houtput8,'String',num2str(10),'Enable','on');
+          case 'Archival'
+            set(movdata.gui.houtput7,'String','Compress:','Enable','off');
+            set(movdata.gui.houtput8,'String',num2str(10),'Enable','off');
+          case 'Uncompressed AVI'
+            set(movdata.gui.houtput7,'String','Quality [%]:','Enable','off');
+            set(movdata.gui.houtput8,'String',num2str(100),'Enable','off');
+          otherwise
+            set(movdata.gui.houtput7,'String','Quality [%]:','Enable','on');
+            set(movdata.gui.houtput8,'String',num2str(75),'Enable','on');
+        end
+        clear popupvalue codecpopup setcodec movstring pointpos
+        figure(movdata.gui.hvidgen);
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+      %% Set FrameRate/CompressionRate/Quality
+      function vidGeneratorFCQ(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        movdata.set.movFrameRate = str2num(get(movdata.gui.houtput6,'String'));
+        switch movdata.set.movcodec
+          case 'Motion JPEG 2000'
+            movdata.set.movcompress = str2num(get(movdata.gui.houtput8,'String'));
+          case 'Motion JPEG AVI'
+            movdata.set.movquality = str2num(get(movdata.gui.houtput8,'String'));
+          case 'MPEG-4'
+        end
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+      %% Activate Record
+      function vidGeneratorRecord(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        movdata.rec = get(movdata.gui.hvidgen1,'Value');
+        if movdata.rec
+          vidWriter('initiate');
+          set(movdata.gui.hvidgen1,'CData',icon_Stop);
+          set(btPlayAll , 'CData',0.9*icon_RecordAll);
+          set(btPlayZoom, 'CData',0.9*icon_RecordZoom);
+        else
+          vidWriter('terminate');
+          set(movdata.gui.hvidgen1,'CData',icon_Record);
+          set(btPlayAll , 'CData',arrowAll);
+          set(btPlayZoom , 'CData',arrowZoom);
+        end
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+      %% Close VidGenerator
+      function vidGeneratorShowHide(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        switch varargin{3}
+          case 'hide'
+            set([movdata.gui.hvidgen movdata.prev.hprev], 'Visible','off');
+            set(tbRecord, 'Value',0);
+            if withAlpha
+              c = [0 0 0];
+            else
+              c = get(0,'DefaultFigureColor');
+            end
+            for iii=1:length(movdata.parts);
+              set(movdata.set.parts{iii}.handle, 'Color',c);
+              al = findobj(movdata.set.parts{iii}.handle ,'Type','Axes');
+              for jjj=1:numel(al)
+                set(al(jjj),'XColor',movdata.set.movLabelColor,'YColor',movdata.set.movLabelColor);
+                set(get(al(jjj),'XLabel'),'Color','k');
+                set(get(al(jjj),'YLabel'),'Color','k');
+              end
+            end
+          case 'show'
+            set([movdata.gui.hvidgen movdata.prev.hprev], 'Visible','on');
+            set(tbRecord, 'Value',1);
+            for iii=1:length(movdata.parts);
+              set(movdata.set.parts{iii}.handle, 'Color',movdata.set.movPartsbg);
+              al = findobj(movdata.set.parts{iii}.handle ,'Type','Axes');
+              for jjj=1:numel(al)
+                set(al(jjj),'XColor',movdata.set.movLabelColor,'YColor',movdata.set.movLabelColor);
+                set(get(al(jjj),'XLabel'),'Color',movdata.set.movLabelColor);
+                set(get(al(jjj),'YLabel'),'Color',movdata.set.movLabelColor);
+              end
+            end
+        end
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+    end
     function vidWriter(writetype)
         if debugMatVis, debugMatVisFcn(1); end
         res = 3;
@@ -11868,9 +11856,9 @@ end
                     axis off;
                     drawnow;
                     if movdata.fastCaptureMode == true;
-                        movdata.titleframe = vidGenerator_myHardcopyFigureSet(movdata.titleframe, res);
-                        movdata.titleframe.CData = vidGenerator_myHardcopy(movdata.titleframe, res);
-                        vidGenerator_myHardcopyFigureReset(movdata.titleframe)
+                        movdata.titleframe = vidGeneratorMyHardcopyFigureSet(movdata.titleframe, res);
+                        movdata.titleframe.CData = vidGeneratorMyHardcopy(movdata.titleframe, res);
+                        vidGeneratorMyHardcopyFigureReset(movdata.titleframe)
                     else
                         movdata.titleframe.CData = export_fig(movdata.titleframe.handle,'-nocrop','-q100','-RGB');%,'-painters'
                         if ndims(movdata.titleframe.CData)==2;
@@ -11889,8 +11877,8 @@ end
                         % properies before scanning
                         % slow: uses export_fig
                         if movdata.fastCaptureMode == true;
-                            movdata.set.parts{np} = vidGenerator_myHardcopyFigureSet(movdata.set.parts{np}, res);
-                            movdata.set.parts{np}.CData = vidGenerator_myHardcopy(movdata.set.parts{np},res);
+                            movdata.set.parts{np} = vidGeneratorMyHardcopyFigureSet(movdata.set.parts{np}, res);
+                            movdata.set.parts{np}.CData = vidGeneratorMyHardcopy(movdata.set.parts{np},res);
                         else
                             movdata.set.parts{np}.CData = export_fig(movdata.set.parts{np}.handle,'-nocrop','-q100','-RGB');%,'-painters'
                             if ndims(movdata.set.parts{np}.CData)==2;
@@ -11929,7 +11917,7 @@ end
                 for np = 1:length(movdata.set.parts)
                     if movdata.set.parts{np}.status == true;
                         if movdata.fastCaptureMode == true;
-                            movdata.set.parts{np}.CData = vidGenerator_myHardcopy(movdata.set.parts{np},res);
+                            movdata.set.parts{np}.CData = vidGeneratorMyHardcopy(movdata.set.parts{np},res);
                         else
                             movdata.set.parts{np}.CData = export_fig(movdata.set.parts{np}.handle,'-nocrop','-q100','-RGB');%,'-painters'
                             if ndims(movdata.set.parts{np}.CData)==2;
@@ -11956,7 +11944,7 @@ end
                 end
                 if movdata.fastCaptureMode == true;
                     for np = 1:length(movdata.set.parts)
-                        vidGenerator_myHardcopyFigureReset(movdata.set.parts{np})
+                        vidGeneratorMyHardcopyFigureReset(movdata.set.parts{np})
                     end
                 end
                 % disable options dialog
@@ -11966,8 +11954,7 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
-    function hh = vidGenerator_myHardcopyFigureSet(hh,rres)
+    function hh = vidGeneratorMyHardcopyFigureSet(hh,rres)
         if debugMatVis, debugMatVisFcn(1); end
         % MATLAB "feature": axes limits can change when printing
         hh.Hlims = findall(hh.handle, 'Type', 'axes');
@@ -12004,9 +11991,8 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
     % extended hardcopy function
-    function A = vidGenerator_myHardcopy(hh,rres)
+    function A = vidGeneratorMyHardcopy(hh,rres)
         if debugMatVis, debugMatVisFcn(1); end
         % '-painters' is the preferd renderer but can only capture visible figures (figures do not have to be updated by drawnow!!!)
         % as workaround we use the slower '-opengl' renderer for invisible figures
@@ -12040,7 +12026,7 @@ end
         if debugMatVis, debugMatVisFcn(2); end
     end
 %% resets figure properties
-    function vidGenerator_myHardcopyFigureReset(hh)
+    function vidGeneratorMyHardcopyFigureReset(hh)
         if debugMatVis, debugMatVisFcn(1); end
         % Reset the axes limit modes
         for a = 1:numel(hh.Hlims)
