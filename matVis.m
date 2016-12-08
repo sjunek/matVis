@@ -4489,7 +4489,9 @@ end
               set(myGcf, 'HandleVisibility', 'on');
               p1 = get(myGca,'CurrentPoint');
               p1 = p1(1,1:2);
+              set(myGcf, 'WindowButtonMotionFcn',''); % Remove callback during zoom region selection (if the new zoom region enters the old one, an error would be thrown otherwise when in the image window)
               rbbox;
+              set(myGcf, 'WindowButtonMotionFcn',@mouseMotion);
               p2 = get(myGca,'CurrentPoint');
               p2 = p2(1,1:2);
               if customDimScale
@@ -9276,7 +9278,9 @@ end
                     p2 = p+newRoiSize;
                 else % Otherwise select rectangle
                     set(myGcf, 'HandleVisibility', 'on');
+                    set(myGcf,'WindowButtonMotionFcn',''); % disable during drawing of ROI to avoid errors when entering the zoom region (when imageWin is active) due to setting of WindowButtonUpFct
                     rbbox;
+                    set(myGcf,'WindowButtonMotionFcn',@mouseMotion);
                     set(myGcf, 'HandleVisibility', 'off');
                     p = get(myGca, 'CurrentPoint');
                     p = p(1 ,[1 2]);
@@ -9703,6 +9707,7 @@ end
 %                 [max(roiList(numberRoi).corners(1  ,:))+1  ,mean(roiList(numberRoi).corners(2,:))]);
         end
         drawPlots;
+%         set(imageWin, 'WindowButtonMotionFcn',@mouseMotion);
         if debugMatVis, debugMatVisFcn(2); end
     end
     function copyRoi(varargin)
