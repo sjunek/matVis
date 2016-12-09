@@ -5573,9 +5573,17 @@ end
         if debugMatVis, debugMatVisFcn(1); end
         if rgbCount == 0
             if strcmp(get(histAxGui, 'USerData'),'gamma')
+              if withAlpha
+                guiHistVal = hist1wf([single(currIm{currContrastSel}(:)),single(currAlphaMap{currContrastSel}(:))],histXData)';
+              else
                 guiHistVal = histcounts(single(currIm{currContrastSel}(:)),histXData);
+              end
             else
+              if withAlpha
+                guiHistVal = hist1wf([single(currImVal{currContrastSel}(:)),single(currAlphaMapVal{currContrastSel}(:))],histXData)';
+              else
                 guiHistVal = histcounts(single(currImVal{currContrastSel}(:)),histXData);
+              end
             end
             set(histAxPlot, 'YData', guiHistVal, 'XData',histXDataBin);
             updateGuiHist(guiHistVal);
@@ -7723,27 +7731,10 @@ end
         elseif   ishandle(tbHist) && get(tbHist,'Value') % Update and/or create 2D hist
             % Create 2d hist from data and alpha map
             % 2D Histogram implementation from André Zeug
-            dd = cat(2,currImVal{1}(:),currAlphaMapVal{1}(:));
-            % if no weight is given, it is set to 1
-            if size(dd,2)==2
-                dd(:,3)=currAlphaMapVal{1}(:);
-                %                 dd(:,3)=1;
-            end
-            dd(any(isnan(dd),2),:)=[];
-            sz = size(dd);
+            dd = [currImVal{1}(:),currAlphaMapVal{1}(:),currAlphaMapVal{1}(:)];
             x_2DHist = linspace(minVal(1), maxVal(1),100);
             y_2DHist = linspace(minVal(nMat+1), maxVal(nMat+1),100);
-            data2DHist = zeros(length(x_2DHist),length(y_2DHist));
-            % fast method for lin spacing only
-            dx = (x_2DHist(end)-x_2DHist(1))/(length(x_2DHist)-1);
-            dy = (y_2DHist(end)-y_2DHist(1))/(length(y_2DHist)-1);
-            l_x = length(x_2DHist);
-            l_y = length(y_2DHist);
-            for ii = 1:sz(1)
-                xi = min(max(round((dd(ii,1)-x_2DHist(1))/dx)+1, 1), l_x);
-                yi = min(max(round((dd(ii,2)-y_2DHist(1))/dy)+1, 1), l_y);
-                data2DHist(xi,yi) = data2DHist(xi,yi) + dd(ii,3);
-            end
+            data2DHist = hist2wf(dd,x_2DHist,y_2DHist);
             if ~with2DHist || ~ishandle(matVis2DHist.figHandles.gui) % 2D hist does not exist yet
                 outStrct = exportOutputStrct;
                 gp = get(gui,'Position');
@@ -10735,6 +10726,39 @@ end
       end
       if debugMatVis > 1, debugMatVisFcn(2); end
     end
+    function wHist = hist1wf(d,x)
+      if debugMatVis, debugMatVisFcn(1); end
+      % calculates weighted 1D histogram
+      % fast method for lin spacing only
+      d(any(~isfinite(d),2),:)=[];
+      l_x = length(x)-1;
+      dx  = (x(end)-x(1))/(l_x);
+      d(:,1)   = min(max(ceil((d(:,1)-x(1))/dx), 1), l_x)';
+      wHist = zeros(l_x,1);
+      for nn = 1:size(d,1)
+        wHist(d(nn,1)) = wHist(d(nn,1)) + d(nn,2);
+      end
+      wHist = wHist/sum(wHist(:))*size(d,1);
+      if debugMatVis, debugMatVisFcn(2); end
+    end
+    function wHist = hist2wf(d,x,y)
+      if debugMatVis, debugMatVisFcn(1); end
+      % calculates weighted 1D histogram
+      % fast method for lin spacing only
+      d(any(~isfinite(d),2),:)=[];
+      l_x = length(x)-1;
+      l_y = length(y)-1;
+      dx = (x(end)-x(1))/(l_x);
+      dy = (y(end)-y(1))/(l_y);
+      d(:,1) = min(max(ceil((d(:,1)-x(1))/dx), 1), l_x);
+      d(:,2) = min(max(ceil((d(:,2)-y(1))/dy), 1), l_y);
+      wHist = zeros(l_x,l_y);
+      for nn=1:size(d,1)
+        wHist(d(nn,1),d(nn,2)) = wHist(d(nn,1),d(nn,2)) + d(nn,3);
+      end
+      wHist = wHist/sum(wHist(:))*size(d,1);
+      if debugMatVis, debugMatVisFcn(2); end
+    end
     function myGcf = myGcf
         if debugMatVis > 2, debugMatVisFcn(1); end
         set(0, 'ShowHiddenHandles', 'on');
@@ -12135,7 +12159,7 @@ end
         delete(gui);
         if debugMatVis, debugMatVisFcn(2); end
     end
-    function  debugMatVisFcn(inOut)
+    function debugMatVisFcn(inOut)
         inOutStr = {sprintf('%sStart ',char(9484)),sprintf('%sEnd   ',char(9492))'};
         ST = dbstack;
         %ST.name
