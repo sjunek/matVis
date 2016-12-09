@@ -6358,8 +6358,14 @@ end
                 if ~isempty(subPlotPlots)
                     if get(tbMarker, 'Value') == 1
                         set([subPlotPlots{:}], 'Marker', 'd', 'MarkerSize', 3);
+                        if withAlpha && ~verLessThan('matlab','9.0')
+                          set([subPlotPlotsAlpha{:}], 'Marker', 'd', 'MarkerSize', 3);
+                        end
                     else
                         set([subPlotPlots{:}],'Marker', 'none');
+                        if withAlpha && ~verLessThan('matlab','9.0')
+                          set([subPlotPlotsAlpha{:}], 'Marker', 'none');
+                        end
                     end
                 end
             end
@@ -7867,14 +7873,14 @@ end
             monSizeMax(2) >= max(sum([config.winPos.imageWin(:,[2 4]);config.winPos.zoomWin(:,[2 4]);config.winPos.plotWin(:,[2 4])],2))
           % at this moment position is alerady set to customConfig
           gp = customConfig.winPos.gui;
-          gp(1:2) = defaultConfig.winPos.gui(1:2);
+          %gp(1:2) = defaultConfig.winPos.gui(1:2);
           if ~get(tbTooltips, 'Value') && config.tooltips
             if strcmp(os(1:3),'MAC'); f = macScaleFactor(2);
             else;                     f = 1;
             end
             gp([2 4]) = gp([2 4])-f*[-130 130];
+            set(gui, 'Position',gp);
           end
-          set(gui, 'Position',gp);
           for ii=1:nMat
             set(imageWin(ii), 'Position', config.winPos.imageWin(ii,:));      %Default: [337, 545,  450, 450];
             set(zoomWin(ii),  'Position', config.winPos.zoomWin(ii,:));       %Default: [800, 545,  450, 450];
