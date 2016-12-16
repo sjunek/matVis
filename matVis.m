@@ -9945,9 +9945,10 @@ end
           matchDims = find([ROIPos(1:matchDims)>dim(1:matchDims) 1],1,'first')-1; % checks if saved ROIpos is larger than data dimension and reduces MATCHDIMS, in case
           currPos(1:matchDims) = ROIPos(1:matchDims);
           currPos(currPos(1:matchDims)>dim(1:matchDims))=1;
-          zoomVal(1:matchDims,:) = roiList(numberRoi).settings.zoomVal(1:matchDims,:); % checks if saved zoomVals are larger than data dimension and reduces MATCHDIMS, in case
-          zoomVal(sum(zoomVal((1:matchDims),:),2) > dim(1:matchDims)',1) = 1; 
-          zoomVal(zoomVal((1:matchDims),2) > dim(1:matchDims)',2) = dim(zoomVal((1:matchDims),2)' > dim(1:matchDims));
+          zoomVal(1:matchDims,:) = roiList(numberRoi).settings.zoomVal(1:matchDims,:); 
+          % checks if saved zoomVals are larger than data dimension and reduces MATCHDIMS, in case
+          zoomVal(sum(zoomVal(1:matchDims,:),2)-1 > dim(1:matchDims)',1) = 1; 
+          zoomVal(zoomVal(1:matchDims,2) > dim(1:matchDims)',2) = dim(zoomVal(1:matchDims,2)' > dim(1:matchDims));
           updateZoom(1,1,1:nDim,'ROIupdate');
           updateSelection(1:length(currPos));
         end
