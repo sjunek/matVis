@@ -4055,7 +4055,8 @@ end
     function px = scaledLocation(px,varargin)
         if debugMatVis > 1, debugMatVisFcn(1); end
         if nargin == 1 % Default xy case
-            px = ((px-[1 1])'.*diff(dimScale(xySel([2 1]),:),1,2)./(dim(xySel([2 1]))-[1 1])')'+dimScale(xySel([2 1]),1)';
+            px = ((px-repmat([1 1],[size(px,1) 1])).*repmat(diff(dimScale(xySel([2 1]),:),1,2)'./(dim(xySel([2 1]))-[1 1]),[size(px,1) 1]))+repmat(dimScale(xySel([2 1]),1)',[size(px,1) 1]);
+            % works only from R2016b: px = ((px-[1 1])'.*diff(dimScale(xySel([2 1]),:),1,2)./(dim(xySel([2 1]))-[1 1])')'+dimScale(xySel([2 1]),1)';
         else  % Different dimension specified as second argument
             px = ((px-1)'.*diff(dimScale(varargin{1},:),1,2)./(dim(varargin{1})-1)')'+dimScale(varargin{1},1)';
         end
@@ -8186,6 +8187,7 @@ end
         %Make profile Gui and all related objects invisible
         if nargin == 3 || ~get(tbProfile,'Value')
             set(profileWin, 'Visible','off');
+            set(profileTraceWin, 'Visible','off');
             set(btMean, 'Enable','on');
             set(cbPlots(xySel),'Enable', 'on');
             set(tbProfile,'Value',0)
@@ -8389,6 +8391,11 @@ end
             if debugMatVis, debugMatVisFcn(1); end
             mousepos = get(myGca,'CurrentPoint');
             mousepos = mousepos(1,1:2);
+            if customDimScale
+              mousepos = pixelLocation(mousepos);
+            else
+              %mousepos = round(mousepos);
+            end
 %             currUnits = get(myGca, 'units');
 %             set(myGca,'Units','Pixels');
 %             axpos = get(myGca,'Position');
@@ -8446,16 +8453,33 @@ end
             profileList(numberProfile).settings.position = currPos;
             profileList(numberProfile).settings.zoomVal = zoomVal;
             for ii=1:nMat
-                hold(imAx(ii),'on');
-                profileLine.im(ii,numberProfile,1) = plot(profileList(numberProfile).smoothedPoints(:,1),profileList(numberProfile).smoothedPoints(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineWidth',2);
-                profileLine.im(ii,numberProfile,2) = plot(profileList(numberProfile).mat(1,:,1),profileList(numberProfile).mat(1,:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineStyle',':','LineWidth',2);
-                profileLine.im(ii,numberProfile,3) = plot(profileList(numberProfile).mat(end,:,1),profileList(numberProfile).mat(end,:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineStyle',':','LineWidth',2);
-                profileText.im(ii,numberProfile) = text(max(profileList(numberProfile).smoothedPoints(:,1))+5,mean(profileList(numberProfile).smoothedPoints(:,2)),profileList(numberProfile).name,'Parent',imAx(ii),'FontWeight','bold');
-                hold(zoomAx(ii),'on');
-                profileLine.zoom(ii,numberProfile,1) = plot(profileList(numberProfile).smoothedPoints(:,1),profileList(numberProfile).smoothedPoints(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineWidth',2);
-                profileLine.zoom(ii,numberProfile,2) = plot(profileList(numberProfile).mat(1,:,1),profileList(numberProfile).mat(1,:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineStyle',':','LineWidth',2);
-                profileLine.zoom(ii,numberProfile,3) = plot(profileList(numberProfile).mat(end,:,1),profileList(numberProfile).mat(end,:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineStyle',':','LineWidth',2);
-                profileText.zoom(ii,numberProfile) = text(max(profileList(numberProfile).smoothedPoints(:,1))+5,mean(profileList(numberProfile).smoothedPoints(:,2)),profileList(numberProfile).name,'Parent',zoomAx(ii),'FontWeight','bold');
+              hold(imAx(ii),'on');
+              hold(zoomAx(ii),'on');
+              if customDimScale;
+                tp = scaledLocation(squeeze(profileList(numberProfile).mat(1,:,:)));
+                profileLine.im(ii,numberProfile,2)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineStyle',':','LineWidth',2);
+                profileLine.zoom(ii,numberProfile,2) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineStyle',':','LineWidth',2);
+                tp = scaledLocation(squeeze(profileList(numberProfile).mat(end,:,:)));
+                profileLine.im(ii,numberProfile,3)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineStyle',':','LineWidth',2);
+                profileLine.zoom(ii,numberProfile,3) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineStyle',':','LineWidth',2);
+                tp = scaledLocation(profileList(numberProfile).smoothedPoints);
+                profileLine.im(ii,numberProfile,1)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineWidth',2);
+                profileLine.zoom(ii,numberProfile,1) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineWidth',2);
+                profileText.im(ii,numberProfile)    = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(numberProfile).name,'Parent',imAx(ii),'FontWeight','bold');
+                profileText.zoom(ii,numberProfile)  = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(numberProfile).name,'Parent',zoomAx(ii),'FontWeight','bold');
+              else
+                tp = squeeze(profileList(numberProfile).mat(1,:,:));
+                profileLine.im(ii,numberProfile,2)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineStyle',':','LineWidth',2);
+                profileLine.zoom(ii,numberProfile,2) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineStyle',':','LineWidth',2);
+                tp = squeeze(profileList(numberProfile).mat(end,:,:));
+                profileLine.im(ii,numberProfile,3)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineStyle',':','LineWidth',2);
+                profileLine.zoom(ii,numberProfile,3) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineStyle',':','LineWidth',2);
+                tp = profileList(numberProfile).smoothedPoints;
+                profileLine.im(ii,numberProfile,1)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineWidth',2);
+                profileLine.zoom(ii,numberProfile,1) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineWidth',2);
+                profileText.im(ii,numberProfile)    = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(numberProfile).name,'Parent',imAx(ii),'FontWeight','bold');
+                profileText.zoom(ii,numberProfile)  = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(numberProfile).name,'Parent',zoomAx(ii),'FontWeight','bold');
+              end
             end
             profileStruct.trace.points = [];
             delete([profileStruct.trace.plot1 profileStruct.trace.plot2 profileStruct.trace.plot3]);
@@ -8492,6 +8516,11 @@ end
             if debugMatVis, debugMatVisFcn(1); end
             mousepos = get(myGca,'CurrentPoint');
             mousepos = mousepos(1,1:2);
+            if customDimScale
+              mousepos = pixelLocation(mousepos);
+            else
+              %mousepos = round(mousepos);
+            end
 %             set(myGca,'Units','Pixels');
 %             axpos = get(myGca,'Position');
 %             set(myGca,'Units','Normalized');
@@ -8511,8 +8540,15 @@ end
                 profileList(iii).smoothedPoints = imgTraceSmooth(profileList(iii).points);
                 profileList(iii).mat = imgTraceMatrix(profileList(iii).smoothedPoints);
                 for ii = 1:nMat
+                  if customDimScale
+                    tp = scaledLocation(squeeze(profileList(iii).mat(1,:,:)));
+                    set([profileLine.im(ii,iii,2) profileLine.zoom(ii,iii,2)], 'XData',tp(:,1),'Ydata',tp(:,2));
+                    tp = scaledLocation(squeeze(profileList(iii).mat(end,:,:)));
+                    set([profileLine.im(ii,iii,3) profileLine.zoom(ii,iii,3)], 'XData',tp(:,1),'Ydata',tp(:,2));
+                  else
                     set([profileLine.im(ii,iii,2) profileLine.zoom(ii,iii,2)], 'XData',profileList(iii).mat(1,:,1),'Ydata',profileList(iii).mat(1,:,2));
                     set([profileLine.im(ii,iii,3) profileLine.zoom(ii,iii,3)], 'XData',profileList(iii).mat(end,:,1),'Ydata',profileList(iii).mat(end,:,2));
+                  end
                 end
             end
             imgTraceUpdate;
@@ -8568,9 +8604,18 @@ end
                 profileStruct.trace.RGB(profileStruct.trace.RGB<0)=0;
               end
               if isfield(profileStruct.trace, 'plot1') && ishandle(profileStruct.trace.plot1)
-                set(profileStruct.trace.plot1,'XData',tracepoints(:,1),'YData',tracepoints(:,2))
-                set(profileStruct.trace.plot2,'XData',profileStruct.trace.mat(1,:,1),'YData',profileStruct.trace.mat(1,:,2))
-                set(profileStruct.trace.plot3,'XData',profileStruct.trace.mat(end,:,1),'YData',profileStruct.trace.mat(end,:,2))
+                if customDimScale
+                  tp = scaledLocation(tracepoints);
+                  set(profileStruct.trace.plot1,'XData',tp(:,1),'YData',tp(:,2));
+                  tp = scaledLocation(squeeze(profileStruct.trace.mat(1,:,:)));
+                  set(profileStruct.trace.plot2,'XData',tp(:,1),'YData',tp(:,2));
+                  tp = scaledLocation(squeeze(profileStruct.trace.mat(end,:,:)));
+                  set(profileStruct.trace.plot3,'XData',tp(:,1),'YData',tp(:,2));
+                else
+                  set(profileStruct.trace.plot1,'XData',tracepoints(:,1),'YData',tracepoints(:,2))
+                  set(profileStruct.trace.plot2,'XData',profileStruct.trace.mat(1,:,1),'YData',profileStruct.trace.mat(1,:,2))
+                  set(profileStruct.trace.plot3,'XData',profileStruct.trace.mat(end,:,1),'YData',profileStruct.trace.mat(end,:,2))
+                end
                 if profileStruct.show.bw
                   set(profileStruct.trace.profh{1},'YData',profileStruct.show.profile(:,1));
                 else
@@ -8586,9 +8631,21 @@ end
               else
                 if profileStruct.trace.inwork  % create/update profile line only if a new line is currently selected (not when function is called from updateProfileSelection)
                   hold(myGca,'on');
-                  profileStruct.trace.plot1 = plot(tracepoints(:,1),tracepoints(:,2),'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineWidth',2);
-                  profileStruct.trace.plot2 = plot(profileStruct.trace.mat(1,:,1),profileStruct.trace.mat(1,:,2),'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineStyle',':','LineWidth',2);
-                  profileStruct.trace.plot3 = plot(profileStruct.trace.mat(end,:,1),profileStruct.trace.mat(end,:,2),'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineStyle',':','LineWidth',2);
+                  if customDimScale
+                    tp = scaledLocation(tracepoints);
+                    profileStruct.trace.plot1 = plot(tp(:,1),tp(:,2),'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineWidth',2);
+                    tp = scaledLocation(squeeze(profileStruct.trace.mat(1,:,:)));
+                    profileStruct.trace.plot2 = plot(tp(:,1),tp(:,2),'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineStyle',':','LineWidth',2);
+                    tp = scaledLocation(squeeze(profileStruct.trace.mat(end,:,:)));
+                    profileStruct.trace.plot3 = plot(tp(:,1),tp(:,2),'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineStyle',':','LineWidth',2);
+                  else
+                    profileStruct.trace.plot1 = plot(tracepoints(:,1),tracepoints(:,2),...
+                      'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineWidth',2);
+                    profileStruct.trace.plot2 = plot(profileStruct.trace.mat(1,:,1),profileStruct.trace.mat(1,:,2),...
+                      'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineStyle',':','LineWidth',2);
+                    profileStruct.trace.plot3 = plot(profileStruct.trace.mat(end,:,1),profileStruct.trace.mat(end,:,2),...
+                      'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineStyle',':','LineWidth',2);
+                  end
                 end
                 if profileStruct.show.bw
                   profileStruct.trace.profh{1} = plot(profileStruct.show.profile,'Parent',profileStruct.gui.profile.ax,'Color','k','tag',sprintf('traceplot_%.0f',profileStruct.instance));
@@ -8973,7 +9030,7 @@ end
 %   later calls or from WindowCloseRequestFcn
     function roiGui(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        %Make Roi Gui and all related objects invisible
+        %% Make Roi Gui and all related objects invisible
         if nargin == 3 || ~get(tbRoi,'Value')
             set(roiWin, 'Visible','off');
             set(btMean, 'Enable','on');
@@ -8993,8 +9050,7 @@ end
             if debugMatVis, debugMatVisFcn(2); end
             return
         end
-        
-        %Make Roi Gui and all related objects visible
+        %% Make Roi Gui and all related objects visible
         set(roiWin, 'Visible','on');
         set(btMean, 'Enable','off');
         if get(roiBtRename, 'UserData')
@@ -9009,9 +9065,9 @@ end
         plotSel(xySel) = 0;
         drawPlots;
         drawRois;
-        %Create ROI GuiWindow (only during first call)
+        %% Create ROI GuiWindow (only during first call)
         if isempty(roiWin)
-            %Roi Manager Window with text
+            %% Roi Manager Window with text
             gp = get(gui,'Position');
             roiWin =  figure;
             set(roiWin,'Units', 'Pixel', 'Name', 'ROI Manager',...
@@ -9055,8 +9111,7 @@ end
             %roiFrame = uicontrol(roiWin,'Style','Frame',  'Position', [160,150,150,150],'Visible','off');
             %Axes for display of Roi
             roiAxes  = axes('Parent', roiPropertiesPanel, 'Unit','pixel','Position', [25 80 145 140]);
-            
-            %Add Rectangle Roi Button
+            %% Add Rectangle Roi Button
             tb_newRoi(1) = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [10,125,32,22],...
                 'CData', roiRectBt,'Callback',{@getNewRoi,1,'one'}, ...
                 'ToolTipString', ' Add rectangular ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'') ',...
@@ -9144,7 +9199,7 @@ end
             %             roiCalcRes = uicontrol(roiWin, 'Style', 'edit','Position', [213,4,60,20],'String','Roi1 + Roi2');
             %             %Add calculated term to list of Rois
             %             roiCalcAdd = uicontrol(roiWin, 'Style', 'PushButton','Position', [280,4,30,20],'String','Add');
-            %Fill Roi Axes with current image
+            %% Fill Roi Axes with current image
             set(roiWin, 'HandleVisibility', 'on','ResizeFcn', @resizeRoiWin,'WindowButtonDownFcn',@buttonDownRoiGui, 'WindowbuttonMotionFcn',@mouseMotion);
             if customDimScale
                 roiImage = imagesc(dimScale(xySel(2),:),dimScale(xySel(1),:),currIm{1});
@@ -9168,7 +9223,6 @@ end
             updateColormap;
             set(roiWin, 'ResizeFcn',[]);adjustGuiSize(roiWin);set(roiWin,'ResizeFcn', @resizeRoiWin);
         end
-        
         function resizeRoiWin(varargin)
             if debugMatVis, debugMatVisFcn(1); end
             adjustGuiSize(roiWin,-1);
@@ -9185,7 +9239,6 @@ end
             adjustGuiSize(roiWin);
             if debugMatVis, debugMatVisFcn(2); end
         end
-        
         function buttonDownRoiGui(varargin)
 			if debugMatVis, debugMatVisFcn(1); end
             if strcmp(get(roiWin,'SelectionType'),'alt')
@@ -9227,7 +9280,6 @@ end
             end
             if debugMatVis, debugMatVisFcn(2); end
         end
-        
         function updateRoiSize(varargin)
             newRoiSize = str2double(get(varargin{1},'string'));
         end
