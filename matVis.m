@@ -1,6 +1,6 @@
 function varargout = matVis(varargin)
 %% matVis(data1, data2, ... , 'PropertyName', PropertyValue, ...)
-%**************************************************************************
+%**************************************************************************c
 % GUI for displaying data sets of arbitrary dimension using 2D images and 
 % 1D profiles. Key features of matVis include
 % - Easy data input: load variables from the workspace or various image file
@@ -727,7 +727,6 @@ end
 currImVal = [];                          %Values of current image (currIm might contain altered values due to filtering and/or gamma values ~= 1)
 currAlphaMapVal = [];                    %Values of current alpha map (currAlphaMap might contain altered values due to filtering and/or  gamma values ~= 1)
 currContrastSel = 1;                     %Dataset currently selected for contrast selection / histogram display
-linkContrastSettings = 1;                %Manual contrast adjustment: adjust contrast of all data sets together in a linear way
 xySel = [1 2];                           %Selected Dimensions for Images
 zoomVal = zeros(nDim,2);
 for i=1:nDim
@@ -962,6 +961,8 @@ defaultConfig.playHist = 0;
 defaultConfig.moveHist = 0;
 % Link figure position/size
 defaultConfig.linkFigSize = 1;
+% Link contrast setting between differetn data sets
+defaultConfig.linkContrastSettings = 1;
 
 % Plot Options
 %Plot Dimensions
@@ -1041,6 +1042,14 @@ if ~isempty(startPar)
                 end
             case 'cmMinMax'   % checked
                 cmMinMax = propVal;
+                % Avoid that the contrast values are outside the min/max
+                % range of each data set.
+                for j = 1:nMat
+                    cmMinMax(j,1) = max(cmMinMax(j,1),minVal(j));
+                    cmMinMax(j,2) = min(cmMinMax(j,2),maxVal(j));
+                end
+                customConfig.colormapMode = 'Manual';
+                customConfig.linkContrastSettings = 0;
             case 'cmap'       % checked
                 customConfig.colormap = propVal;
             case 'aspRatio'   % checked
@@ -1094,8 +1103,6 @@ if ~isempty(startPar)
                     propVal.gui(3:4) = customConfig.winPos.gui(3:4); % Ignore width and height of GUI, since it is fixed by matVis
                     customConfig.winPos.gui = propVal.gui;
                 end
-                  
-                
             case 'objVisibility'
                 customConfig.lineVis = propVal;
             case 'calledAs2DHist'
@@ -2892,27 +2899,28 @@ if nMat > 1 %|| withAlpha
     %Popup for selection of data set
     popContrastSel = uicontrol('Style','popup','FontSize', 7,'Parent',panel_imageControls,'String',s,'value',currContrastSel,'Position',[6 113 47 30],'Value',1,'Callback',@updateContrastSel);
     % Lock contrast adjustments across data sets (manual mode: linear scaling)
-    tb_linkContrastAdjustments = uicontrol('Parent',panel_imageControls, 'Style', 'Togglebutton','Position',[54 125 15 15],'Value',linkContrastSettings,  ...
-        'CData', lockOpen, 'Callback', @updateLinkContrast,...
+    tb_linkContrastAdjustments = uicontrol('Parent',panel_imageControls, 'Style', 'Togglebutton','Position',[54 125 15 15],'Value',customConfig.linkContrastSettings,  ...
+        'CData', lockOpen , 'Callback', @updateLinkContrast,...
         'BackgroundColor', get(gui, 'Color'),'Tooltipstring', 'Link contrast adjustments across data sets in manual mode. ',...
         'Tag', ['Link contrast adjustments across data sets in manual mode. (Linear scaling) ']);  %#ok
-    if linkContrastSettings
+    if customConfig.linkContrastSettings
         set(tb_linkContrastAdjustments, 'CData', lockClosed);
     end
 end
+linkContrastSettings = customConfig.linkContrastSettings;
 %Values of slider limits
 uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
     'Position', [6 80 47 40], 'String', {'Slider';'min / max'}, ...
     'HorizontalAlignment', 'center','FontSize',7, 'Tag', 'Set minimum and maximum of contrast sliders.  The range of the histogram and the display of the colormap in between the sliders will be updated accordingly.');
 sldLimMin = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
-    'Position', [7 80 45 12], 'String', num2str(cmMinMax(1,1)),...
+    'Position', [7 80 45 12], 'String', num2str(minVal(1)),...
     'HorizontalAlignment', 'right','Callback', @updateSldLim, 'Tag', 'Set minimum of contrast sliders. The range of the histogram and the display of the colormap in between the sliders will be updated accordingly.');
 sldLimMax = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
-    'Position', [7 69 45 12], 'String', num2str(cmMinMax(1,2)), ...
+    'Position', [7 69 45 12], 'String', num2str(maxVal(1)), ...
     'HorizontalAlignment', 'right','Callback', @updateSldLim, 'Tag', 'Set maximum of contrast sliders. The range of the histogram and the display of the colormap in between the sliders will be updated accordingly.');
 if ~isinteger(data{1})
-    set(sldLimMin, 'String', num2str(cmMinMax(1  ,1),'%6.3f'));
-    set(sldLimMax, 'String', num2str(cmMinMax(1  ,2),'%6.3f'));
+    set(sldLimMin, 'String', num2str(minVal(1),'%6.3f'));
+    set(sldLimMax, 'String', num2str(maxVal(1),'%6.3f'));
 end
 %Slider Colormap
 sldMin = uicontrol('Parent', panel_imageControls, 'Style', 'Slider', 'Callback', @updateColormap, 'Units', 'Pixel', ...
@@ -2933,10 +2941,10 @@ uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'Bac
     'Position', [267 80 47 40], 'String', {'Contrast';'min / max'}, ...
     'HorizontalAlignment', 'center','FontSize',7, 'Tag', 'Set minimum (''black point'') and maximum (''white point'') of colormap. These values are linked to the sliders to the left.');
 valSldMin = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
-    'Position', [268 80 45 12], 'String', num2str(cmMinMax(1,1)), 'Callback', @setColormapFromEdit,...
+    'Position', [268 80 45 12], 'String', num2str(minVal(1)), 'Callback', @setColormapFromEdit,...
     'HorizontalAlignment', 'right', 'Tag', 'Set minimum (''black point'') of colormap. This value is linked to the slider to the left.');
 valSldMax = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
-    'Position', [268 69 45 12], 'String', num2str(cmMinMax(1,2)), 'Callback', @setColormapFromEdit,...
+    'Position', [268 69 45 12], 'String', num2str(maxVal(1)), 'Callback', @setColormapFromEdit,...
     'HorizontalAlignment', 'right', 'Tag', 'Set maximum (''white point'') of colormap. This value is linked to the slider to the left.');
 
 % Small histogram on top of sliders
@@ -4910,7 +4918,7 @@ end
     end
     function updateContrastSel(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        currContrastSel = get(popContrastSel, 'Value');
+        currContrastSel = get(popContrastSel, 'Value'); 
         set(sldMin, 'Value',cmMinMax(currContrastSel,1));
         set(sldMax, 'Value',cmMinMax(currContrastSel,2));
         set(sldGamma, 'Value',currGamma(currContrastSel));
@@ -6431,7 +6439,7 @@ end
                 end
             case cmManual       %Values from Min / Max sliders
                 if isinteger(data{currContrastSel})
-                    cmMinMax(currContrastSel  ,:) = round([get(sldMin, 'Value') get(sldMax, 'Value')]);
+                    minVal(currContrastSel) = round([get(sldMin, 'Value') get(sldMax, 'Value')]);
                 else
                     cmMinMax(currContrastSel  ,:) = [get(sldMin, 'Value') get(sldMax, 'Value')];
                 end
@@ -7844,6 +7852,8 @@ end
         currConfig.moveHist = get(tb_moveHist, 'Value');  % Default: 0 (don't update)
         % Link figure size / position
         currConfig.linkFigSize = get(tbLinkWin, 'Value'); % Default: 1 (link figures)
+        % Link contrast settings between different data sets
+        currConfig.linkContrastSettings = linkContrastSettings; % Default: 1 (link contrast)
         if debugMatVis, debugMatVisFcn(2); end
     end
 
