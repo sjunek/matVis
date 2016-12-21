@@ -978,6 +978,11 @@ defaultConfig.plotMean = 0;              %Default: 0 (no averaging)
 % Tooltips
 defaultConfig.tooltips = 1;              %Default: 1 (display tooltips)
 
+
+% ROI options
+% Jump to ROI position/zoom where ROI was created when changing ROI
+% selection
+defaultConfig.jump2ROIPos = 1;    
 [matVisPath,f,e] = fileparts(which('matVis.m'));
 compName = strtrim(getenv('Computername'));
 configFile = [];
@@ -7854,6 +7859,10 @@ end
         currConfig.linkFigSize = get(tbLinkWin, 'Value'); % Default: 1 (link figures)
         % Link contrast settings between different data sets
         currConfig.linkContrastSettings = linkContrastSettings; % Default: 1 (link contrast)
+        % Jump to ROI selection position
+        if get(roiWin,'Visible')
+            currConfig.jump2ROIPos = get(jump2ROIPos_cb, 'Value');
+        end
         if debugMatVis, debugMatVisFcn(2); end
     end
 
@@ -7967,6 +7976,8 @@ end
         set(tb_moveHist, 'Value',config.moveHist);
         % Lin figure size / position
         set(tbLinkWin, 'Value', config.linkFigSize);
+        % Link contrast settings between different data sets
+        linkContrastSettings = config.linkContrastSettings; % Default: 1 (link contrast)
         %         toggleMoveHist
         %Update
         set(cbPlots, 'Value', 0);
@@ -7979,6 +7990,10 @@ end
         cbCallback;
         toggleShowObjects;
         updateObjects;
+        % Jump to ROI selection position
+        if ~isempty(roiWin)
+            set(jump2ROIPos_cb, 'Value') = config.jump2ROIPos;
+        end
         if debugMatVis, debugMatVisFcn(2); end
     end
 
@@ -9194,7 +9209,7 @@ end
                     'Tag', 'Export ROI data along specified dimension into the workspace.', 'Enable', 'off');
             end
             jump2ROIPos_cb = uicontrol(roiWin, 'Style', 'checkbox','Position', [10,2,250  ,22],...
-                    'Value',1,'String','Jump to ROI selection position',...
+                    'Value',customConfig.jump2ROIPos,'String','Jump to ROI selection position',...
                     'Tag', 'Jump to position in data set at which ROI was defined.');
             %             %Roi Calculator
             %              uicontrol(roiWin, 'Style', 'Text', 'Position', [90 28 110 15], ...
