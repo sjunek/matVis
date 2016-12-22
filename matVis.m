@@ -8305,9 +8305,22 @@ end
                     'Tag', 'Export profile data along specified dimension into the workspace.', 'Enable', 'off');
             end
             profileStruct.show.width = 5;
-            edt_lineWidt = uicontrol(profileWin, 'Style', 'Edit','Position', [88,25,32,22],...
-                'String', num2str(profileStruct.show.width),'Callback', @changeProfileWidth,'Enable','off','ToolTipString', ' Line width in pixels ',...
-                'Tag', 'Line width in pixels (only integers allowed)');
+            if customDimScale
+              ttt = sprintf('Line width in um');
+              edt_lineWidt = uicontrol(profileWin, 'Style', 'Edit','Position', [85,28,20,16],...
+                'String', sprintf('%.1f',profileStruct.show.width*diff(dimScale(xySel(1),:),1,2)/(dim(xySel(1))'-1)),...
+                'Callback', @changeProfileWidth,'Enable','off',...
+                'Tooltip',ttt,'Tag',ttt);
+              uicontrol(profileWin, 'Style', 'Text','Position', [105,28,20,16],'String', 'um');
+            else
+              ttt = sprintf('Line width in pixels');
+              edt_lineWidt = uicontrol(profileWin, 'Style', 'Edit','Position', [85,28,20,16],...
+                'String', sprintf('%d',profileStruct.show.width),...
+                'Callback', @changeProfileWidth,'Enable','off',...
+                'Tooltip',ttt,'Tag',ttt);
+              uicontrol(profileWin, 'Style', 'Text','Position', [105,28,20,16],'String', 'px');
+            end
+              
             pop_profileProjection= uicontrol(profileWin, 'Style', 'Popup','Position', [10,25,71  ,22],...
                     'Enable','on','String',{'Mean','Sum','Max','Min'},...
                     'Tag', 'Select projection method.','Callback',@imgTraceUpdate);
@@ -8534,8 +8547,13 @@ end
         end
         function changeProfileWidth(varargin)
             if debugMatVis, debugMatVisFcn(1); end
-            profileStruct.show.width = double(uint16(str2double(get(edt_lineWidt,'String'))));
-            set(edt_lineWidt,'String', num2str(profileStruct.show.width));
+            if customDimScale
+              profileStruct.show.width = max(1,round(str2double(get(edt_lineWidt,'String'))/diff(dimScale(xySel(1),:),1,2)*(dim(xySel(1))'-1)));
+              set(edt_lineWidt,'String', sprintf('%.1f',profileStruct.show.width*diff(dimScale(xySel(1),:),1,2)/(dim(xySel(1))'-1)));
+            else
+              profileStruct.show.width = max(1,round(str2double(get(edt_lineWidt,'String'))));
+              set(edt_lineWidt,'String', sprintf('%d',profileStruct.show.width));
+            end
             for iii = 1:numel(profileList)
                 profileList(iii).smoothedPoints = imgTraceSmooth(profileList(iii).points);
                 profileList(iii).mat = imgTraceMatrix(profileList(iii).smoothedPoints);
