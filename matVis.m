@@ -6444,7 +6444,8 @@ end
                 end
             case cmManual       %Values from Min / Max sliders
                 if isinteger(data{currContrastSel})
-                    minVal(currContrastSel) = round([get(sldMin, 'Value') get(sldMax, 'Value')]);
+                    minVal(currContrastSel) = round(get(sldMin, 'Value'));
+                    maxVal(currContrastSel) = round(get(sldMax, 'Value'));
                 else
                     cmMinMax(currContrastSel  ,:) = [get(sldMin, 'Value') get(sldMax, 'Value')];
                 end
