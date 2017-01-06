@@ -6443,11 +6443,11 @@ end
                     cmMinMax(ii,:) = [min(w(:)) max(w(:))]';
                 end
             case cmManual       %Values from Min / Max sliders
+              cmMinMax(currContrastSel  ,:) = [get(sldMin, 'Value') get(sldMax, 'Value')];
                 if isinteger(data{currContrastSel})
-                    minVal(currContrastSel) = round(get(sldMin, 'Value'));
-                    maxVal(currContrastSel) = round(get(sldMax, 'Value'));
-                else
-                    cmMinMax(currContrastSel  ,:) = [get(sldMin, 'Value') get(sldMax, 'Value')];
+                  cmMinMax(currContrastSel  ,:) = round(cmMinMax(currContrastSel  ,:));
+                  minVal(currContrastSel) = cmMinMax(currContrastSel  ,1);
+                  maxVal(currContrastSel) = cmMinMax(currContrastSel  ,2);
                 end
                 if linkContrastSettings
                     if ~(cmMinMax(currContrastSel  ,1) < cmMinMax(currContrastSel  ,2))
