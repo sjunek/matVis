@@ -6446,8 +6446,6 @@ end
               cmMinMax(currContrastSel  ,:) = [get(sldMin, 'Value') get(sldMax, 'Value')];
                 if isinteger(data{currContrastSel})
                   cmMinMax(currContrastSel  ,:) = round(cmMinMax(currContrastSel  ,:));
-                  minVal(currContrastSel) = cmMinMax(currContrastSel  ,1);
-                  maxVal(currContrastSel) = cmMinMax(currContrastSel  ,2);
                 end
                 if linkContrastSettings
                     if ~(cmMinMax(currContrastSel  ,1) < cmMinMax(currContrastSel  ,2))
@@ -7639,6 +7637,7 @@ end
             set(sldLimMax, 'String', num2str(sldLimVal(currContrastSel,2),'%6.3f'));
         end
         histXData = linspace(sldLimVal(currContrastSel,1)  ,sldLimVal(currContrastSel,2),numel(histXData));
+        histXDataBin = histXData(1:end-1)+.5*diff(histXData(1:2));
         if get(sldMin, 'Value') < histXData(1)
             set(sldMin, 'Value', histXData(1));
         end
