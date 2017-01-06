@@ -9080,7 +9080,7 @@ end
             set(cbPlots(xySel),'Enable', 'on');
             set(tbRoi,'Value',0)
             if nRois >0
-                set([roiLine.im, roiLine.zoom, roiText.im, roiText.zoom],  'Visible', 'off');
+                set([roiLine.im, roiLine.zoom, roiText.im, roiText.zoom, roiCenterIndicator'],  'Visible', 'off');
             end
             set([tb_newRoi tbRoiShift tbRoiRotate tbRoiScale roiBtReplace], 'Value', 0);
             set([imageWin zoomWin],'WindowButtonMotionFcn',@mouseMotion,...
@@ -9100,9 +9100,9 @@ end
           set(tempRoiPropWin, 'Visible','on');
         end
         if nRois > 0 && get(roiBtShowNames, 'Value')
-            set([roiLine.im, roiLine.zoom, roiText.im, roiText.zoom], 'Visible', 'on');
+            set([roiLine.im, roiLine.zoom, roiText.im, roiText.zoom, roiCenterIndicator'], 'Visible', 'on');
         elseif nRois > 0
-            set([roiLine.im, roiLine.zoom, roiText.im, roiText.zoom], 'Visible', 'off');
+            set([roiLine.im, roiLine.zoom, roiText.im, roiText.zoom, roiCenterIndicator'], 'Visible', 'off');
         end
         set(cbPlots(xySel),  'Value', 0 ,'Enable', 'off'); %necessary when call from WindowCloseRequestFcn
         plotSel(xySel) = 0;
