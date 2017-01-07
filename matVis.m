@@ -656,7 +656,7 @@ savedZoom = [];                          %Matrix for saved zoom using small butt
 
 % peallocation of handles
 if oldMATLAB
-  currIm = [];                             %Handle of Figure of Current Image
+  currIm = [];                             %data of Current Image (compare currImVal)
   imHandle = [];                           %Handle of Figure in Image Window
   zoomHandle = [];                         %Handle of Figure in Zoom Window
   tifParFig = [];                          %Handle to Figure displaying CustomTif parameter
@@ -3788,7 +3788,6 @@ end
             set(btMean, 'UserData', mod(get(btMean, 'UserData')  ,5));
             set(btMean, 'CData', squeeze(meanBt{get(btMean, 'UserData')+1}));
             set([sldMax_RGB sldMin_RGB valSldMax_RGB valSldMin_RGB rgbSldIm], 'Visible','off');
-            set([valSldMin valSldMax], 'Callback',{@updateColormap,0});
             set([sldMin sldMax], 'Callback',@updateColormap);
             set([sld etxt btPlayAll btPlayZoom], 'Enable','on');
             drawGuiHist(1);
@@ -3822,7 +3821,6 @@ end
               set(projMethodPop,'Enable', 'on');
             end
             %             set([sldGamma valSldGamma strGamma], 'Visible', 'off');
-            set([sldMin sldMax], 'Callback',@updateImages);
             set([valSldMin_RGB valSldMax_RGB sldMin_RGB sldMax_RGB], 'Visible', 'on');
             for ii=1:nMat
                 colorbar('peer', imAx(ii),'off');
@@ -6395,6 +6393,7 @@ end
         if debugMatVis, debugMatVisFcn(2); end
     end
     function setColormapFromEdit(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
         % Called from edit fields for contrast values
             if str2double(get(valSldMin, 'String')) < get(sldMin, 'Min')
                 set(valSldMin, 'String', num2str(get(sldMin, 'Min')));
@@ -6409,6 +6408,7 @@ end
             else
                 updateColormap;
             end
+        if debugMatVis, debugMatVisFcn(2); end
     end
 %Adjust Colormap
     function updateColormap(varargin)
