@@ -8209,7 +8209,7 @@ end
 %   later calls or from WindowCloseRequestFcn
     function profileGui(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        %Make profile Gui and all related objects invisible
+        %% Make profile Gui and all related objects invisible
         if nargin == 3 || ~get(tbProfile,'Value')
             set(profileWin, 'Visible','off');
             set(profileTraceWin, 'Visible','off');
@@ -8249,7 +8249,7 @@ end
             profileWin =  figure('Units', 'Pixel', 'Name', 'Profile Manager',...
                 'MenuBar', 'none', 'NumberTitle', 'off','CloseRequestFcn', {@profileGui,0}, 'HandleVisibility', 'off',...
                 'WindowStyle','normal', 'Position', [gp(1) gp(2)-362 130 330]);
-            warning('off','MATLAB:HandleGraphicresizeRoiGuis:ObsoletedProperty:JavaFrame');
+            warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
             profile_jf = get(profileWin,'JavaFrame');
             profile_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_profile))));
             warning('on','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
@@ -8380,6 +8380,7 @@ end
             profileStruct.instance = 1; % not clear what this is used for
             profileStruct.gui.bgcolor = [.9 .9 .9];
         end
+        %% SubFunctions
         function resizeProfileWin(varargin)
           if debugMatVis, debugMatVisFcn(1); end
             adjustGuiSize(profileWin,-1);
@@ -8491,33 +8492,7 @@ end
             profileList(numberProfile).settings.position = currPos;
             profileList(numberProfile).settings.zoomVal = zoomVal;
             for ii=1:nMat
-              hold(imAx(ii),'on');
-              hold(zoomAx(ii),'on');
-              if customDimScale;
-                tp = scaledLocation(squeeze(profileList(numberProfile).mat(1,:,:)));
-                profileLine.im(ii,numberProfile,2)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineStyle',':','LineWidth',2);
-                profileLine.zoom(ii,numberProfile,2) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineStyle',':','LineWidth',2);
-                tp = scaledLocation(squeeze(profileList(numberProfile).mat(end,:,:)));
-                profileLine.im(ii,numberProfile,3)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineStyle',':','LineWidth',2);
-                profileLine.zoom(ii,numberProfile,3) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineStyle',':','LineWidth',2);
-                tp = scaledLocation(profileList(numberProfile).smoothedPoints);
-                profileLine.im(ii,numberProfile,1)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineWidth',2);
-                profileLine.zoom(ii,numberProfile,1) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineWidth',2);
-                profileText.im(ii,numberProfile)    = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(numberProfile).name,'Parent',imAx(ii),'FontWeight','bold');
-                profileText.zoom(ii,numberProfile)  = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(numberProfile).name,'Parent',zoomAx(ii),'FontWeight','bold');
-              else
-                tp = squeeze(profileList(numberProfile).mat(1,:,:));
-                profileLine.im(ii,numberProfile,2)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineStyle',':','LineWidth',2);
-                profileLine.zoom(ii,numberProfile,2) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineStyle',':','LineWidth',2);
-                tp = squeeze(profileList(numberProfile).mat(end,:,:));
-                profileLine.im(ii,numberProfile,3)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineStyle',':','LineWidth',2);
-                profileLine.zoom(ii,numberProfile,3) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineStyle',':','LineWidth',2);
-                tp = profileList(numberProfile).smoothedPoints;
-                profileLine.im(ii,numberProfile,1)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineWidth',2);
-                profileLine.zoom(ii,numberProfile,1) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineWidth',2);
-                profileText.im(ii,numberProfile)    = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(numberProfile).name,'Parent',imAx(ii),'FontWeight','bold');
-                profileText.zoom(ii,numberProfile)  = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(numberProfile).name,'Parent',zoomAx(ii),'FontWeight','bold');
-              end
+              drawProfile(ii, numberProfile)
             end
             profileStruct.trace.points = [];
             delete([profileStruct.trace.plot1 profileStruct.trace.plot2 profileStruct.trace.plot3]);
@@ -8532,6 +8507,37 @@ end
             end
             updateProfileSelection;
             set([bt_deleteProfile bt_profileExport edt_lineWidt],'Enable','on');
+          if debugMatVis, debugMatVisFcn(2); end
+        end
+        function drawProfile(iinMat, nProfile)
+          if debugMatVis, debugMatVisFcn(1); end
+          hold(imAx(iinMat),'on');
+          hold(zoomAx(iinMat),'on');
+          if customDimScale
+            tp = scaledLocation(squeeze(profileList(nProfile).mat(1,:,:)));
+            profileLine.im(iinMat,nProfile,2)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineStyle',':','LineWidth',2);
+            profileLine.zoom(iinMat,nProfile,2) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineStyle',':','LineWidth',2);
+            tp = scaledLocation(squeeze(profileList(nProfile).mat(end,:,:)));
+            profileLine.im(iinMat,nProfile,3)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineStyle',':','LineWidth',2);
+            profileLine.zoom(iinMat,nProfile,3) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineStyle',':','LineWidth',2);
+            tp = scaledLocation(profileList(nProfile).smoothedPoints);
+            profileLine.im(iinMat,nProfile,1)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineWidth',2);
+            profileLine.zoom(iinMat,nProfile,1) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineWidth',2);
+            profileText.im(iinMat,nProfile)    = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(nProfile).name,'Parent',imAx(iinMat),'FontWeight','bold');
+            profileText.zoom(iinMat,nProfile)  = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(nProfile).name,'Parent',zoomAx(iinMat),'FontWeight','bold');
+          else
+            tp = squeeze(profileList(nProfile).mat(1,:,:));
+            profileLine.im(iinMat,nProfile,2)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineStyle',':','LineWidth',2);
+            profileLine.zoom(iinMat,nProfile,2) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineStyle',':','LineWidth',2);
+            tp = squeeze(profileList(nProfile).mat(end,:,:));
+            profileLine.im(iinMat,nProfile,3)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineStyle',':','LineWidth',2);
+            profileLine.zoom(iinMat,nProfile,3) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineStyle',':','LineWidth',2);
+            tp = profileList(nProfile).smoothedPoints;
+            profileLine.im(iinMat,nProfile,1)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineWidth',2);
+            profileLine.zoom(iinMat,nProfile,1) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineWidth',2);
+            profileText.im(iinMat,nProfile)    = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(nProfile).name,'Parent',imAx(iinMat),'FontWeight','bold');
+            profileText.zoom(iinMat,nProfile)  = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(nProfile).name,'Parent',zoomAx(iinMat),'FontWeight','bold');
+          end
           if debugMatVis, debugMatVisFcn(2); end
         end
         function updateProfileSelection(varargin)
@@ -8865,19 +8871,6 @@ end
                 if debugMatVis, debugMatVisFcn(2); end
                 return
             end
-%             if customDimScale
-%                 for ii=1:numel(matVisProfileExport)
-%                     % Convert corners to scale
-%                     for jj = 1:size(matVisProfileExport(ii).corners,2)
-%                         matVisProfileExport(ii).corners(:,jj) = scaledLocation(matVisProfileExport(ii).corners(:,jj)');
-%                     end
-%                     % Convert rectangle to scale
-%                     matVisProfileExport(ii).rectangle = [max(dimScale(xySel(2),1)+pxWidth(xySel(2))  ,-pxWidth(xySel(2))+min(matVisProfileExport(ii).corners(1,:))),...
-%                         max(dimScale(xySel(1),1)+pxWidth(xySel(1))  ,-pxWidth(xySel(1))+min(matVisProfileExport(ii).corners(2,:))),...
-%                         min(dimScale(xySel(2),2),pxWidth(xySel(2))+max(matVisProfileExport(ii).corners(1,:))),...
-%                         min(dimScale(xySel(1),2),pxWidth(xySel(1))+max(matVisProfileExport(ii).corners(2,:)))];
-%                 end
-%             end
             if nProfiles  % nProfiles == 0 if there are no profiles existing
                 q = questdlg('Append imported profiles or overwrite existing profiles?','Append or overwrite?','Overwrite','Append','Overwrite');
                 if strcmp(q,'Append')
@@ -8885,7 +8878,10 @@ end
                 else
                     profileList = matVisProfileExport;
                 end
-                delete([profileLine.im profileLine.zoom profileText.im profileText.zoom])
+                delete([profileLine.im profileLine.zoom])
+                delete([profileText.im profileText.zoom])
+                profileLine = [];
+                profileText = [];
             else
                 profileList = matVisProfileExport;
             end
@@ -8900,18 +8896,9 @@ end
                 s{ii} = [num2str(ii,'%03d'),': ',profileList(ii).name];
             end
             for ii=1:nMat
-                for pp = 1:numel(profileList)
-                    hold(imAx(ii),'on');
-                    profileLine.im(ii,pp,1) = plot(profileList(pp).smoothedPoints(:,1),profileList(pp).smoothedPoints(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineWidth',2);
-                    profileLine.im(ii,pp,2) = plot(profileList(pp).mat(1,:,1),profileList(pp).mat(1,:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineStyle',':','LineWidth',2);
-                    profileLine.im(ii,pp,3) = plot(profileList(pp).mat(end,:,1),profileList(pp).mat(end,:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(ii),'LineStyle',':','LineWidth',2);
-                    profileText.im(ii,pp) = text(max(profileList(pp).smoothedPoints(:,1))+5,mean(profileList(pp).smoothedPoints(:,2)),profileList(pp).name,'Parent',imAx(ii),'FontWeight','bold');
-                    hold(zoomAx(ii),'on');
-                    profileLine.zoom(ii,pp,1) = plot(profileList(pp).smoothedPoints(:,1),profileList(pp).smoothedPoints(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineWidth',2);
-                    profileLine.zoom(ii,pp,2) = plot(profileList(pp).mat(1,:,1),profileList(pp).mat(1,:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineStyle',':','LineWidth',2);
-                    profileLine.zoom(ii,pp,3) = plot(profileList(pp).mat(end,:,1),profileList(pp).mat(end,:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(ii),'LineStyle',':','LineWidth',2);
-                    profileText.zoom(ii,pp) = text(max(profileList(pp).smoothedPoints(:,1))+5,mean(profileList(pp).smoothedPoints(:,2)),profileList(pp).name,'Parent',zoomAx(ii),'FontWeight','bold');
-                end
+              for pp = 1:numel(profileList)
+                drawProfile(ii, pp)
+              end
             end
             set(profileListbox, 'String',s,'Value', 1);
             set([profileBtRename tbProfileShift profileBtReplace bt_profileExport bt_deleteProfile bt_exportProfileData] , 'Enable', 'on');
