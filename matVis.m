@@ -9017,7 +9017,7 @@ end
                 end
             end
             set(profileStruct.gui.traceim.ax,'box','on','YTickLabel',(profileStruct.show.width-1)/2:-1:-1*(profileStruct.show.width-1)/2,'XLim',[.5 length(tracepoints)-.5],'YLim',[.5 profileStruct.show.width+.5]);%,'Color',profileStruct.gui.bgcolor
-            set(profileStruct.gui.profile.ax,'box','on','XTickLabel',[],'Color',profileStruct.gui.bgcolor,'XLim',[.5 length(tracepoints)-.5],'YLim',[0 max(profileStruct.show.profile(:))]);
+            set(profileStruct.gui.profile.ax,'box','on','XTickLabel',[],'Color',profileStruct.gui.bgcolor,'XLim',[.5 length(tracepoints)-.5],'YLim',[min(profileStruct.show.profile(:)) max(profileStruct.show.profile(:))]);
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
@@ -9840,6 +9840,7 @@ end
         else
             set(roiListbox, 'Value',0, 'String', '');
             set([roiBtRename tbRoiShift tbRoiRotate tbRoiScale roiBtReplace bt_roiExport bt_deleteRoi bt_exportRoiData] , 'Enable', 'off');
+            set(roiCenterIndicator(:),'Visible','off');
             if ~isempty(bt_exportRoiData)
                 set(bt_exportRoiData, 'Enable','off')
             end
