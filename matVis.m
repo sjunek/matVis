@@ -324,12 +324,13 @@ if nargin == 0 || ischar(varargin{1})
 %                 end
                 defaultColormap{i} = []; %#ok
             elseif strcmp(ext, '.lsm')
-                dimNames{1} = 'x';
-                dimNames{2} = 'y';
-                dimNames{4} = 'l';
-                dimNames{3} = 'z';
-                dimNames{5} = 't';
                 if i==1  % Data size and scaling, assume it's the same for all files
+                  dimNames{1} = 'x';
+                  dimNames{2} = 'y';
+                  dimNames{4} = 'c';
+                  dimNames{3} = 'z';
+                  dimNames{5} = 't';
+                  dimNames{6} = 'Series';
                     if any(which('lsminfo'))
                         ww = lsminfo([p,f{i}]);
                         lsmDim = ww.DIMENSIONS;
@@ -346,26 +347,26 @@ if nargin == 0 || ischar(varargin{1})
                         dimUnits{4} = 'channel';
                         dimUnits{3} = 'µm';
                         dimUnits{5} = 's';
+                        dimUnits{6} = '';
                         customDimScale = 1;
                         withDimUnits = 1;
-                        % remove singular dimensions
-                        dimScale(lsmDim==1,:) = [];
-                        dimUnits(lsmDim==1) = [];
-                        dimNames(lsmDim==1) = [];
-                        pxWidth = diff(dimScale,1,2)'./(lsmDim(lsmDim~=1)-1);
-                        if iscell(ww(1).ScanInfo.BITS_PER_SAMPLE)
-                            bd =  ww(1).ScanInfo.BITS_PER_SAMPLE{1};
-                        else
-                            bd =  ww(1).ScanInfo.BITS_PER_SAMPLE(1);
-                        end
+                        ww = imfinfo([p,f{i}]);
                     else
-                        lsmDim = str2double(inputdlg({'x';'y';'z';'z';'t';'BitDepth'},'Enter data size for all 5 dimensions and bit depth'));
-                        bd = lsmDim(6);
-                        lsmDim(6) = [];
-                        dimNames(lsmDim==1) = [];
+                      ww = imfinfo([p,f{i}]);
+                      lsmDim = [ww(1).Height, ww(1).Width, floor(numel(ww)/2), ww(1).SamplesPerPixel, 1, 1];
+                        lsmDimN = str2double(inputdlg({'x';'y';'z';'c';'t';'Series'},...
+                        'Enter data size for all dimensions',1,cellstr(num2str(lsmDim'))));
+                      if isempty(lsmDimN)
+                        return
+                      elseif prod(lsmDim)~=prod(lsmDimN)
+                        error('Number of Elements must not change')
+                      else
+                        lsmDim = lsmDimN';
+                        clear lsmDimN
+                      end
+                      dimNames(lsmDim==1) = [];
                     end
                 end
-                ww = imfinfo([p,f{i}]);
                 nCol = ww(1).SamplesPerPixel;
                 nImg = floor(numel(ww)/2); % Every second image is a thumbnail of the preceding full-res image
                 if ww(1).BitsPerSample(1) <= 16
@@ -383,12 +384,26 @@ if nargin == 0 || ischar(varargin{1})
                         elseif ww(2*j-1).BitsPerSample(col) <=16
                             data{i}(:,:,col,j) = fread(gl_fid, readLength, '*uint16')';
                         else ww(2*j-1).BitsPerSample(col)
-                            data{i}(:,:,col,j) = fread(gl_fid,readLength, 'uint32')';
+                            data{i}(:,:,col,j) = fread(gl_fid, readLength, 'uint32')';
                         end
                     end
                 end
                 fclose(gl_fid);
-                data{i} = permute(reshape(permute(data{i},[2 1 3 4 5]), lsmDim([1 2 4 3 5])),[1 2 4 3 5]);
+                % exchange x/y
+                data{i} = permute(data{i},[2 1 3 4]);
+                % extend dimensions to multiple Series
+                lsmDim(6) = numel(data{i})/prod(lsmDim(1:5));
+                data{i} = reshape(data{i},lsmDim([1 2 4 3 5 6]));
+                % exchange c/z ?
+                data{i} = permute(data{i},[1 2 4 3 5 6]);
+                if i==1 && any(which('lsminfo')) 
+                  dimScale(6,:) = [1 lsmDim(6)];
+                   % remove singular dimensions
+                  dimScale(lsmDim==1,:) = [];
+                  dimUnits(lsmDim==1) = [];
+                  dimNames(lsmDim==1) = [];
+                  pxWidth = diff(dimScale,1,2)'./(lsmDim(lsmDim~=1)-1);
+                end
                 data{i} = squeeze(data{i}); %  in case  of a single color channel
                 defaultColormap{i} = [];             %#ok
             elseif strcmp(ext, '.da')
@@ -420,14 +435,19 @@ if nargin == 0 || ischar(varargin{1})
                 allNames = [varName{1} ' ... ' varName{end}];
             end
             if customDimScale
-               pxWidth = diff(dimScale,1,2)'./(size(data{1})-1);
-               dimScale(end+1,:) = [1 size(dimScale,1)+1];
+               dimScale(end+1,:) = [1 numel(data)];
+               pxWidth = diff(dimScale,1,2)'./([size(data{1}) numel(data)]-1);
+            end
+            if ~isempty(dimNames)
+               dimNames{end+1} = 'Files'; 
             end
             if withDimUnits
                 dimUnits{end+1} = '';
             end
             varName = [];
             varName{1} = allNames;
+            data = {cat(ndims(data{1})+1, data{:})};
+            %{
             % Create size vector and dimension index for reshape data after
             %  converting cell array into matrix. The cells are
             %  concatenated along the 2nd dimension, so the matrix has to
@@ -448,12 +468,7 @@ if nargin == 0 || ischar(varargin{1})
             dd = permute(reshape(cell2mat(dd), dim),ind);
             data{1} = dd;
             clear dd;
-            if ~isempty(dimNames)
-               dimNames{end+1} = 'Files'; 
-            end
-            if customDimScale
-                pxWidth(end+1) = 1;
-            end
+            %}
         end
     end
     nMat = numel(data);
