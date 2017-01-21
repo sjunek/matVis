@@ -1,6 +1,6 @@
 function varargout = matVis(varargin)
 %% matVis(data1, data2, ... , 'PropertyName', PropertyValue, ...)
-%**************************************************************************c
+%**************************************************************************
 % GUI for displaying data sets of arbitrary dimension using 2D images and 
 % 1D profiles. Key features of matVis include
 % - Easy data input: load variables from the workspace or various image file
@@ -2866,6 +2866,7 @@ bg_colormap = uibuttongroup('Parent', panel_imageControls, 'Title', '', 'Units',
     'Position', [0 140 customConfig.winPos.gui(3) 24], 'BackgroundColor', get(gui, 'Color'),...
     'TitlePosition', 'centertop', 'BorderType', 'none', 'HighlightColor', 'w',...
     'SelectionChangeFcn',@updateColormap,'Tag', 'Select contrast adjustment. Global: min/max of complete data set. Image: min/max of currently displayed image. Zoom: min /max of current zoom in displayed image. Manual: Select min/max using slider or edit control below.');
+set(bg_colormap,'UserData',get(bg_colormap,'Tag'));
 % Contrast Text
 % uicontrol('Style', 'Text', 'Parent', bg_colormap, 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
 %     'Position', [10 3 50 15], 'String', 'Contrast', ...
@@ -7847,6 +7848,7 @@ end
         currConfig.gamma  = currGamma;
         %RGB Mode
         currConfig.RGB = get(tbSwitchRGB, 'Value');
+        currConfig.rgbCount = rgbCount;
         %Colormap Mode (Global, Local or Manual)
         currConfig.colormapMode = get(get(bg_colormap, 'SelectedObject'), 'String');   %Default: 'Global'
         %Lines Visibility
@@ -7876,7 +7878,9 @@ end
         currConfig.linkContrastSettings = linkContrastSettings; % Default: 1 (link contrast)
         % Jump to ROI selection position
         if get(roiWin,'Visible')
-            currConfig.jump2ROIPos = get(jump2ROIPos_cb, 'Value');
+          currConfig.jump2ROIPos = get(jump2ROIPos_cb, 'Value');
+        else
+          currConfig.jump2ROIPos = customConfig.jump2ROIPos;
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
@@ -7957,9 +7961,11 @@ end
             end
         end
         %RGB Mode
-        if config.RGB && ~withAlpha
+        if config.RGB && ~withAlpha && nDim>2
             set(cmImage, 'String', 'Channel');
             set(tbSwitchRGB, 'Value', 1);
+            set(bg_colormap, 'SelectedObject',bg_colormap.Children(strcmp(get(bg_colormap.Children,'String'),config.colormapMode)))
+            rgbCount = min(nDim-3, config.rgbCount -1);
             switchRGB;
         end
         %Colormap Mode (Global, Local or Manual)
