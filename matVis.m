@@ -892,7 +892,7 @@ movdata.fastCaptureMode = true; %false; % use 'hardcopy' instead of 'export_fig'
 %Window Properties
 
 % Ensure root units are pixels and get the size of the screen
-set(0,'Units','pixels')
+set(0,'Units','pixels');
 scnSize = get(0,'ScreenSize'); %
 monSize = get(0,'MonitorPosition');
 monSizeMin = min(monSize(:,[1 2]),[],1);         % min x y position
@@ -2745,7 +2745,7 @@ btMean = uicontrol('Parent',panel_positionControls, 'Style', 'Pushbutton', 'Unit
 %     'HorizontalAlignment', 'center','FontWeight','bold','FontSize',10);
 
 %Button for Data Export
-btExport = uicontrol('Parent',panel_positionControls, 'Style', 'Pushbutton', 'Units', 'Pixel', 'CData', exportBt,  ...
+btExport = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'CData', exportBt,  ...
     'Position', [200 10 24 24], 'Callback', @exportData,  'Value', 0,...
     'ToolTipString', 'Export subset of data','Tag','Export subset of data either as a new variable in the workspace or into a new matVis.');  %[115 85 24 24]
 
@@ -3567,7 +3567,7 @@ end
         if projMethod
             if isPlaying
                 isPlaying = 0;
-                set(btPlayAll, 'CData', arrow, 'Value', 0);
+                set(btPlayAll, 'CData', arrows, 'Value', 0);
             end
             %set(tbSwitchRGB, 'Enable', 'off');
             set(btMean, 'Enable', 'off', 'CData', squeeze(meanBt{1}));
@@ -3815,7 +3815,7 @@ end
             updateColormap;
         else
             %RGB mode on
-            if rgbCount == 1 || any(get(bg_colormap, 'SelectedObject')==[cmManual cmImage cmZoom cmThresh]) 
+            if any(get(bg_colormap, 'SelectedObject')==[cmManual cmImage cmZoom cmThresh]) %rgbCount == 1 || 
                 set(bg_colormap, 'SelectedObject', cmGlobal);
             end
             notXY = setdiff(1:nDim, xySel);
@@ -4414,6 +4414,9 @@ end
                 end
                 if get(roiBtRename, 'Value')
                     figure(tempRoiPropWin);
+                end
+                if get(btExport, 'Value')
+                    figure(exportWin);
                 end
             end
         elseif strcmp(get(gui,'SelectionType'),'extend')  % Move all windows together 
@@ -7964,16 +7967,21 @@ end
         if config.RGB && ~withAlpha && nDim>2
             set(cmImage, 'String', 'Channel');
             set(tbSwitchRGB, 'Value', 1);
-            set(bg_colormap, 'SelectedObject',bg_colormap.Children(strcmp(get(bg_colormap.Children,'String'),config.colormapMode)))
+            if oldMATLAB
+              set(bg_colormap, 'SelectedObject',...
+                strcmp(get(get(bg_colormap,'Children'),'String'),config.colormapMode)'*get(bg_colormap,'Children'));   %Default: 'Global'
+            else
+              set(bg_colormap, 'SelectedObject',bg_colormap.Children(strcmp(get(bg_colormap.Children,'String'),config.colormapMode)))
+            end
             rgbCount = min(nDim-3, config.rgbCount -1);
             switchRGB;
         end
         %Colormap Mode (Global, Local or Manual)
-        if oldMATLAB
+        if ~config.RGB && withAlpha
+          if oldMATLAB
             set(bg_colormap, 'SelectedObject',...
-                strcmp(get(get(bg_colormap,'Children'),'String'),config.colormapMode)'*get(bg_colormap,'Children'));   %Default: 'Global'
-        else
-          if ~(config.RGB && withAlpha)
+              strcmp(get(get(bg_colormap,'Children'),'String'),config.colormapMode)'*get(bg_colormap,'Children'));   %Default: 'Global'
+          else
             set(bg_colormap, 'SelectedObject',bg_colormap.Children(strcmp(get(bg_colormap.Children,'String'),config.colormapMode)))
           end
         end
@@ -8036,7 +8044,7 @@ end
     function exportData(varargin)
       if debugMatVis, debugMatVisFcn(1); end
       exportWin = figure('Units', 'Pixel', 'Position', [300 300 200 25*nDim+150], 'Name', 'Export Data',...
-        'MenuBar', 'none', 'Resize', 'off', 'NumberTitle', 'off', 'HandleVisibility', 'off');
+        'MenuBar', 'none', 'Resize', 'off', 'NumberTitle', 'off', 'HandleVisibility', 'off', 'CloseRequestFcn',@closeExportWin);
       uicontrol(exportWin, 'Style', 'Text', 'Position', [30 25*nDim+105 140 40], ...
         'String','Specify intervals of data to be exported!','FontWeight', 'bold',...
         'BackgroundColor', get(exportWin, 'Color'), 'HorizontalAlignment', 'center');
@@ -8067,7 +8075,7 @@ end
           ind{iii} = eval(get(exportTxt(iii), 'String'));    %#ok
           indC(iii) = length(ind{iii})==1;
         end
-        assignin('base', [get(exportName, 'String'),'_index'], ind);
+        assignin('base', strrep(sprintf('%s_index',get(exportName, 'String')),' ','_'), ind);
         expProp = [];lEA = 1;
         if exist('dimScale','var') && ~isempty(dimScale)
           expProp{lEA} = 'dimScale';
@@ -8094,27 +8102,38 @@ end
           expProp{lEA+1} = {allNames};
           lEA = lEA+2;
         end
-        assignin('base', [get(exportName, 'String'),'_props'], expProp);
+        assignin('base', strrep(sprintf('%s_props',get(exportName, 'String')),' ','_'), expProp);
         if nMat == 1
           d = data{1}(ind{:});
-          assignin('base', get(exportName, 'String'), d);
+          assignin('base', strrep(sprintf('%s',get(exportName, 'String')),' ','_') , d);
+          if withAlpha
+            d = alphaMap{1}(ind{:});
+            assignin('base', strrep(sprintf('%s_Alpha',get(exportName, 'String')),' ','_'), d);
+          end
         else
           for iii = 1:nMat
             d = data{iii}(ind{:});
+            if withAlpha
+              dA = alphaMap{1}(ind{:});
+            end
             if isempty(varName{iii})
-              assignin('base', [get(exportName, 'String') '_set' num2str(iii,'%02d')] , d);
+              vn = sprintf('_set%02d',iii);
             else
               if fromFile
-                [pn vn] = fileparts(varName{iii});
+                [~, vn] = fileparts(varName{iii});
+                vn = sprintf('_%s',vn);
               else
-                vn = varName({iii});
+                vn = sprintf('_%s',varName({iii}));
               end
-              assignin('base', [get(exportName, 'String') '_' vn] , d);
+            end
+            assignin('base', strrep(sprintf('%s%s',get(exportName, 'String'),vn),' ','_') , d);
+            if withAlpha
+              assignin('base', strrep(sprintf('%s_Alpha%s',get(exportName, 'String'),vn),' ','_'), dA);
             end
           end
         end
         exportCount = exportCount + 1;
-        clear d;
+        clear d dA;
         delete(exportWin);
         exportWin = [];
         set(btExport, 'Value', 0);
@@ -8188,6 +8207,7 @@ end
         matVis(inputArg{:});
         delete(exportWin);
         exportWin = [];
+        set(btExport, 'Value', 0);
         if debugMatVis, debugMatVisFcn(2); end
       end
    end
@@ -10883,6 +10903,13 @@ end
         set(tempWin, 'HandleVisibility', 'on');
         delete(tempWin);
         tempWin = [];
+        if debugMatVis, debugMatVisFcn(2); end
+    end
+    function closeExportWin(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        set(btExport,'Value',0);
+        delete(exportWin);
+        exportWin = [];
         if debugMatVis, debugMatVisFcn(2); end
     end
     function openMatVisGuide(varargin)
