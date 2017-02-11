@@ -5259,9 +5259,10 @@ end
                                 end
                             end
                             if nBlack > 0
-                                c(:,:,size(c,3)+1:nRows*nCols) = minVal(1);
+                                szc3 = size(c,3);
+                                c(:,:,szc3+1:nRows*nCols) = minVal(1);
                                 if withAlpha
-                                  cA(:,:,size(c,3)+1:nRows*nCols) = 0;
+                                  cA(:,:,szc3+1:nRows*nCols) = 0;
                                 end
                             end
                             if islogical(c)
@@ -5279,7 +5280,7 @@ end
                                 end
                             end
                     end
-                    clear c cA sz1;
+                    clear c cA sz1 szc3;
                 end
                 busy(0);
             end
