@@ -834,15 +834,16 @@ profileSize = [];                            %Number of pixels of profile
 profileStruct = struct;                      %Structure used for creating and updating profiles ("finisehed" profiles are then collected in profileList)
 profileList = [];                            %List of profiles
 profileLine = [];                            %Handle to lines indicating profiles
+profileDirection = [];                       %Handle to lines indicating profile directions
 nProfiles = 0;                               %Number of profiles
 profileText = [];                            %Handle to text (numbers) for profiles
 profileName = [];                            %profile name of currently selected profile above profileAxes
 profileListbox = [];                         %Listbox in profile Gui containing all profiles; selected profile is "current profile"
-profileBtRename = [];                        %Button to rename profile
-profileBtShowNames = [];                     %Button to show or hide profile text in figure windows
-profileBtReplace = [];                       %Button to exchange existing profile by new one.
+tb_profileRename = [];                        %Button to rename profile
+tb_profileShowNames = [];                     %Button to show or hide profile text in figure windows
+tb_profileReplace = [];                       %Button to exchange existing profile by new one.
 profilePopDataExport = [];                   %Handle to pop menu to choose dimension for profile based data export
-tbProfileShift = [];                         %Handle for toggle button for shifting of profiles
+tb_ProfileShift = [];                         %Handle for toggle button for shifting of profiles
 tbProfileRotate = [];                        %Handle for toggle button for rotating profiles
 tbProfileScale = [];                         %Handle for toggle button for scaling profiles
 tb_newProfile = [];                          %Handle for toggle buttons to creat new profiles
@@ -2159,6 +2160,18 @@ roiScaleBt =               [NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,
     NaN,0  ,NaN,0  ,NaN,0  ,NaN,0  ,NaN,0  ,NaN,0  ,NaN,0  ,NaN,0  ,NaN,0  ,NaN,0  ,NaN,0  ,NaN;
     NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN;];
 roiScaleBt = repmat(roiScaleBt, [1 1 3]);
+profileDir = [NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN;
+              NaN,   0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN,   0,   0, NaN, NaN, NaN, NaN, NaN, NaN;
+              NaN,   0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN,   0,   0, NaN, NaN, NaN, NaN, NaN;
+              NaN,   0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN,   0,   0, NaN, NaN, NaN, NaN;
+              NaN,   0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN,   0,   0, NaN, NaN, NaN;
+              NaN,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, NaN, NaN;
+              NaN,   0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN,   0,   0, NaN, NaN, NaN;
+              NaN,   0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN,   0,   0, NaN, NaN, NaN, NaN;
+              NaN,   0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN,   0,   0, NaN, NaN, NaN, NaN, NaN;
+              NaN,   0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN,   0,   0, NaN, NaN, NaN, NaN, NaN, NaN;
+              NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN];
+profileDir = repmat(profileDir,[1 1 3]);
 invertBt =                 [NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN;
     1  ,1  ,1  ,1  ,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,0  ,0  ,0  ,0;
     1  ,1  ,1  ,1  ,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,0  ,0  ,0  ,0;
@@ -4090,30 +4103,30 @@ end
         if debugMatVis > 1, debugMatVisFcn(2); end
     end
     function toggleTooltipDisplay(varargin)
-		if debugMatVis, debugMatVisFcn(1); end
-        if strcmp(os(1:3),'MAC')
-            f = macScaleFactor(2);
-        else
-            f = 1;
-        end
-        if ~get(tbTooltips, 'Value')   % Hide headings and tooltips
-            set([sepLine(end) txt_titles txt_tooltips txt_plots], 'Visible','off');
-            set(panel_positionControls, 'Position', get(panel_positionControls, 'Position') - f*[0 110 0 0]);
-            set(panel_imageControls, 'Position', get(panel_imageControls, 'Position') - f*[0 90 0 0]);
-            set(panel_windowButtons, 'Position', get(panel_windowButtons, 'Position') - f*[0 67 0 0]);
-            set(sepLine(2), 'Position',get(sepLine(2), 'Position') - f*[0 90 0 0]);
-            set(sepLine(1), 'Position',get(sepLine(1), 'Position') - f*[0 110 0 0]);
-            set(gui, 'Position', get(gui,'Position')-f*[0 -130 0 130]);
-        else % Show headings and tooltips
-            set([sepLine(end) txt_titles txt_tooltips txt_plots], 'Visible','on');
-            set(panel_positionControls, 'Position', get(panel_positionControls, 'Position') + f*[0 110 0 0]);
-            set(panel_imageControls, 'Position', get(panel_imageControls, 'Position') + f*[0 90 0 0]);
-            set(panel_windowButtons, 'Position', get(panel_windowButtons, 'Position') + f*[0 67 0 0]);
-            set(sepLine(2), 'Position',get(sepLine(2), 'Position') + f*[0 90 0 0]);
-            set(sepLine(1), 'Position',get(sepLine(1), 'Position') + f*[0 110 0 0]);
-            set(gui, 'Position', get(gui, 'Position')+f*[0 -130 0 130]);
-        end
-		if debugMatVis, debugMatVisFcn(2); end
+      if debugMatVis, debugMatVisFcn(1); end
+          if strcmp(os(1:3),'MAC')
+              f = macScaleFactor(2);
+          else
+              f = 1;
+          end
+          if ~get(tbTooltips, 'Value')   % Hide headings and tooltips
+              set([sepLine(end) txt_titles txt_tooltips txt_plots], 'Visible','off');
+              set(panel_positionControls, 'Position', get(panel_positionControls, 'Position') - f*[0 110 0 0]);
+              set(panel_imageControls, 'Position', get(panel_imageControls, 'Position') - f*[0 90 0 0]);
+              set(panel_windowButtons, 'Position', get(panel_windowButtons, 'Position') - f*[0 67 0 0]);
+              set(sepLine(2), 'Position',get(sepLine(2), 'Position') - f*[0 90 0 0]);
+              set(sepLine(1), 'Position',get(sepLine(1), 'Position') - f*[0 110 0 0]);
+              set(gui, 'Position', get(gui,'Position')-f*[0 -130 0 130]);
+          else % Show headings and tooltips
+              set([sepLine(end) txt_titles txt_tooltips txt_plots], 'Visible','on');
+              set(panel_positionControls, 'Position', get(panel_positionControls, 'Position') + f*[0 110 0 0]);
+              set(panel_imageControls, 'Position', get(panel_imageControls, 'Position') + f*[0 90 0 0]);
+              set(panel_windowButtons, 'Position', get(panel_windowButtons, 'Position') + f*[0 67 0 0]);
+              set(sepLine(2), 'Position',get(sepLine(2), 'Position') + f*[0 90 0 0]);
+              set(sepLine(1), 'Position',get(sepLine(1), 'Position') + f*[0 110 0 0]);
+              set(gui, 'Position', get(gui, 'Position')+f*[0 -130 0 130]);
+          end
+      if debugMatVis, debugMatVisFcn(2); end
     end
 
 %     function toggleMoveHist(varargin)
@@ -6177,7 +6190,7 @@ end
                 subPlotHandles = matlab.graphics.chart.primitive.Line.empty;                     %Handles to subplot axes in Plots Window
                 subPlotPlots = matlab.graphics.chart.primitive.Line.empty;                       %Handles to data displayed in Plots Window
                 if withAlpha
-                  subPlotPlotsAlpha = matlab.graphics.chart.primitive.Line.empty;                       %Handles to data displayed in Plots Window
+                  subPlotPlotsAlpha = matlab.graphics.chart.primitive.Line.empty;                %Handles to data displayed in Plots Window
                 end
             end
             if get(tbRoi, 'Value')
@@ -6287,6 +6300,14 @@ end
                         end
                     else
                         xlabel(dimNames(plotDim(ii)));
+                    end
+                    if withAlpha && ~verLessThan('matlab','9.0')
+                      yyaxis(subPlotHandles(jj,ii),'right')
+                      ylabel('AlphaValue (:)')
+                      yyaxis(subPlotHandles(jj,ii),'left')
+                      ylabel('Value (-)')
+                    else
+                      ylabel('Value')
                     end
                 end
                 set(plotWin(jj), 'HandleVisibility', 'off');
@@ -8264,7 +8285,7 @@ end
             if nProfiles >0
                 set([profileLine.im(:)', profileLine.zoom(:)', profileText.im(:)', profileText.zoom(:)'],  'Visible', 'off');
             end
-            set([tb_newProfile tbProfileShift tbProfileRotate tbProfileScale profileBtReplace], 'Value', 0);
+            set([tb_newProfile tb_ProfileShift tbProfileRotate tbProfileScale tb_profileReplace], 'Value', 0);
             set([imageWin zoomWin],'WindowButtonMotionFcn',@mouseMotion,...
                 'WindowButtonDownFcn',@buttonDownCallback,...
                 'WindowButtonUpFcn','');
@@ -8275,10 +8296,11 @@ end
         %Make profile Gui and all related objects visible
         set(profileWin, 'Visible','on');
         set(btMean, 'Enable','off');
-        if nProfiles > 0 && get(profileBtShowNames, 'Value')
+        if nProfiles > 0 && get(tb_profileShowNames, 'Value')
             set([profileLine.im(:)', profileLine.zoom(:)', profileText.im(:)', profileText.zoom(:)'], 'Visible', 'on');
+            showProfileDirection;
         elseif nProfiles > 0
-            set([profileLine.im(:)', profileLine.zoom(:)', profileText.im(:)', profileText.zoom(:)'], 'Visible', 'off');
+            set([profileLine.im(:)', profileLine.zoom(:)', profileDirection.im(:)', profileDirection.zoom(:)', profileText.im(:)', profileText.zoom(:)'], 'Visible', 'off');
         end
         set(cbPlots(xySel),  'Value', 0 ,'Enable', 'off'); %necessary when call from WindowCloseRequestFcn
         plotSel(xySel) = 0;
@@ -8289,22 +8311,22 @@ end
         if isempty(profileWin)
             gp = get(gui,'Position');
             % Profile trace window
-            profileTraceWin = figure('Position',[ gp(1)+140  gp(2)-452   560   420], 'Name', 'Profile view', 'MenuBar', 'none', 'NumberTitle', 'off');
+            profileTraceWin = figure('Position',[ gp(1)+130  gp(2)-452   560   420], 'Name', 'Profile view', 'MenuBar', 'none', 'NumberTitle', 'off');
             %profile Manager Window with text
             profileWin =  figure('Units', 'Pixel', 'Name', 'Profile Manager',...
                 'MenuBar', 'none', 'NumberTitle', 'off','CloseRequestFcn', {@profileGui,0}, 'HandleVisibility', 'off',...
-                'WindowStyle','normal', 'Position', [gp(1) gp(2)-362 130 330]);
+                'WindowStyle','normal', 'Position', [gp(1) gp(2)-387 130 355]);
             warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
             profile_jf = get(profileWin,'JavaFrame');
             profile_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_profile))));
             warning('on','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
-            txt_profileList = uicontrol(profileWin, 'Style', 'Text', 'Position', [10 305 110 15], ...
+            txt_profileList = uicontrol(profileWin, 'Style', 'Text', 'Position', [10 330 110 15], ...
                 'String','List of profiles','FontWeight', 'bold',...
                 'BackgroundColor', get(profileWin, 'Color'), 'HorizontalAlignment', 'center');
             %Listbox for profiles
             profileListbox = uicontrol(profileWin, 'Style', 'listbox', 'Units', 'Pixel', ...
                 'BackgroundColor', get(profileWin, 'Color'),'Value',0,...
-                'Position', [10 153 110 147], 'String', '','Max',1, 'Callback', @updateProfileSelection,...
+                'Position', [10 178 110 147], 'String', '','Max',1, 'Callback', @updateProfileSelection,...
                 'Tag', 'List of profiles. Multiple selections are not (yet) possible. The Names of the profiles can be changed (see buttons below), the numbers in front of the names are generated by matVIs and can not be edited.');
             %Panel for display of profile properties: probably not
             %necessary
@@ -8319,36 +8341,49 @@ end
             profileStruct.gui.traceim.ax  = subplot(4,1,4,'Parent',profileTraceWin);
             %set(profileStruct.gui.traceim.ax,'Color','k'); % required for alphaMap
             %Add Poly profile Button
-            tb_newProfile = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [10,125,32,22],...
+            tb_newProfile = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [10,150,32,22],...
                 'CData', roiPolygonBt,'Callback',{@getNewProfile,'one'},...
                 'ToolTipString', 'Add polygonal/free hand profile. Left click for single profile (''push button''), right click for multiple selections (''toggle button'') ',...
                 'Tag', 'Add polygonal/free hand profile. Draw straight lines using short clicks and free hand selections by keeping the mouse button pressed. End selection by right or double click. Left click for single profile, right click for multiple selections');
             %Copy profile Button
-            tb_copyProfile = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [49,125,32,22],...
-                'String', 'Copy','Callback',@copyProfile,'Enable','off',...
+            tb_editProfile = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [49,150,32,22],...
+                'String', 'Edit','Callback',@editProfile,'Enable','off',...
                 'ToolTipString', 'Copy currently selected profile as new profile.',...
                 'Tag', 'Copy currently selected profile as new profile.');
             
             %Shift profile Button
-            tbProfileShift = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [88,125,32,22], 'Enable', 'off',...
-                'CData', roiShiftBt,'Callback',@shiftprofile,...
+            tb_ProfileShift = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [88,150,32,22], 'Enable', 'off',...
+                'CData', roiShiftBt,'Callback',@shiftProfile,...
                 'ToolTipString', ' Move selected profile with mouse or keyboard. Use control, shift or alt to move by 5, 10 or 20 px, respectively. ',...
                 'Tag', 'Move selected profile(s) with mouse or keyboard. Use control, shift or alt to move by 5, 10 or 20 px, respectively.  Note that this is a toggle button.',...
                 'Value',0);
-           
+            %EmptyButton
+            tb_profileProp1 = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [10,125,32,22],...
+                'String', 'NotUsed','Callback', @showProfileProp2,'Tag', 'Replace the selected profile. The position in the list and the name will be preserved. Note that this is a toggle button.',...
+                'FontSize', 6, 'Enable', 'off','ToolTipString','Replace selected profile by new selection');
+            
+            %EmptyButton
+            tb_profileProp2 = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [49,125,32,22],...
+                'String', 'NotUsed','Callback', @showProfileProp2,'ToolTipString', ' Show or hide profile names in figure windows ',...
+                'Tag', 'Show or hide the profile names in the figure windows.','FontSize', 6, 'Value', 0,'Enable','off');
+            
+            %Show direction profile Button
+            tb_profileDirection = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [88,125,32,22],...
+                'CData', profileDir,'Callback', @showProfileDirection,'ToolTipString', ' Rename selected profile ',...
+                'Value', 0, 'Enable', 'off','ToolTipString','Show profile direction','Tag','Show profile direction');
             %Replace profile
-            profileBtReplace = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [10,100,32,22],...
+            tb_profileReplace = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [10,100,32,22],...
                 'String', 'Replace','Tag', 'Replace the selected profile. The position in the list and the name will be preserved. Note that this is a toggle button.',...
                 'FontSize', 6, 'Enable', 'off','ToolTipString','Replace selected profile by new selection');
             
             %Rename profile Button
-            profileBtRename = uicontrol(profileWin, 'Style', 'Pushbutton','Position', [49,100,32,22],...
+            tb_profileRename = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [49,100,32,22],...
                 'String', 'Rename','Callback', @renameProfile,'ToolTipString', ' Rename selected profile ',...
                 'FontSize', 6, 'Enable', 'off','ToolTipString','Rename Selected profile','Tag','Rename the selected profile.');
             
             %Show / hide profile names button
-            profileBtShowNames = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [88,100,32,22],...
-                'String', 'ShowNames','Callback', @showProfileNames,'ToolTipString', ' Show or hide profile names in figure windows ',...
+            tb_profileShowNames = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [88,100,32,22],...
+                'String', sprintf('Show%sNames',char(10)),'Callback', @showProfileNames,'ToolTipString', ' Show or hide profile names in figure windows ',...
                 'Tag', 'Show or hide the profile names in the figure windows.','FontSize', 6, 'Value', 1,'Enable','off');
             
             %Delete profile Button
@@ -8448,23 +8483,22 @@ end
                 if get(tb_newProfile, 'Value') %If previously selected button is not pressed
 %                     set(profileStruct.gui.settrace.h,'Value',0);set(findobj('tag',sprintf('trace_%.0f',profileStruct.instance)),'Enable','off');
                     set([zoomWin imageWin],'Pointer','crosshair');
-                    set([zoomWin imageWin],'WindowButtonDownFcn',@profileButtonDown);
-                    set([zoomWin imageWin],'WindowButtonUpFcn',[])
-                    set([zoomWin imageWin],'WindowButtonMotionFcn',[])
-                    set([zoomWin imageWin],'WindowButtonUpFcn',[]);
+                    set([zoomWin imageWin],'WindowButtonDownFcn',@profileButtonDown,...
+                      'WindowButtonMotionFcn',[],'WindowButtonUpFcn',[]);
                     if currProfile
                         set([profileLine.im profileLine.zoom], 'LineWidth',1,'Color','w');              %'Color', 'b');
+                        set([profileDirection.im profileDirection.zoom], 'LineWidth',1,'Color','w');              %'Color', 'b');
                         set([profileText.im profileText.zoom], 'Color','w','FontWeight','normal')
                     end
                 else % otherwise: unpress and quit
                     set(tb_newProfile, 'Value', 0);
-                    set([zoomWin imageWin],'WindowButtonMotionFcn',@mouseMotion);
-                    set([zoomWin imageWin],'WindowButtonDownFcn',@buttonDownCallback);
-                    set([zoomWin imageWin],'WindowButtonUpFcn','');
-                    set([zoomWin imageWin],'WindowButtonUpFcn',@zoomKeyReleaseFcn);
+                    set([zoomWin imageWin],'WindowButtonDownFcn',@buttonDownCallback,...
+                      'WindowButtonMotionFcn',@mouseMotion,'WindowButtonUpFcn',@zoomKeyReleaseFcn);
                     if currProfile
                         set(profileLine.im(:,currProfile,:), 'LineWidth',1,'Color','r');              %'Color', 'b');
                         set(profileLine.zoom(:,currProfile,:), 'LineWidth',1,'Color','r');            %'Color', 'b');
+                        set(profileDirection.im(:,currProfile,:), 'LineWidth',1,'Color','r');              %'Color', 'b');
+                        set(profileDirection.zoom(:,currProfile,:), 'LineWidth',1,'Color','r');            %'Color', 'b');
                         set([profileText.im(:,currProfile,:) profileText.zoom(:,currProfile,:)], 'Color','r','FontWeight','bold')
                     end
                 end
@@ -8551,37 +8585,67 @@ end
                 end
             end
             updateProfileSelection;
-            set([bt_deleteProfile bt_profileExport edt_lineWidt],'Enable','on');
+            showProfileDirection;
+            set([tb_editProfile tb_profileDirection tb_profileShowNames bt_deleteProfile bt_profileExport edt_lineWidt bt_exportProfileData],'Enable','on');
           if debugMatVis, debugMatVisFcn(2); end
         end
         function drawProfile(iinMat, nProfile)
           if debugMatVis, debugMatVisFcn(1); end
           hold(imAx(iinMat),'on');
           hold(zoomAx(iinMat),'on');
+          tp_A = squeeze(profileList(nProfile).mat(1,:,:));
+          tp_B = squeeze(profileList(nProfile).mat(end,:,:));
+          tp_C = profileList(nProfile).smoothedPoints;
+          %ProfileDirection
+          tp_D = squeeze(profileList(nProfile).mat([1 end],1,:));
+          szm = size(profileList(nProfile).mat);
+          indMatArrow = 1-flipdim(1:ceil(szm(1)/2),2); indMatArrow((1-length(indMatArrow):0)+szm(1)) = 1-[1:ceil(szm(1)/2)];
+          tp_E      = squeeze(profileList(nProfile).mat(sub2ind(szm,1:szm(1),max(2*indMatArrow+szm(2),1),  ones(1,szm(1)))))';
+          tp_E(:,2) = squeeze(profileList(nProfile).mat(sub2ind(szm,1:szm(1),max(2*indMatArrow+szm(2),1),2*ones(1,szm(1)))))';
           if customDimScale
-            tp = scaledLocation(squeeze(profileList(nProfile).mat(1,:,:)));
-            profileLine.im(iinMat,nProfile,2)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineStyle',':','LineWidth',2);
-            profileLine.zoom(iinMat,nProfile,2) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineStyle',':','LineWidth',2);
-            tp = scaledLocation(squeeze(profileList(nProfile).mat(end,:,:)));
-            profileLine.im(iinMat,nProfile,3)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineStyle',':','LineWidth',2);
-            profileLine.zoom(iinMat,nProfile,3) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineStyle',':','LineWidth',2);
-            tp = scaledLocation(profileList(nProfile).smoothedPoints);
-            profileLine.im(iinMat,nProfile,1)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineWidth',2);
-            profileLine.zoom(iinMat,nProfile,1) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineWidth',2);
-            profileText.im(iinMat,nProfile)    = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(nProfile).name,'Parent',imAx(iinMat),'FontWeight','bold');
-            profileText.zoom(iinMat,nProfile)  = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(nProfile).name,'Parent',zoomAx(iinMat),'FontWeight','bold');
+            tp_A = scaledLocation(tp_A);
+            tp_B = scaledLocation(tp_B);
+            tp_C = scaledLocation(tp_C);
+            %ProfileDirection
+            tp_D = scaledLocation(tp_D);
+            tp_E = scaledLocation(tp_E);
+          end
+          profileLine.im(iinMat,nProfile,2)   = plot(tp_A(:,1),tp_A(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineStyle',':','LineWidth',2);
+          profileLine.zoom(iinMat,nProfile,2) = plot(tp_A(:,1),tp_A(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineStyle',':','LineWidth',2);
+          profileLine.im(iinMat,nProfile,3)   = plot(tp_B(:,1),tp_B(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineStyle',':','LineWidth',2);
+          profileLine.zoom(iinMat,nProfile,3) = plot(tp_B(:,1),tp_B(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineStyle',':','LineWidth',2);
+          profileLine.im(iinMat,nProfile,1)   = plot(tp_C(:,1),tp_C(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineWidth',2);
+          profileLine.zoom(iinMat,nProfile,1) = plot(tp_C(:,1),tp_C(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineWidth',2);
+          %ProfileLable
+          profileText.im(iinMat,nProfile)    = text(max(tp_C(:,1))+5,mean(tp_C(:,2)),profileList(nProfile).name,'Parent',imAx(iinMat),'FontWeight','bold');
+          profileText.zoom(iinMat,nProfile)  = text(max(tp_C(:,1))+5,mean(tp_C(:,2)),profileList(nProfile).name,'Parent',zoomAx(iinMat),'FontWeight','bold');
+          %ProfileDirection
+          profileDirection.im(iinMat,nProfile,1)   = plot(tp_D(:,1),tp_D(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineWidth',1);
+          profileDirection.zoom(iinMat,nProfile,1) = plot(tp_D(:,1),tp_D(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineWidth',1);
+          profileDirection.im(iinMat,nProfile,2)   = plot(tp_E(:,1),tp_E(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineWidth',1);
+          profileDirection.zoom(iinMat,nProfile,2) = plot(tp_E(:,1),tp_E(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineWidth',1);
+          if debugMatVis, debugMatVisFcn(2); end
+        end
+        function editProfile(varargin)
+          if debugMatVis, debugMatVisFcn(1); end
+          warning('''editProfile'' function under construction')
+          if debugMatVis, debugMatVisFcn(2); end
+        end
+        function showProfileDirection(varargin)
+          if debugMatVis, debugMatVisFcn(1); end
+          if get(tb_profileDirection, 'Value')
+            set([profileDirection.im profileDirection.zoom], 'Visible', 'on');
           else
-            tp = squeeze(profileList(nProfile).mat(1,:,:));
-            profileLine.im(iinMat,nProfile,2)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineStyle',':','LineWidth',2);
-            profileLine.zoom(iinMat,nProfile,2) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineStyle',':','LineWidth',2);
-            tp = squeeze(profileList(nProfile).mat(end,:,:));
-            profileLine.im(iinMat,nProfile,3)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineStyle',':','LineWidth',2);
-            profileLine.zoom(iinMat,nProfile,3) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineStyle',':','LineWidth',2);
-            tp = profileList(nProfile).smoothedPoints;
-            profileLine.im(iinMat,nProfile,1)   = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',imAx(iinMat),'LineWidth',2);
-            profileLine.zoom(iinMat,nProfile,1) = plot(tp(:,1),tp(:,2),'Color','w','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',zoomAx(iinMat),'LineWidth',2);
-            profileText.im(iinMat,nProfile)    = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(nProfile).name,'Parent',imAx(iinMat),'FontWeight','bold');
-            profileText.zoom(iinMat,nProfile)  = text(max(tp(:,1))+5,mean(tp(:,2)),profileList(nProfile).name,'Parent',zoomAx(iinMat),'FontWeight','bold');
+            set([profileDirection.im profileDirection.zoom], 'Visible', 'off');
+          end
+          if debugMatVis, debugMatVisFcn(2); end
+        end
+        function showProfileNames(varargin)
+          if debugMatVis, debugMatVisFcn(1); end
+          if get(tb_profileShowNames, 'Value')
+            set([profileText.im profileText.zoom], 'Visible', 'on');
+          else
+            set([profileText.im profileText.zoom], 'Visible', 'off');
           end
           if debugMatVis, debugMatVisFcn(2); end
         end
@@ -8589,14 +8653,12 @@ end
             if debugMatVis, debugMatVisFcn(1); end
             currProfile = get(profileListbox, 'Value');
             %Update Profile lines and numbers in image/zoom windows
-            set(profileLine.im, 'LineWidth',1,'Color','w');              %'Color', 'b');
-            set(profileLine.zoom, 'LineWidth',1,'Color','w');            %'Color', 'b');
-            set(profileLine.im(:,currProfile,:), 'Color','r');  % , 'LineWidth',3);  
-            set(profileLine.zoom(:,currProfile,:), 'Color','r'); % , 'LineWidth',3); %
-            set(profileText.im, 'FontWeight', 'normal','Color','w');     %'Color', 'b');
-            set(profileText.zoom, 'FontWeight', 'normal','Color','w');   %'Color', 'b');
-            set(profileText.im(:,currProfile), 'FontWeight', 'bold', 'Color','r');
-            set(profileText.zoom(:,currProfile),'FontWeight', 'bold',  'Color','r');
+            set([profileLine.im profileLine.zoom],           'LineWidth',1,'Color','w');              %'Color', 'b');
+            set([profileDirection.im profileDirection.zoom], 'LineWidth',1,'Color','w');              %'Color', 'b');
+            set([profileText.im profileText.zoom], 'Color','w','FontWeight','normal')
+            set([profileLine.im(:,currProfile,:) profileLine.zoom(:,currProfile,:)], 'Color','r'); % , 'LineWidth',3); %
+            set([profileDirection.im(:,currProfile,:) profileDirection.zoom(:,currProfile,:)], 'Color','r'); % , 'LineWidth',3); %
+            set([profileText.im(:,currProfile) profileText.zoom(:,currProfile)],'FontWeight', 'bold',  'Color','r');
             set(txt_profileLength, 'String', num2str(size(profileList(currProfile).smoothedPoints,1)));
             imgTraceUpdate;
             if debugMatVis, debugMatVisFcn(2); end
@@ -8622,38 +8684,48 @@ end
             if debugMatVis, debugMatVisFcn(2); end
         end
         function changeProfileWidth(varargin)
-            if debugMatVis, debugMatVisFcn(1); end
+          if debugMatVis, debugMatVisFcn(1); end
+          if customDimScale
+            profileStruct.show.width = max(1,round(str2double(get(edt_lineWidt,'String'))/diff(dimScale(xySel(1),:),1,2)*(dim(xySel(1))'-1)));
+            set(edt_lineWidt,'String', sprintf('%.1f',profileStruct.show.width*diff(dimScale(xySel(1),:),1,2)/(dim(xySel(1))'-1)));
+          else
+            profileStruct.show.width = max(1,round(str2double(get(edt_lineWidt,'String'))));
+            set(edt_lineWidt,'String', sprintf('%d',profileStruct.show.width));
+          end
+          for iii = 1:numel(profileList)
+            profileList(iii).smoothedPoints = imgTraceSmooth(profileList(iii).points);
+            profileList(iii).mat = imgTraceMatrix(profileList(iii).smoothedPoints);
+            tp_A = squeeze(profileList(iii).mat(1,:,:));
+            tp_B = squeeze(profileList(iii).mat(end,:,:));
+            %ProfileDirection
+            tp_D = squeeze(profileList(iii).mat([1 end],1,:));
+            szm = size(profileList(iii).mat);
+            indMatArrow = 1-flipdim(1:ceil(szm(1)/2),2); indMatArrow((1-length(indMatArrow):0)+szm(1)) = 1-[1:ceil(szm(1)/2)];
+            tp_E      = squeeze(profileList(iii).mat(sub2ind(szm,1:szm(1),max(2*indMatArrow+szm(2),1),  ones(1,szm(1)))))';
+            tp_E(:,2) = squeeze(profileList(iii).mat(sub2ind(szm,1:szm(1),max(2*indMatArrow+szm(2),1),2*ones(1,szm(1)))))';
             if customDimScale
-              profileStruct.show.width = max(1,round(str2double(get(edt_lineWidt,'String'))/diff(dimScale(xySel(1),:),1,2)*(dim(xySel(1))'-1)));
-              set(edt_lineWidt,'String', sprintf('%.1f',profileStruct.show.width*diff(dimScale(xySel(1),:),1,2)/(dim(xySel(1))'-1)));
-            else
-              profileStruct.show.width = max(1,round(str2double(get(edt_lineWidt,'String'))));
-              set(edt_lineWidt,'String', sprintf('%d',profileStruct.show.width));
+              tp_A = scaledLocation(tp_A);
+              tp_B = scaledLocation(tp_B);
+              %ProfileDirection
+              tp_D = scaledLocation(tp_D);
+              tp_E = scaledLocation(tp_E);
             end
-            for iii = 1:numel(profileList)
-                profileList(iii).smoothedPoints = imgTraceSmooth(profileList(iii).points);
-                profileList(iii).mat = imgTraceMatrix(profileList(iii).smoothedPoints);
-                for ii = 1:nMat
-                  if customDimScale
-                    tp = scaledLocation(squeeze(profileList(iii).mat(1,:,:)));
-                    set([profileLine.im(ii,iii,2) profileLine.zoom(ii,iii,2)], 'XData',tp(:,1),'Ydata',tp(:,2));
-                    tp = scaledLocation(squeeze(profileList(iii).mat(end,:,:)));
-                    set([profileLine.im(ii,iii,3) profileLine.zoom(ii,iii,3)], 'XData',tp(:,1),'Ydata',tp(:,2));
-                  else
-                    set([profileLine.im(ii,iii,2) profileLine.zoom(ii,iii,2)], 'XData',profileList(iii).mat(1,:,1),'Ydata',profileList(iii).mat(1,:,2));
-                    set([profileLine.im(ii,iii,3) profileLine.zoom(ii,iii,3)], 'XData',profileList(iii).mat(end,:,1),'Ydata',profileList(iii).mat(end,:,2));
-                  end
-                end
+            for ii = 1:nMat
+              set([profileLine.im(ii,iii,2)      profileLine.zoom(ii,iii,2)],      'XData',tp_A(:,1),'Ydata',tp_A(:,2));
+              set([profileLine.im(ii,iii,3)      profileLine.zoom(ii,iii,3)],      'XData',tp_B(:,1),'Ydata',tp_B(:,2));
+              set([profileDirection.im(ii,iii,1) profileDirection.zoom(ii,iii,1)], 'XData',tp_D(:,1),'Ydata',tp_D(:,2));
+              set([profileDirection.im(ii,iii,2) profileDirection.zoom(ii,iii,2)], 'XData',tp_E(:,1),'Ydata',tp_E(:,2));
             end
-            imgTraceUpdate;
-            if debugMatVis, debugMatVisFcn(2); end
+          end
+          imgTraceUpdate;
+          if debugMatVis, debugMatVisFcn(2); end
         end
         function imgTraceUpdate(varargin)
             if debugMatVis, debugMatVisFcn(1); end
             linpoints = [];
             if nargin == 1  % called with linpoints as input
                 linpoints = varargin{1};
-            elseif profileList(1).number > 0;  % called as function callback or without input
+            elseif profileList(1).number > 0  % called as function callback or without input
                 linpoints = profileList(currProfile).points;
             end
             if ~isempty(linpoints) && numel(unique(linpoints(:,1)))>1
@@ -8663,16 +8735,18 @@ end
               if withAlpha
                 profileStruct.trace.imgA = [];
               end
-              for nt=1:profileStruct.show.chsz
+              for nt=1:profileStruct.show.chsz % not used, = 1;
                 profileStruct.trace.img(:,:,nt) = interp2(double(currIm{1}(:,:,nt)),profileStruct.trace.mat(:,:,1),profileStruct.trace.mat(:,:,2));
                 if withAlpha
                   profileStruct.trace.imgA(:,:,nt) = interp2(double(currAlphaMap{1}(:,:,nt)),profileStruct.trace.mat(:,:,1),profileStruct.trace.mat(:,:,2));
                 end
               end
+              % calc profile
               if withAlpha
-                profileStruct.trace.profile = squeeze(imgTraceProfile(profileStruct.trace.img,profileStruct.trace.imgA));
+                [profileStruct.trace.profile, profileStruct.trace.profileA] = imgTraceProfile(profileStruct.trace.img,profileStruct.trace.imgA);
+                profileStruct.show.profileA = profileStruct.trace.profileA';
               else
-                profileStruct.trace.profile = squeeze(imgTraceProfile(profileStruct.trace.img));
+                profileStruct.trace.profile = imgTraceProfile(profileStruct.trace.img);
               end
               profileStruct.show.profile = profileStruct.trace.profile';
               %profileStruct.show.profile= profileStruct.show.profile(~isnan(profileStruct.show.profile))'; % added by Stephan check where the NaN values come from
@@ -8689,7 +8763,7 @@ end
                 profileStruct.trace.RGB = profileStruct.trace.img;
               else
                 profileStruct.trace.RGB = reshape(profileStruct.trace.img,[prod(profilesz(1:end-1)) profilesz(end)]);
-                for nt=1:profileStruct.show.chsz
+                for nt=1:profileStruct.show.chsz % not used, = 1;
                   profileStruct.trace.RGB(:,nt)=profileStruct.trace.RGB(:,nt)/max(profileStruct.trace.RGB(:,nt));
                 end
                 profileStruct.trace.RGB = profileStruct.trace.RGB*single(profileStruct.show.colors);
@@ -8697,23 +8771,25 @@ end
                 profileStruct.trace.RGB(profileStruct.trace.RGB>1)=1;
                 profileStruct.trace.RGB(profileStruct.trace.RGB<0)=0;
               end
+              tp_A = squeeze(profileStruct.trace.mat(1,:,:));
+              tp_B = squeeze(profileStruct.trace.mat(end,:,:));
+              tp_C = tracepoints;
+              if customDimScale
+                tp_A = scaledLocation(tp_A);
+                tp_B = scaledLocation(tp_B);
+                tp_C = scaledLocation(tp_C);
+              end
               if isfield(profileStruct.trace, 'plot1') && ishandle(profileStruct.trace.plot1)
-                if customDimScale
-                  tp = scaledLocation(tracepoints);
-                  set(profileStruct.trace.plot1,'XData',tp(:,1),'YData',tp(:,2));
-                  tp = scaledLocation(squeeze(profileStruct.trace.mat(1,:,:)));
-                  set(profileStruct.trace.plot2,'XData',tp(:,1),'YData',tp(:,2));
-                  tp = scaledLocation(squeeze(profileStruct.trace.mat(end,:,:)));
-                  set(profileStruct.trace.plot3,'XData',tp(:,1),'YData',tp(:,2));
-                else
-                  set(profileStruct.trace.plot1,'XData',tracepoints(:,1),'YData',tracepoints(:,2))
-                  set(profileStruct.trace.plot2,'XData',profileStruct.trace.mat(1,:,1),'YData',profileStruct.trace.mat(1,:,2))
-                  set(profileStruct.trace.plot3,'XData',profileStruct.trace.mat(end,:,1),'YData',profileStruct.trace.mat(end,:,2))
-                end
+                set(profileStruct.trace.plot2,'XData',tp_A(:,1),'YData',tp_A(:,2));
+                set(profileStruct.trace.plot3,'XData',tp_B(:,1),'YData',tp_B(:,2));
+                set(profileStruct.trace.plot1,'XData',tp_C(:,1),'YData',tp_C(:,2));
                 if profileStruct.show.bw
                   set(profileStruct.trace.profh{1},'YData',profileStruct.show.profile(:,1));
+                  if withAlpha && ~verLessThan('matlab','9.0')
+                    set(profileStruct.trace.profAh{1},'YData',profileStruct.show.profileA(:,1));
+                  end
                 else
-                  for nt=1:profileStruct.show.chsz
+                  for nt=1:profileStruct.show.chsz % not used, = 1;
                     set(profileStruct.trace.profh{nt},'YData',profileStruct.show.profile(:,nt),'Color',profileStruct.show.colors(nt,:)*.8);
                   end
                 end
@@ -8725,27 +8801,25 @@ end
               else
                 if profileStruct.trace.inwork  % create/update profile line only if a new line is currently selected (not when function is called from updateProfileSelection)
                   hold(myGca,'on');
-                  if customDimScale
-                    tp = scaledLocation(tracepoints);
-                    profileStruct.trace.plot1 = plot(tp(:,1),tp(:,2),'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineWidth',2);
-                    tp = scaledLocation(squeeze(profileStruct.trace.mat(1,:,:)));
-                    profileStruct.trace.plot2 = plot(tp(:,1),tp(:,2),'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineStyle',':','LineWidth',2);
-                    tp = scaledLocation(squeeze(profileStruct.trace.mat(end,:,:)));
-                    profileStruct.trace.plot3 = plot(tp(:,1),tp(:,2),'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineStyle',':','LineWidth',2);
-                  else
-                    profileStruct.trace.plot1 = plot(tracepoints(:,1),tracepoints(:,2),...
-                      'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineWidth',2);
-                    profileStruct.trace.plot2 = plot(profileStruct.trace.mat(1,:,1),profileStruct.trace.mat(1,:,2),...
-                      'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineStyle',':','LineWidth',2);
-                    profileStruct.trace.plot3 = plot(profileStruct.trace.mat(end,:,1),profileStruct.trace.mat(end,:,2),...
-                      'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineStyle',':','LineWidth',2);
-                  end
+                  profileStruct.trace.plot2 = plot(tp_A(:,1),tp_A(:,2),'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineStyle',':','LineWidth',2);
+                  profileStruct.trace.plot3 = plot(tp_B(:,1),tp_B(:,2),'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineStyle',':','LineWidth',2);
+                  profileStruct.trace.plot1 = plot(tp_C(:,1),tp_C(:,2),'Color','r','tag',sprintf('traceplot_%.0f',profileStruct.instance),'Parent',myGca,'LineWidth',2);
                 end
-                if profileStruct.show.bw
-                  profileStruct.trace.profh{1} = plot(profileStruct.show.profile,'Parent',profileStruct.gui.profile.ax,'Color','k','tag',sprintf('traceplot_%.0f',profileStruct.instance));
+                if profileStruct.show.bw % always == 1
+                  if withAlpha && ~verLessThan('matlab','9.0')
+                    yyaxis(profileStruct.gui.profile.ax,'right')
+                    profileStruct.trace.profAh{1} = plot(profileStruct.show.profileA,':','Parent',profileStruct.gui.profile.ax,...
+                                                      'Color','k','tag',sprintf('traceplot_%.0f',profileStruct.instance));
+                    ylabel(profileStruct.gui.profile.ax,'AlphaValue (:)')                 
+                    yyaxis(profileStruct.gui.profile.ax,'left')
+                  end
+                  profileStruct.trace.profh{1} = plot(profileStruct.show.profile,'Parent',profileStruct.gui.profile.ax,...
+                                                    'Color','k','tag',sprintf('traceplot_%.0f',profileStruct.instance));
+                  ylabel(profileStruct.gui.profile.ax,'Value (-)')
                 else
-                  for nt=1:profileStruct.show.chsz
-                    profileStruct.trace.profh{nt} = plot(profileStruct.show.profile(:,nt),'Parent',profileStruct.gui.profile.ax,'Color',profileStruct.show.colors(nt,:)*.8,'tag',sprintf('traceplot_%.0f',profileStruct.instance));
+                  for nt=1:profileStruct.show.chsz % not used, = 1;
+                    profileStruct.trace.profh{nt} = plot(profileStruct.show.profile(:,nt),'Parent',profileStruct.gui.profile.ax,...
+                      'Color',profileStruct.show.colors(nt,:)*.8,'tag',sprintf('traceplot_%.0f',profileStruct.instance));
                   end
                 end
                 profileStruct.trace.imgh = imagesc(profileStruct.trace.img,'Parent',profileStruct.gui.traceim.ax,'tag',sprintf('traceplot_%.0f',profileStruct.instance));
@@ -8844,37 +8918,37 @@ end
         end
         
         function deleteProfile(varargin)
-            if debugMatVis, debugMatVisFcn(1); end
-            profileSel = get(profileListbox, 'Value');
-            profileList(profileSel) = [];
-            s = get(profileListbox, 'String');
-            s(profileSel) = [];
-            for ii=1:size(s,1)
-                s{ii}(1:3) = num2str(ii,'%03d');
+          if debugMatVis, debugMatVisFcn(1); end
+          profileSel = get(profileListbox, 'Value');
+          profileList(profileSel) = [];
+          s = get(profileListbox, 'String');
+          s(profileSel) = [];
+          for ii=1:size(s,1)
+            s{ii}(1:3) = num2str(ii,'%03d');
+          end
+          set(profileListbox,'Value',1);
+          set(profileListbox, 'String',s);
+          delete(profileText.im(:,profileSel));
+          delete(profileText.zoom(:,profileSel));
+          delete(squeeze(profileLine.im(:,profileSel,:)));
+          delete(squeeze(profileLine.zoom(:,profileSel,:)));
+          profileText.im(:,profileSel) = [];
+          profileText.zoom(:,profileSel) = [];
+          profileLine.im(:,profileSel,:) = [];
+          profileLine.zoom(:,profileSel,:) = [];
+          nProfiles = nProfiles - size(profileSel,2);
+          if nProfiles > 0
+            set(profileListbox, 'Value',1);
+            currProfile = 1;
+            updateProfileSelection;
+          else
+            set(profileListbox, 'Value',0, 'String', '');
+            set([tb_editProfile tb_profileRename tb_profileShowNames tb_ProfileShift tb_profileReplace bt_deleteProfile bt_profileExport edt_lineWidt bt_exportProfileData] , 'Enable', 'off');
+            if ~isempty(bt_exportProfileData)
+              set([edt_lineWidt bt_exportProfileData], 'Enable','off')
             end
-            set(profileListbox,'Value',1);
-            set(profileListbox, 'String',s);
-            delete(profileText.im(:,profileSel));
-            delete(profileText.zoom(:,profileSel));
-            delete(squeeze(profileLine.im(:,profileSel,:)));
-            delete(squeeze(profileLine.zoom(:,profileSel,:)));
-            profileText.im(:,profileSel) = [];
-            profileText.zoom(:,profileSel) = [];
-            profileLine.im(:,profileSel,:) = [];
-            profileLine.zoom(:,profileSel,:) = [];
-            nProfiles = nProfiles - size(profileSel,2);
-            if nProfiles > 0
-                set(profileListbox, 'Value',1);
-                currProfile = 1;
-                updateProfileSelection;
-            else
-                set(profileListbox, 'Value',0, 'String', '');
-                set([profileBtRename tbProfileShift profileBtReplace bt_profileExport bt_deleteProfile bt_exportProfileData] , 'Enable', 'off');
-                if ~isempty(bt_exportProfileData)
-                    set([edt_lineWidt bt_exportProfileData], 'Enable','off')
-                end
-            end
-            if debugMatVis, debugMatVisFcn(2); end
+          end
+          if debugMatVis, debugMatVisFcn(2); end
         end
         function exportProfiles(varargin)
             if debugMatVis, debugMatVisFcn(1); end
@@ -8924,8 +8998,10 @@ end
                     profileList = matVisProfileExport;
                 end
                 delete([profileLine.im profileLine.zoom])
+                delete([profileDirection.im profileDirection.zoom])
                 delete([profileText.im profileText.zoom])
                 profileLine = [];
+                profileDirection = [];
                 profileText = [];
             else
                 profileList = matVisProfileExport;
@@ -8946,29 +9022,33 @@ end
               end
             end
             set(profileListbox, 'String',s,'Value', 1);
-            set([profileBtRename tbProfileShift profileBtReplace bt_profileExport bt_deleteProfile bt_exportProfileData] , 'Enable', 'on');
+            set([bt_exportProfileData] , 'Enable', 'on');%tb_profileRename tb_ProfileShift tb_profileReplace 
+            set([tb_editProfile tb_profileDirection tb_profileShowNames bt_deleteProfile bt_profileExport edt_lineWidt bt_exportProfileData],'Enable','on');
             updateProfileSelection;
             if debugMatVis, debugMatVisFcn(2); end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-    function profile = imgTraceProfile(A, AA)
+    function [profile, profileA]= imgTraceProfile(A, AA)
         if debugMatVis, debugMatVisFcn(1); end
         %profile = mean(A,1);
         val = get(pop_profileProjection,'Value');
         list = get(pop_profileProjection,'String');
         profileProj = list{val};
         sz1 = size(A);
+        profileA = [];
         switch profileProj
             case 'Mean'
                 if withAlpha
                     profile = sum(A.*AA,1, 'omitnan')./sum(AA.*~isnan(A),1, 'omitnan'); % weighted mean ratio
+                    profileA = mean(AA,1, 'omitnan');
                 else
                     profile = mean(A,1, 'omitnan'); % used to be nanmean
                 end
             case 'Sum'
                 if withAlpha
-                    profile = sum(A.*AA,1, 'omitnan')./sum(AA.*~isnan(A),1, 'omitnan')*sz1(1); % weighted mean ratio % used to be nansum
+                    profile  = sum(A.*AA,1, 'omitnan')./sum(AA.*~isnan(A),1, 'omitnan')*sz1(1); % weighted mean ratio % used to be nansum
+                    profileA = sum(AA,1, 'omitnan');
                 else
                     profile = sum(A,1, 'omitnan'); % used to be nansum
                 end
@@ -8979,10 +9059,13 @@ end
                     [~,AAInd] = max(AA, [], 1); %stopHere%squeeze() % used to be nanmax
                     AAInd  = sz1(1)*(0:sz1(2)-1) + AAInd(:)';%(1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (AAInd(:)-1);
                     profile  = A(AAInd);
+                    profileA = max(AA,[],1, 'omitnan');
                 else
                     profile = max(A,[],1); % used to be nanmax
                 end
         end
+        profile  = squeeze(profile);
+        profileA = squeeze(profileA);
         if debugMatVis, debugMatVisFcn(2); end
     end
     function updateProfileProperties
@@ -9002,9 +9085,10 @@ end
               end
             end
             if withAlpha
-              profileStruct.trace.profile = squeeze(imgTraceProfile(profileStruct.trace.img,profileStruct.trace.imgA));
+              [profileStruct.trace.profile, profileStruct.trace.profileA] = imgTraceProfile(profileStruct.trace.img,profileStruct.trace.imgA);
+              profileStruct.show.profileA = profileStruct.trace.profileA';
             else
-              profileStruct.trace.profile = squeeze(imgTraceProfile(profileStruct.trace.img));
+              profileStruct.trace.profile = imgTraceProfile(profileStruct.trace.img);
             end
             profileStruct.show.profile = profileStruct.trace.profile';
             %profileStruct.show.profile= profileStruct.show.profile(~isnan(profileStruct.show.profile))'; % added by Stephan check where the NaN values come from
@@ -9027,20 +9111,33 @@ end
             profileStruct.trace.RGB(profileStruct.trace.RGB<0)=0;
             if isfield(profileStruct.trace, 'plot1') && ishandle(profileStruct.trace.plot1)
                 if profileStruct.show.bw
-                    set(profileStruct.trace.profh{1},'YData',profileStruct.show.profile(:,1));
+                  set(profileStruct.trace.profh{1},'YData',profileStruct.show.profile(:,1));
+                  if withAlpha && ~verLessThan('matlab','9.0')
+                    set(profileStruct.trace.profAh{1},'YData',profileStruct.show.profileA(:,1));
+                  end
                 else
-                    for nt=1:profileStruct.show.chsz
-                        set(profileStruct.trace.profh{nt},'YData',profileStruct.show.profile(:,nt),'Color',profileStruct.show.colors(nt,:)*.8);
-                    end
+                  for nt=1:profileStruct.show.chsz % not used, = 1;
+                    set(profileStruct.trace.profh{nt},'YData',profileStruct.show.profile(:,nt),'Color',profileStruct.show.colors(nt,:)*.8);
+                  end
                 end
                 set(profileStruct.trace.imgh,'CData',profileStruct.trace.RGB)
             else
-                if profileStruct.show.bw
-                    profileStruct.trace.profh{1} = plot(profileStruct.show.profile,'Parent',profileStruct.gui.profile.ax,'Color','k','tag',sprintf('traceplot_%.0f',profileStruct.instance));
+                if profileStruct.show.bw % always == 1
+                  if withAlpha && ~verLessThan('matlab','9.0')
+                    yyaxis(profileStruct.gui.profile.ax,'right')
+                    profileStruct.trace.profAh{1} = plot(profileStruct.show.profileA,':','Parent',profileStruct.gui.profile.ax,...
+                                                      'Color','k','tag',sprintf('traceplot_%.0f',profileStruct.instance));
+                    ylabel(profileStruct.gui.profile.ax,'AlphaValue (:)')                 
+                    yyaxis(profileStruct.gui.profile.ax,'left')
+                  end
+                  profileStruct.trace.profh{1} = plot(profileStruct.show.profile,'Parent',profileStruct.gui.profile.ax,...
+                                                    'Color','k','tag',sprintf('traceplot_%.0f',profileStruct.instance));
+                  ylabel(profileStruct.gui.profile.ax,'Value (-)')
                 else
-                    for nt=1:profileStruct.show.chsz
-                        profileStruct.trace.profh{nt} = plot(profileStruct.show.profile(:,nt),'Parent',profileStruct.gui.profile.ax,'Color',profileStruct.show.colors(nt,:)*.8,'tag',sprintf('traceplot_%.0f',profileStruct.instance));
-                    end
+                  for nt=1:profileStruct.show.chsz % not used, = 1;
+                    profileStruct.trace.profh{nt} = plot(profileStruct.show.profile(:,nt),'Parent',profileStruct.gui.profile.ax,...
+                      'Color',profileStruct.show.colors(nt,:)*.8,'tag',sprintf('traceplot_%.0f',profileStruct.instance));
+                  end
                 end
                 profileStruct.trace.imgh = imagesc(profileStruct.trace.img,'Parent',profileStruct.gui.traceim.ax,'tag',sprintf('traceplot_%.0f',profileStruct.instance));%profileStruct.trace.RGB
                 if withAlpha
