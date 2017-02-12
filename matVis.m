@@ -145,9 +145,10 @@ function varargout = matVis(varargin)
 % questions / bug reports / feature requests!
 %
 %**************************************************************************
-%               Copyright 13.06.2012, S. Junek (sjunek@gwdg.de)
+% Copyright Stephan Junek <stephan.junek@brain.mpg.de>
+%           Andre Zeug    <zeug.andre@mh-hannover.de>
 %
-versionNumber = 1.102;  % Current version number of matVis
+versionNumber = 1.1;  % Current version number of matVis
 %% Check Matlab version and installed toolboxes
 v = version;
 % v = num2str(v(1:3));
