@@ -4831,6 +4831,9 @@ end
             end
         end
         updateSelection(dimNum);
+        if movdata.rec
+            vidWriter('append');
+        end
         if debugMatVis, debugMatVisFcn(2); end
     end
 
