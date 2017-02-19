@@ -10960,7 +10960,12 @@ end
       d(any(~isfinite(d),2),:)=[];
       l_x = length(x)-1;
       dx  = (x(end)-x(1))/(l_x);
-      d(:,1)   = min(max(ceil((d(:,1)-x(1))/dx), 1), l_x)';
+      % includes values outside range
+      %d(:,1)   = min(max(ceil((d(:,1)-x(1))/dx), 1), l_x)';
+      % excludes values outside range
+      d(:,1)   = ceil((d(:,1)-x(1))/dx)';
+      myInd = d(:,1)<1; d(myInd,2) = 0; d(myInd,1) = 1;
+      myInd = d(:,1)>l_x; d(myInd,2) = 0; d(myInd,1) = 1;
       wHist = zeros(l_x,1);
       for nn = 1:size(d,1)
         wHist(d(nn,1)) = wHist(d(nn,1)) + d(nn,2);
