@@ -845,12 +845,11 @@ tb_profileShowNames = [];                     %Button to show or hide profile te
 tb_profileReplace = [];                       %Button to exchange existing profile by new one.
 profilePopDataExport = [];                   %Handle to pop menu to choose dimension for profile based data export
 tb_ProfileShift = [];                         %Handle for toggle button for shifting of profiles
-tbProfileRotate = [];                        %Handle for toggle button for rotating profiles
-tbProfileScale = [];                         %Handle for toggle button for scaling profiles
 tb_newProfile = [];                          %Handle for toggle buttons to creat new profiles
 bt_deleteProfile = [];
 bt_profileExport = [];
 bt_exportProfileData = [];
+tb_profileDirection = [];
 isMatVis2DHist = 0;                        % Flag to indicate whether current matVis is called to display 2D hist
 calledFrom2DHist = 0;                   % Flag indicating whether matVis update was called as 2D hist (to avoid recrusive callbacks between main matVis and 3D Hist matVis)
 matVis2DHist = [];                      % Handle to matVis that will/might be called as 2D hist-matVis
@@ -8299,8 +8298,9 @@ end
             set(tbProfile,'Value',0)
             if nProfiles >0
                 set([profileLine.im(:)', profileLine.zoom(:)', profileText.im(:)', profileText.zoom(:)'],  'Visible', 'off');
+                set([profileDirection.im profileDirection.zoom], 'Visible', 'off');
             end
-            set([tb_newProfile tb_ProfileShift tbProfileRotate tbProfileScale tb_profileReplace], 'Value', 0);
+            set([tb_newProfile tb_ProfileShift tb_profileReplace], 'Value', 0);
             set([imageWin zoomWin],'WindowButtonMotionFcn',@mouseMotion,...
                 'WindowButtonDownFcn',@buttonDownCallback,...
                 'WindowButtonUpFcn','');
@@ -8420,8 +8420,8 @@ end
                     'Enable','on','String',n,...
                     'Tag', 'Select dimension for profile data export.');
                 %Export profile Data Button
-                bt_exportprofileData = uicontrol(profileWin, 'Style', 'Pushbutton','Position', [88,50,32,22],...
-                    'CData', roiExportDataBt,'Callback', @exportprofileData,'Enable','on','ToolTipString', ' Export profile data along specified dimension ',...
+                bt_exportProfileData = uicontrol(profileWin, 'Style', 'Pushbutton','Position', [88,50,32,22],...
+                    'CData', roiExportDataBt,'Callback', @exportProfileData,'Enable','on','ToolTipString', ' Export profile data along specified dimension ',...
                     'Tag', 'Export profile data along specified dimension into the workspace.', 'Enable', 'off');
             end
             profileStruct.show.width = 5;
