@@ -148,7 +148,7 @@ function varargout = matVis(varargin)
 % Copyright Stephan Junek <stephan.junek@brain.mpg.de>
 %           Andre Zeug    <zeug.andre@mh-hannover.de>
 %
-versionNumber = 1.1;  % Current version number of matVis
+versionNumber = 1.2;  % Current version number of matVis
 %% Check Matlab version and installed toolboxes
 v = version;
 % v = num2str(v(1:3));
@@ -171,10 +171,10 @@ macScaleFactor = [1.05 1.05]; % Scaling factor to adjust width and height of GUI
 %% Read Data ...
 % ... from Files
 if nargin == 0 || ischar(varargin{1})
-  debugMatVis = 0;
-  if nargin && strcmp(varargin{1},'debug') && (islogical(varargin{2}) || isscalar(varargin{2}))
-    debugMatVis = varargin{2};
-  end
+    debugMatVis = 0;
+    if nargin && strcmp(varargin{1},'debug') && (islogical(varargin{2}) || isscalar(varargin{2}))
+      debugMatVis = varargin{2};
+    end
     if nargin == 0 || strcmp(varargin{1},'debug')
         %Choose files
         [f,p] = uigetfile( '*.mat;*.tif;*.tiff; *.jpg; *.bmp; *.gif; *.png; *.lsm; *.da; *.dat',...
@@ -603,11 +603,13 @@ for i=1:nMat
     
     if minVal(i) == maxVal(i)
         minVal(i) = maxVal(i)-1; % to avoid error messages
-        if isempty(varName{i})
-            display(['Warning: All numbers in the data set #' num2str(i) ' equal ' num2str(minVal(i)) '.']);
-        else
-            display(['Warning: All numbers in the data set ''' varName{i} ''' equal ' num2str(minVal(i)) '.']);
-        end
+        warning('All numbers in the data set ''%s'' equal %f.',varName{i},minVal(i))
+% varName{i} should never be empty (removed 26.02.2017, please delete after some time :-))
+%         if isempty(varName{i})
+%             display(['Warning: All numbers in the data set #' num2str(i) ' equal ' num2str(minVal(i)) '.']);
+%         else
+%             display(['Warning: All numbers in the data set ''' varName{i} ''' equal ' num2str(minVal(i)) '.']);
+%         end
     end
     cmMinMax(i,:) = [minVal(i) maxVal(i)]'; %Colormap Limits
 end
@@ -618,11 +620,13 @@ if withAlpha
         sldLimVal(nMat+i,:) = [minVal(nMat+i) maxVal(nMat+i)];
         if minVal(nMat+i) == maxVal(nMat+i)
             minVal(nMat+i) = maxVal(nMat+i)-1; % to avoid error messages
-            if isempty(varName{i})
-                display(['Warning: All numbers in alpha map #' num2str(i) ' equal ' num2str(maxVal(nMat+i)) '.']);
-            else
-                display(['Warning: All numbers in alpha map to data set ''' varName{i} ''' equal ' num2str(maxVal(nMat+i)) '.']);
-            end
+            warning('All numbers in alpha map to data set ''%s'' equal %f.',varName{i},minVal(nMat+i))
+% varName{i} should never be empty (removed 26.02.2017, please delete after some time :-))
+%             if isempty(varName{i})
+%                 display(['Warning: All numbers in alpha map #' num2str(i) ' equal ' num2str(maxVal(nMat+i)) '.']);
+%             else
+%                 display(['Warning: All numbers in alpha map to data set ''' varName{i} ''' equal ' num2str(maxVal(nMat+i)) '.']);
+%             end
         end
     end
     if all(maxVal(nMat+1:end)<=1) && all(minVal(nMat+1:end)>=0) % If all alpha values are between 0 and 1, use [0,1] as alpha limits
@@ -2585,7 +2589,7 @@ set(gui, 'Renderer',' zbuffer');
 try
     gui_jf = get(gui,'JavaFrame');
     gui_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_matVis))));
-catch    %#ok
+catch    
 end
 panel_positionControls = uipanel(gui, 'units','pixel','Position', [-1 customConfig.winPos.gui(4)-150-(nDim-1)*40 customConfig.winPos.gui(4)+2 130+(nDim-1)*40],...
     'BackgroundColor',get(gui, 'Color'),'BorderType','none');
@@ -2600,13 +2604,19 @@ txt_plots = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor',
 %Dimension Controls
 for i = 1:nDim
     %Text for dimension names
+    ttt = sprintf('Name of dimension %d',i); 
+    if debugMatVis, ttt1 = sprintf('Handle: ''txt_dimName(%d)''',i); else,  ttt1 = ttt; end
     txt_dimName(i) = uicontrol('Parent',panel_positionControls , 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
         'Position', [5 (nDim-i+2)*40+18 40 17], 'String', dimNames(i), 'FontWeight','bold',...
-        'HorizontalAlignment', 'left','ForegroundColor', [(i==1) 0.8*(i==2) 0] );  %#ok
+        'HorizontalAlignment', 'left','ForegroundColor', [(i==1) 0.8*(i==2) 0],...
+        'Tooltip',ttt1,'Tag',ttt);  %#ok
     %Slider for current values
+    ttt = sprintf('Set position for dimension %s.\nYou can use the mouse scroll wheel to move the slider position.',dimNames{i});
+    if debugMatVis, ttt1 = sprintf('Handle: ''sld(%d)''\nCallback: ''sliderCallback''',i); else,  ttt1 = ttt; end
     sld(i) = uicontrol('Parent',panel_positionControls , 'Style', 'Slider', 'Callback', @sliderCallback, 'Units', 'Pixel', ...
         'Position', [40 (nDim-i+2)*40+22 105 16], 'Min', 1  , 'Max', dim(i), ...
-        'SliderStep', [1/(dim(i)-1) 10/(dim(i)-1)],'Value',currPos(i),'Userdata', i,'Tooltip',['Set position for dimension ''',dimNames{i},'''. You can use the mouse scroll wheel to move the slider position.'],'Tag',['Set position for dimension ''',dimNames{i},'''. You can use the mouse scroll wheel to move the slider position.']);  %#ok
+        'SliderStep', [1/(dim(i)-1) 10/(dim(i)-1)],'Value',currPos(i),'Userdata', i,...
+        'Tooltip',ttt1,'Tag',ttt);  %#ok
     sldPos(:,i) = get(sld(i),'Position')+get(panel_positionControls,'Position').*[1 1 0 0];
     if usejava('awt')  % java enabled -> use it to update while dragging
       if oldMATLAB
@@ -2616,22 +2626,30 @@ for i = 1:nDim
       end
     end
     %etxt windows for current values
+    ttt = sprintf('Set position for dimension %s',dimNames{i});
+    if debugMatVis, ttt1 = sprintf('Handle: ''etxt(%d)''\nCallback: ''etxtCallback(%d)''',i,i);else,  ttt1 = ttt; end
     etxt(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Edit', 'Callback', {@etxtCallback,i}, 'Units', 'Pixel', ...
         'Position', [200 (nDim-i+2)*40+22 50 16], 'String', num2str(currPos(i)),...
-        'Tag',['Set position for dimension ''',dimNames{i},'''']);  %#ok
+        'Tooltip',ttt1,'Tag',ttt);  %#ok
     %Text for lengths of dimensions
+    ttt = sprintf('Size of data set along dimension %s',dimNames{i});
+    if debugMatVis, ttt1 = sprintf('Handle: ''dimSize(%d)''',i); else,  ttt1 = ttt; end
     dimSize(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
         'Position', [250 (nDim-i+2)*40+20 75 17], 'String', [' / ', num2str(dim(i))], ...
-        'HorizontalAlignment', 'left','Tooltip',['Size of data set along dimension ''',dimNames{i},''''],'Tag',['Size of data set along dimension ''',dimNames{i},'''']);  %#ok
+        'HorizontalAlignment', 'left','Tooltip',ttt1,'Tag',ttt);  %#ok
     % Slider for Zoom Values
+    ttt = sprintf('Minimum of zoom range for dimension %s',dimNames{i});
+    if debugMatVis, ttt1 = sprintf('Handle: ''sld_down(%d)''\nCallback: ''updateZoom(%d,''sld'')''',i,i);else,  ttt1 = ttt; end
     sld_down(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Slider', 'Units', 'Pixel', ...
         'Position', [40 (nDim-i+2)*40+15 105 8], 'Min', 1  , 'Max', dim(i), ...
         'SliderStep', [1/(dim(i)-1) 10/(dim(i)-1)],'Value',1,'Userdata', i,...
-        'Callback',{@updateZoom,i,'sld'},'Tag',['Minimum of zoom range for dimension ''',dimNames{i},'''']);  %#ok
+        'Callback',{@updateZoom,i,'sld'},'Tooltip',ttt1,'Tag',ttt);  %#ok
+    ttt = sprintf('Maximum of zoom range for dimension %s',dimNames{i});
+    if debugMatVis, ttt1 = sprintf('Handle: ''sld_up(%d)''\nCallback: ''updateZoom(%d,''sld'')''',i,i);else,  ttt1 = ttt; end
     sld_up(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Slider', 'Units', 'Pixel', ...
         'Position', [40 (nDim-i+2)*40+8 105 8], 'Min', 1  , 'Max', dim(i), ...
         'SliderStep', [1/(dim(i)-1) 10/(dim(i)-1)],'Value',dim(i),'Userdata', i,...
-        'Callback',{@updateZoom,i,'sld'},'Tag',['Maximum of zoom range for dimension ''',dimNames{i},'''']);  %#ok
+        'Callback',{@updateZoom,i,'sld'},'Tooltip',ttt1,'Tag',ttt);  %#ok
     if usejava('awt')  % java enabled -> use it to update while dragging
       if oldMATLAB
         hListenersD(i) = handle.listener(sld_down(i), 'ActionEvent', @updateZoomL);  %#ok
@@ -2642,124 +2660,167 @@ for i = 1:nDim
       end
     end
     % Etxt for zoom values
+    ttt = sprintf('Minimum of zoom range for dimension %s',dimNames{i});
+    if debugMatVis, ttt1 = sprintf('Handle: ''etxt_down(%d)''\nCallback: ''updateZoom(%d,''etxt'')''',i,i);else,  ttt1 = ttt; end
     etxt_down(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Edit', 'Callback', {@etxtCallback,i}, 'Units', 'Pixel', ...
         'Position', [200 (nDim-i+2)*40+8 26 15], 'String', zoomVal(i,1),'FontSize',7,...
-        'Callback',{@updateZoom,i,'etxt'},'Tooltip',['Minimum of zoom range for dimension ''',dimNames{i},''''],'Tag',['Minimum of zoom range for dimension ''',dimNames{i},'''']);  %#ok
+        'Callback',{@updateZoom,i,'etxt'},'Tooltip',ttt1,'Tag',ttt);  %#ok
+    ttt = sprintf('Maximum of zoom range for dimension %s',dimNames{i});
+    if debugMatVis, ttt1 = sprintf('Handle: ''etxt_up(%d)''\nCallback: ''updateZoom(%d,''etxt'')''',i,i);else,  ttt1 = ttt; end
     etxt_up(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Edit', 'Callback', {@etxtCallback,i}, 'Units', 'Pixel', ...
         'Position', [224 (nDim-i+2)*40+8 26 15], 'String', zoomVal(i,2),'FontSize',7,...
-        'Callback',{@updateZoom,i,'etxt'},'Tooltip',['Maximum of zoom range for dimension ''',dimNames{i},''''],'Tag',['Maximum of zoom range for dimension ''',dimNames{i},'''']);  %#ok
+        'Callback',{@updateZoom,i,'etxt'},'Tooltip',ttt1,'Tag',ttt);  %#ok
     %Play button
-    btPlayAll(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Callback', {@playCallback,i,'all',1}, 'Units', 'Pixel', ...
-        'Position', [150 (nDim-i+2)*40+23 30 15], 'Value',0  , 'CData', arrowAll,...
-        'BackgroundColor', get(gui, 'Color'),'Tooltip',['Play along dimension ''',dimNames{i},'''. Right click for reverse play.'],'Tag',['Play along dimension ''',dimNames{i},'''. Right click for reverse play.']);  %#ok
-    btPlayZoom(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Callback', {@playCallback,i,'zoom',1}, 'Units', 'Pixel', ...
-        'Position', [150 (nDim-i+2)*40+8 30 15], 'Value',0  , 'CData', arrowZoom,...
-        'BackgroundColor', get(gui, 'Color'),'Tooltip',['Play across zoom range of dimension ''',dimNames{i},'''. Right click for reverse play.'],'Tag',['Play across zoom range of dimension ''',dimNames{i},'''. Right click for reverse play.']);  %#ok
+    ttt = sprintf('Play along dimension %s\nRight click for reverse play.',dimNames{i});
+    if debugMatVis, ttt1 = sprintf('Handle: ''bt_playAll(%d)''\nCallback: ''playCallback(%d,''all'',1)''',i,i); else,  ttt1 = ttt; end
+    bt_playAll(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Callback', {@playCallback,i,'all',1},...
+        'Units', 'Pixel', 'Position', [150 (nDim-i+2)*40+23 30 15], 'Value',0  , 'CData', arrowAll,...
+        'BackgroundColor', get(gui, 'Color'),'Tooltip',ttt1,'Tag',ttt);  %#ok
+    ttt = sprintf('Play across zoom range of dimension %s\nRight click for reverse play.',dimNames{i});
+    if debugMatVis, ttt1 = sprintf('Handle: ''bt_playZoom(%d)''\nCallback: ''playCallback(%d,''zoom'',1)''',i,i);else,  ttt1 = ttt; end
+    bt_playZoom(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Callback', {@playCallback,i,'zoom',1}, ...
+        'Units', 'Pixel','Position', [150 (nDim-i+2)*40+8 30 15], 'Value',0  , 'CData', arrowZoom,...
+        'BackgroundColor', get(gui, 'Color'),'Tooltip',ttt1,'Tag',ttt);  %#ok
     % Zoom Width
+    ttt = sprintf('Width of zoom range of %s',dimNames{i}); 
+    if debugMatVis, ttt1 = sprintf('Handle: ''txt_zoomWidth(%d)''',i); else,  ttt1 = ttt; end
     txt_zoomWidth(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
         'Position', [250 (nDim-i+2)*40+5 75 17], 'String', [' = ', num2str(zoomVal(i,2))], ...
-        'HorizontalAlignment', 'left','FontSize',7,'Tooltip',['Width of zoom range of  ''',dimNames{i},''''],'Tag',['Width of zoom range of  ''',dimNames{i},'''']);  %#ok
+        'HorizontalAlignment', 'left','FontSize',7,'Tooltip',ttt1,'Tag',ttt);  %#ok
     if customDimScale
+        ttt = sprintf('Minimum of zoom range for dimension %s in dimension units',dimNames{i}); 
+        if debugMatVis, ttt1 = sprintf('Handle: ''txt_zoomDownScaled(%d)''',i); else,  ttt1 = ttt; end
         txt_zoomDownScaled(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
             'Position', [200 (nDim-i+2)*40+8-10 26 10], 'String', num2str(pxWidth(i)*round(dimScale(i,1)/pxWidth(i)),'%6.1f'), ...
-            'HorizontalAlignment', 'center','FontSize',7,'Tooltip',['Minimum of zoom range for dimension ''',dimNames{i},''' in dimension units'],'Tag',['Minimum of zoom range for dimension ''',dimNames{i},''' in dimension units']);  %#ok
+            'HorizontalAlignment', 'center','FontSize',7,'Tooltip',ttt1,'Tag',ttt);  %#ok
+        ttt = sprintf('Maximum of zoom range for dimension %s in dimension units',dimNames{i});
+        if debugMatVis, ttt1 = sprintf('Handle: ''txt_zoomUpScaled(%d)''',i); else,  ttt1 = ttt; end
         txt_zoomUpScaled(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
             'Position', [224 (nDim-i+2)*40+8-10 26 10], 'String', num2str(pxWidth(i)*round(dimScale(i,2)/pxWidth(i)),'%6.1f'), ...
-            'HorizontalAlignment', 'center','FontSize',7,'Tooltip',['Maximum of zoom range for dimension ''',dimNames{i},''' in dimension units'],'Tag',['Maximum of zoom range for dimension ''',dimNames{i},''' in dimension units']);  %#ok
+            'HorizontalAlignment', 'center','FontSize',7,'Tooltip',ttt1,'Tag',ttt);  %#ok
+        ttt = sprintf('Width of zoom range of %s in dimension units',dimNames{i});
+        if debugMatVis, ttt1 = sprintf('Handle: ''txt_zoomWidthScale(%d)''',i); else,  ttt1 = ttt; end
         txt_zoomWidthScale(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
             'Position', [250 (nDim-i+2)*40+8-10 75 10], 'String', [' = ', num2str(pxWidth(i)*zoomVal(i,2),'%6.2f') ' ' dimUnits{i}], ...
-            'HorizontalAlignment', 'left','FontSize',7,'Tooltip',['Width of zoom range of  ''',dimNames{i},''' in dimension units.'],'Tag',['Width of zoom range of  ''',dimNames{i},''' in dimension units.']);  %#ok
+            'HorizontalAlignment', 'left','FontSize',7,'Tooltip',ttt1,'Tag',ttt);  %#ok
+        ttt = sprintf('Pixel size of %s',dimNames{i});
+        if debugMatVis, ttt1 = sprintf('Handle: ''txt_pxScale(%d)''',i); else,  ttt1 = ttt; end
         txt_pxScale(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
             'Position', [40 (nDim-i+2)*40+8-10 105 10], 'String', [num2str(pxWidth(i),'%6.2f') ' '  dimUnits{i} '/px'], ...
-            'HorizontalAlignment', 'center','FontSize',7,'Tooltip',['Pixel size of ''',dimNames{i},''''],'Tag',['Pixel size of ''',dimNames{i},'''']);  %#ok
+            'HorizontalAlignment', 'center','FontSize',7,'Tooltip',ttt1,'Tag',ttt);  %#ok
     end
     % Checkboxes for displaying plots
-    cbPlots(i) = uicontrol('Parent',panel_positionControls, 'Style', 'checkbox', 'Callback', {@cbCallback,i}, 'Units', 'Pixel', ...
+    ttt = sprintf('Show/hide plot along dimension %s',dimNames{i});
+    if debugMatVis, ttt1 = sprintf('Handle: ''cb_plots(%d)''\nCallback: ''cbCallback(%d)''',i,i);else,  ttt1 = ttt; end
+    cb_plots(i) = uicontrol('Parent',panel_positionControls, 'Style', 'checkbox', 'Callback', {@cbCallback,i}, 'Units', 'Pixel', ...
         'Position', [295 (nDim-i+2)*40+23 20 17], 'Value', any(i == customConfig.plotDim), 'String', '',...
-        'BackgroundColor', get(gui, 'Color'),'Tooltipstring', 'Show/hide plot along respective dimension.',...
-        'Tag',['Show/hide plot along dimension''',dimNames{i},'''']);  %#ok
+        'BackgroundColor', get(gui, 'Color'),'Tooltip',ttt1,'Tag',ttt);  %#ok
     % Toggle button to lock plot x-axes to zoom values
+    ttt = sprintf('Locks x-lim of plot axes to zoom interval.\nRequires pressed ''xLim button'' (in plot controls)\nIn RGB-Stretch mode it limits the stretch range.');
+    if debugMatVis, ttt1 = sprintf('Handle: ''tb_lockPlots2Zoom(%d)''\nCallback: ''updateZoom(%d,''lockBt'')''',i,i); else,  ttt1 = ttt; end
     tb_lockPlots2Zoom(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Callback', {@updateZoom,i,'lockBt'}, 'Units', 'Pixel', ...
         'Position', [295 (nDim-i+2)*40+9 15 15], 'Value',0  , 'CData', lockOpen,...
-        'BackgroundColor', get(gui, 'Color'),'Tooltipstring', sprintf('Locks x-lim of plot axes to zoom interval. Requires pressed ''x-lim button'' (under plot controls)\nIn RGB-Stretch mode it limits the stretch range.'),...
-        'Tag', ['Lock x-lim of plot axes to zoom interval.' char(10) 'Requires pressed ''x-lim button'' (under plot controls).' char(10) 'In RGB-Stretch mode it limits the stretch range.']);  %#ok
+        'BackgroundColor', get(gui, 'Color'),'Tooltip',ttt1,'Tag',ttt);  %#ok
 end
 if usejava('awt')  % java enabled -> use it to update while dragging
   set([sld sld_down sld_up], 'Callback', '');
   setappdata(gui,'sliderListeners', [hListeners hListenersD hListenersU]); % -> hListeners can be list of handles
 end
 if customDimScale
-    set(panel_positionControls, 'Children',[tb_lockPlots2Zoom cbPlots txt_zoomWidthScale txt_zoomDownScaled txt_zoomUpScaled txt_pxScale txt_zoomWidth btPlayZoom btPlayAll sld_up sld_down sld txt_dimName dimSize flipdim(reshape((cat(1,etxt_down,etxt_up)),[1 2*nDim]),2) etxt(nDim:-1:1)]);
+    set(panel_positionControls, 'Children',[tb_lockPlots2Zoom cb_plots txt_zoomWidthScale txt_zoomDownScaled txt_zoomUpScaled txt_pxScale txt_zoomWidth bt_playZoom bt_playAll sld_up sld_down sld txt_dimName dimSize flipdim(reshape((cat(1,etxt_down,etxt_up)),[1 2*nDim]),2) etxt(nDim:-1:1)]);
 else
-    set(panel_positionControls, 'Children',[tb_lockPlots2Zoom cbPlots txt_zoomWidth btPlayZoom btPlayAll sld_up sld_down sld txt_dimName dimSize flipdim(reshape((cat(1,etxt_down,etxt_up)),[1 2*nDim]),2) etxt(nDim:-1:1)]);
+    set(panel_positionControls, 'Children',[tb_lockPlots2Zoom cb_plots txt_zoomWidth bt_playZoom bt_playAll sld_up sld_down sld txt_dimName dimSize flipdim(reshape((cat(1,etxt_down,etxt_up)),[1 2*nDim]),2) etxt(nDim:-1:1)]);
 end
-sldPlaySpeed = uicontrol('Parent',panel_positionControls, 'Style', 'Slider', 'Units', 'Pixel', ...
+ttt = sprintf('Speed of playback. Current value 0\nMoving up: slower speed by introducing pauses.\nMoving down: faster speed by skipping images.');
+if debugMatVis, ttt1 = sprintf('Handle: ''sld_playSpeed''\nCallback: ''playSpeedCallback'''); 
+else, ttt1 = sprintf('<html>Speed of playback. Current value 0.<br /><b>Moving up:</b> slower speed by introducing pauses.<br /><b>Moving down:</b> faster speed by skipping images.</html>'); end
+sld_playSpeed = uicontrol('Parent',panel_positionControls, 'Style', 'Slider', 'Units', 'Pixel', ...
     'Position', [185 88 10 nDim*dimHeight-10], 'Min', -10, 'Max', 10, ...
     'SliderStep', [0.05 0.2],'Value',0, ...
-    'Callback', @playSpeedCallback, 'TooltipString','Playspeed: 0',...
-    'Tag',['Speed of playback. Current value: 0.' char(10) 'Negative values: faster speed by skipping over images.' char(10) 'Positive values: slower speed by introducing pauses.'] );
+    'Callback', @playSpeedCallback,'Tooltip',ttt1,'Tag',ttt);
 
 % Find Min/Max Buttons
 uicontrol('Parent',panel_positionControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
     'Position', [1 45 38 25], 'String', {'Set/Get';'Position'}, ...
-    'HorizontalAlignment', 'center','FontSize',7);  %#ok
+    'HorizontalAlignment', 'center','FontSize',7);  
 for i=1:4
+    ttt = sprintf('Click to save current position.');
+    if debugMatVis, ttt1 = sprintf('Handle: ''bt_setJumpPos(%d)''\nCallback: ''setJumpPos(%d)''',i,i); else,  ttt1 = ttt; end
     bt_setJumpPos(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Pushbutton', 'Callback', {@setJumpPos,i}, 'Units', 'Pixel', 'FontSize',7,...
         'Position', [40+(i-1)*20 60 20 15], 'ForeGroundColor','r', 'String', num2str(i),...
-        'BackgroundColor', get(gui, 'Color'),'Tooltipstring', 'Click to save current position.',...
-        'Tag', 'Click to save current position.');  %#ok
+        'BackgroundColor', get(gui, 'Color'),'Tooltip',ttt1,'Tag',ttt);  %#ok
+    ttt = sprintf('Click to go saved position.');
+    if debugMatVis, ttt1 = sprintf('Handle: ''bt_getJumpPos(%d)''\nCallback: ''jumpPos(%d)''',i,i); else,  ttt1 = ttt; end
     bt_getJumpPos(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Pushbutton', 'Callback', {@jumpPos,i}, 'Units', 'Pixel', 'FontSize',7,...
         'Position', [40+(i-1)*20 45 20 15], 'ForeGroundColor',[0 .7 0], 'String', num2str(i),...
-        'BackgroundColor', get(gui, 'Color'),'Tooltipstring', 'Click to go saved position','Enable','off',...
-        'Tag','Click to go to saved position');  %#ok
+        'BackgroundColor', get(gui, 'Color'),'Enable','off','Tooltip',ttt1,'Tag',ttt);  %#ok
 end
 % Lock to zoom
+ttt = sprintf('Pressed: Apply saved zoom setting together with position.\nUnressed: Only jump to position, leave zoom unchanged.'); 
+
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_savedZoom'''); 
+else,  ttt = sprintf('<html><b>Pressed:</b> Apply saved zoom setting together with position.<br /><b>Unressed:</b> Only jump to position, leave zoom unchanged.</html>'); end
 bt_savedZoom = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'FontSize',7,...
-    'Position', [120 45 38 30], 'String', {'+Zoom'}, 'Value',0,...
-    'Tooltipstring', ['Pressed: Apply saved zoom setting together with position.' char(10) 'Unpressed: Only jump to position, leave zoom unchanged.'],...
-    'Tag', ['Pressed: Apply saved zoom setting together with position.' char(10) 'Unpressed: Only jump to position, leave zoom unchanged.']);
+    'Position', [120 45 38 30], 'String', {'+Zoom'}, 'Value',0,'Tooltip',ttt1,'Tag',ttt);
 % Go to global min/max
+ttt = sprintf('Jump to (first) position with the minimum value of the data set: %s', sprintf('%d\t',minPos)); 
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_jumpMin''\nCallback: ''jumpPos(''min'')'''); else,  ttt1 = ttt; end
 bt_jumpMin = uicontrol('Parent',panel_positionControls, 'Style', 'Pushbutton', 'Callback', {@jumpPos,'min'}, 'Units', 'Pixel', ...
     'Position', [160 60 50 15],  'String', 'Min-global', 'FontSize',7,...
-    'BackgroundColor', get(gui, 'Color'),'Tooltipstring', ['Jumps to (first) position with minimum value: [' num2str(minPos) ']'],...
-    'Tag',['Jump to (first) position with the minimum value of the data set: [' num2str(minPos) ']']);  %#ok
+    'BackgroundColor', get(gui, 'Color'),'Tooltip',ttt1,'Tag',ttt);  %#ok
+ttt = sprintf('Jump to (first) position with the maximum value of the data set: %s', sprintf('%d\t',minPos)); 
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_jumpMax''\nCallback: ''jumpPos(''max'')'''); else,  ttt1 = ttt; end
 bt_jumpMax = uicontrol('Parent',panel_positionControls, 'Style', 'Pushbutton', 'Callback', {@jumpPos,'max'}, 'Units', 'Pixel', 'FontSize',7, ...
     'Position', [160 45 50 15],  'String', 'Max-global', ...
-    'BackgroundColor', get(gui, 'Color'),'Tooltipstring', ['Jumps to (first) position with maximum value: [' num2str(maxPos) ']'],...
-    'Tag',['Jump to (first) position with the maximum value of the data set: [' num2str(minPos) ']']);  %#ok
+    'BackgroundColor', get(gui, 'Color'),'Tooltip',ttt1,'Tag',ttt);  %#ok
 % Push button: find min/max in zoom/image
-tb_findLocalMinImg = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton', 'Callback', {@findExtremum,'min','image'}, 'Units', 'Pixel', ...
-    'Position', [213 60 50 15],  'String', 'Min-Img','TooltipString', 'Find minimum in current image',...
-    'BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tag', 'Find minimum in current image');
-tb_findLocalMaxImg = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton', 'Callback', {@findExtremum,'max','image'}, 'Units', 'Pixel', ...
-    'Position', [213 45 50 15],  'String', 'Max-Img','TooltipString', 'Find maximum in current image',...
-    'BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tag', 'Find maximum in current image');
-tb_findLocalMinZm = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton', 'Callback', {@findExtremum,'min','zoom'}, 'Units', 'Pixel', ...
-    'Position', [266 60 50 15],  'String', 'Min-Zoom','TooltipString', 'Find minimum in current zoom',...
-    'BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tag', 'Find minimum in current zoom');
-tb_findLocalMaxZm = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton', 'Callback', {@findExtremum,'max','zoom'}, 'Units', 'Pixel', ...
-    'Position', [266 45 50 15],  'String', 'Max-Zoom','TooltipString', 'Find maximum in current zoom',...
-    'BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tag', 'Find maximum in current zoom');
+ttt = sprintf('Find minimum in current image'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_findLocalMinImg''\nCallback: ''findExtremum(''min'',''image'')'''); else,  ttt1 = ttt; end
+tb_findLocalMinImg = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton', ...
+    'Callback', {@findExtremum,'min','image'}, 'Units', 'Pixel', 'Position', [213 60 50 15], ...
+    'String', 'Min-Img','BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Find maximum in current image'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_findLocalMaxImg''\nCallback: ''findExtremum(''max'',''image'')'''); else,  ttt1 = ttt; end
+tb_findLocalMaxImg = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton', ...
+    'Callback', {@findExtremum,'max','image'}, 'Units', 'Pixel', 'Position', [213 45 50 15],  ...
+    'String', 'Max-Img','BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Find minimum in current zoom range'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_findLocalMinZm''\nCallback: ''findExtremum(''min'',''zoom'')'''); else,  ttt1 = ttt; end
+tb_findLocalMinZm = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton', ...
+    'Callback', {@findExtremum,'min','zoom'}, 'Units', 'Pixel', 'Position', [266 60 50 15], ...
+    'String', 'Min-Zoom','BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Find maximum in current zoom range'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_findLocalMaxZm''\nCallback: ''findExtremum(''max'',''zoom'')'''); else,  ttt1 = ttt; end
+tb_findLocalMaxZm = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton',  ...
+    'Callback', {@findExtremum,'max','zoom'}, 'Units', 'Pixel','Position', [266 45 50 15], ...
+    'String', 'Max-Zoom','BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tooltip',ttt1,'Tag',ttt);
 
 %Toggle button for applying zoom plots
-tbPlotsXLim = uicontrol('Parent',panel_positionControls, 'Style', 'togglebutton', 'Callback', @updatePlots, 'Units', 'Pixel', ...
-    'Position', [40 10 24 24],  'String', '','TooltipString', ['Set x-limits of plots.' char(10) '- Left click: Toggle auto / fixed.' char(10) '- Right click: Set fixed limits.'],...
-    'BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom, 'CData', permute(arrows,[2,1  ,3]),'Tag', ['Set x-limits of plots.' char(10) 'Left click: Toggle auto / fixed.' char(10) 'Right click: Set fixed limits.']);
+ttt = sprintf('Set x-limits of plots.\nLeft click: Toggle auto / fixed.\nRight click: Set fixed limits.');
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_plotsXLim''\nCallback: ''updatePlots'''); 
+else, ttt1 = sprintf('<html>Set x-limits of plots.<br /><b>Left click:</b> Toggle auto / fixed.<br /><b>Right click:</b>Set fixed limits.</html>'); end
+tb_plotsXLim = uicontrol('Parent',panel_positionControls, 'Style', 'togglebutton', 'Callback', @updatePlots, ...
+    'Units', 'Pixel', 'Position', [40 10 24 24],  'String', '','BackgroundColor', get(gui, 'Color'), ...
+    'Value', customConfig.plotZoom, 'CData', permute(arrows,[2,1  ,3]),'Tooltip',ttt1,'Tag',ttt);
 %Toggle button to (y-)scale plots (otherwise scaled to min-max of complete
 %data set
-tbPlotsYLim = uicontrol('Parent',panel_positionControls, 'Style', 'togglebutton', 'Callback', @updatePlots, 'Units', 'Pixel', ...
-    'Position', [70 10 24 24],  'String', '','TooltipString', ['Set y-limits of plots.' char(10) '- Left click: Toggle auto / fixed.' char(10) '- Right click: Set fixed limits.'],...
-    'BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotScale, 'CData', arrows,...
-    'Tag', ['Set y-limits of plots.' char(10) 'Left click: Toggle auto / fixed.' char(10) 'Right click: Set fixed limits.']);
+ttt = sprintf('Set y-limits of plots.\nLeft click: Toggle auto / fixed.\nRight click: Set fixed limits.');
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_plotsYLim''\nCallback: ''updatePlots'''); 
+else, ttt1 = sprintf('<html>Set y-limits of plots.<br /><b>Left click:</b> Toggle auto / fixed.<br /><b>Right click:</b>Set fixed limits.</html>'); end
+tb_plotsYLim = uicontrol('Parent',panel_positionControls, 'Style', 'togglebutton', 'Callback', @updatePlots, ...
+    'Units', 'Pixel', 'Position', [70 10 24 24],  'String', '','BackgroundColor', get(gui, 'Color'), ...
+    'Value', customConfig.plotScale, 'CData', arrows,'Tooltip',ttt1,'Tag',ttt);
 %Toggle button to display marker in plots
-tbMarker = uicontrol('Parent',panel_positionControls, 'Style', 'togglebutton', 'Callback', @updatePlots, 'Units', 'Pixel', ...
+ttt = sprintf('Show / hide marker in plots'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_marker''\nCallback: ''updatePlots'''); else,  ttt1 = ttt; end
+tb_marker = uicontrol('Parent',panel_positionControls, 'Style', 'togglebutton', 'Callback', @updatePlots, 'Units', 'Pixel', ...
     'Position', [100 10 24 24],  'String', '', 'TooltipString', 'Show / hide marker in plots', ...
-    'BackgroundColor', get(gui, 'Color'), 'Value', customConfig.marker, 'CData', marker, 'Tag', 'Show / hide marker in plots');
+    'BackgroundColor', get(gui, 'Color'), 'Value', customConfig.marker, 'CData', marker, 'Tooltip',ttt1,'Tag',ttt);
 %Mean Plots
-btMean = uicontrol('Parent',panel_positionControls, 'Style', 'Pushbutton', 'Units', 'Pixel', 'UserData', customConfig.plotMean, ...
-    'Position', [130 10 24 24], 'CData', meanBt{customConfig.plotMean+1}, 'Callback', @meanPlots,...
-    'ToolTipString', ['Average plot values over 1, 9, 25 pixels or the complete zoom area.' char(10) 'In stretch RGB mode all plots along the RGB dimension can be displayed alternatively.'],...
-    'Tag', ['Average plot values over 1, 9, 25 pixels or the complete zoom area. In stretch RGB mode all plots along the' char(10) 'RGB dimension can be displayed alternatively.']);
+ttt = sprintf('Average plot values over 1, 9, 25 pixels or the complete zoom area.\nIn stretch RGB mode all plots along the RGB dimension can be displayed alternatively.'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_mean''\nCallback: ''meanPlots'''); else,  ttt1 = ttt; end
+bt_mean = uicontrol('Parent',panel_positionControls, 'Style', 'Pushbutton', 'Units', 'Pixel', 'UserData', customConfig.plotMean, ...
+    'Position', [130 10 24 24], 'CData', meanBt{customConfig.plotMean+1}, 'Callback', @meanPlots,'Tooltip',ttt1,'Tag',ttt);
 
 % Features
 % uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
@@ -2767,29 +2828,34 @@ btMean = uicontrol('Parent',panel_positionControls, 'Style', 'Pushbutton', 'Unit
 %     'HorizontalAlignment', 'center','FontWeight','bold','FontSize',10);
 
 %Button for Data Export
-btExport = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'CData', exportBt,  ...
-    'Position', [200 10 24 24], 'Callback', @exportData,  'Value', 0,...
-    'ToolTipString', 'Export subset of data','Tag','Export subset of data either as a new variable in the workspace or into a new matVis.');  %[115 85 24 24]
+ttt = sprintf('Export subset of data either as a new variable in the workspace or into a new matVis.');
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_export''\nCallback: ''exportData'''); else,  ttt1 = ttt; end
+bt_export = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'CData', exportBt,  ...
+    'Position', [200 10 24 24], 'Callback', @exportData,  'Value', 0,'Tooltip',ttt1,'Tag',ttt);  %[115 85 24 24]
 
 %Toggle button for display of menu bars in all windows (excpett gui)
-tbMenuBars = uicontrol('Parent', panel_positionControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Value', customConfig.menuBarVis, ...
-    'Position', [230 10 24 24], 'CData', menuBarIcon, 'Callback', @toggleMenuBars, ...
-    'TooltipString', 'Toggle display of menu bars in Image/Zoom/Plot windows', ...
-    'Tag', 'Toggle display of menu bars in Image/Zoom/Plot windows');
-
+ttt = sprintf('Toggle display of menu bars in Image/Zoom/Plot windows'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_menuBars''\nCallback: ''toggleMenuBars'''); else,  ttt1 = ttt; end
+tb_menuBars = uicontrol('Parent', panel_positionControls, 'Style', 'Togglebutton', 'Value', customConfig.menuBarVis, ...
+    'Units', 'Pixel', 'Position', [230 10 24 24], 'CData', menuBarIcon, 'Callback', @toggleMenuBars, ...
+    'Tooltip',ttt1,'Tag',ttt);
 
 %Button to link/unlink window position/size
-tbLinkWin = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'CData', icon_linkWins,  ...
-    'Position', [260 10 24 24], 'Callback', @linkWins,  'Value', 1, 'Tag', 'Link window positions and sizes'); %[145 85 24 24]
+ttt = sprintf('Link window positions and sizes'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_linkWin''\nCallback: ''linkWins'''); else,  ttt1 = ttt; end
+tb_linkWin = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'CData', icon_linkWins,  ...
+    'Position', [260 10 24 24], 'Callback', @linkWins,  'Value', 1, 'Tooltip',ttt1,'Tag',ttt); %[145 85 24 24]
 if numel(data) == 1
-    set(tbLinkWin, 'Visible','off', 'Value', 0);
+    set(tb_linkWin, 'Visible','off', 'Value', 0);
 end
 
 %Button for display of CustomTif Parameter
-tbTifPar = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'CData', tifParBt,  ...
-    'Position', [290 10 24 24], 'Callback', @showTifPar,  'Value', 0, 'Tag', 'Display parameters of custom tif files used in the Schild lab (University of Göttingen).'); %[145 85 24 24]
+ttt = sprintf('Display parameters of custom tif files used in the Schild lab (University of Göttingen).'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_tifPar''\nCallback: ''linkWins''');else,  ttt1 = ttt; end
+tb_tifPar = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'CData', tifParBt,  ...
+    'Position', [290 10 24 24], 'Callback', @showTifPar,  'Value', 0, 'Tooltip',ttt1,'Tag',ttt); %[145 85 24 24]
 if ~isCustomTif
-    set(tbTifPar, 'Visible', 'off');
+    set(tb_tifPar, 'Visible', 'off');
 end
 
 %Separator line
@@ -2804,27 +2870,37 @@ txt_titles(end+1) = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'Backgroun
 panel_imageControls = uipanel(gui, 'units','pixel','Position', [-1 135 customConfig.winPos.gui(4)+2 190],...
     'BackgroundColor',get(gui, 'Color'),'BorderType','none');  %
 % xText
-uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
-    'Position', [20 175 10 20], 'String', 'x', ...
-    'HorizontalAlignment', 'left', 'Tag', 'Select dimension of data set to be used as the ''x-dimension'' of the displayed images');
+ttt = sprintf('Select dimension of data set to be used as the ''x-dimension'' of the displayed images');
+if debugMatVis, ttt1 = sprintf('Handle: ''none''\nCallback: ''none'''); else,  ttt1 = ttt; end
+uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'Position', [20 175 10 20], ...
+    'BackgroundColor', get(gui, 'Color'),'String', 'x', 'HorizontalAlignment', 'left', 'Tooltip',ttt1,'Tag',ttt);
 % XDir control
-bt_XDir = uicontrol('Parent', panel_imageControls, 'Style', 'pushbutton', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
-    'Position', [42 181 13 13], 'String', '>', 'Callback',{@setAxisDir,'x'}, ...
-    'HorizontalAlignment', 'left', 'Tag', 'x-axis direction of images', 'Tooltip', 'x-axis direction of images');
+ttt = sprintf('x-axis direction of images'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_XDir''\nCallback: ''setAxisDir(''x'')'''); else,  ttt1 = ttt; end
+bt_XDir = uicontrol('Parent', panel_imageControls, 'Style', 'pushbutton', 'Units', 'Pixel', 'Position', [42 181 13 13], ...
+    'BackgroundColor', get(gui, 'Color'),'String', '>', 'Callback',{@setAxisDir,'x'}, ...
+    'HorizontalAlignment', 'left', 'Tooltip',ttt1,'Tag',ttt);
 % yText
-uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
-    'Position', [70 175 10 20], 'String', 'y', ...
-    'HorizontalAlignment', 'left', 'Tag', 'Select dimension of data set to be used as the ''y-dimension'' of the displayed images');
+ttt = sprintf('Select dimension of data set to be used as the ''y-dimension'' of the displayed images'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''none''\nCallback: ''none'''); else,  ttt1 = ttt; end
+uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'Position', [70 175 10 20], ...
+    'BackgroundColor', get(gui, 'Color'),'String', 'y', 'HorizontalAlignment', 'left', 'Tooltip',ttt1,'Tag',ttt);
 % YDir control
-bt_YDir = uicontrol('Parent', panel_imageControls, 'Style', 'pushbutton', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
-    'Position', [92 181 13 13], 'String', 'v', 'Callback',{@setAxisDir,'y'}, ...
-    'HorizontalAlignment', 'left', 'Tag', 'y-axis direction of images', 'Tooltip', 'y-axis direction of images');
+ttt = sprintf('y-axis direction of images');
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_YDir''\nCallback: ''setAxisDir(''y'')'''); else,  ttt1 = ttt; end
+bt_YDir = uicontrol('Parent', panel_imageControls, 'Style', 'pushbutton', 'Units', 'Pixel', 'Position', [92 181 13 13], ...
+    'BackgroundColor', get(gui, 'Color'), 'String', 'v', 'Callback',{@setAxisDir,'y'}, ...
+    'HorizontalAlignment', 'left', 'Tooltip',ttt1,'Tag',ttt);
 % Switch position of pop1 and pop2 to place pop1 under the "y" direction
 % and pop2 under the "x" direction. (Changed in v1.021
+ttt = sprintf('Select dimension of data set to be used as the ''x-dimension'' of the displayed images'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''pop(1)''\nCallback: ''popCallback'''); else,  ttt1 = ttt; end
 pop(1)  = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', @popCallback, 'Units', 'Pixel', ...
-    'Position', [56 160 50 20], 'String', dimNames, 'Value',xySel(1),'FontSize',7, 'Tag', 'Select dimension of data set to be used as the ''x-dimension'' of the displayed images');
+    'Position', [56 160 50 20], 'String', dimNames, 'Value',xySel(1),'FontSize',7, 'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Select dimension of data set to be used as the ''y-dimension'' of the displayed images'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''pop(2)''\nCallback: ''popCallback'''); else,  ttt1 = ttt; end
 pop(2)  = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', @popCallback, 'Units', 'Pixel', ...
-    'Position', [5 160 50 20], 'String', dimNames, 'Value',xySel(2),'FontSize',7, 'Tag', 'Select dimension of data set to be used as the ''y-dimension'' of the displayed images');
+    'Position', [5 160 50 20], 'String', dimNames, 'Value',xySel(2),'FontSize',7, 'Tooltip',ttt1,'Tag',ttt);
 if withDipimage || withImageProcessingTB
     withFilter = 1;
     % Filter types
@@ -2839,139 +2915,184 @@ if withDipimage || withImageProcessingTB
         s = {'none','gauss','median','mean','unsharp-ml'};
     end
     % Filter
-    uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
-        'Position', [125 173 30 20], 'String', 'Filter', ...
-        'HorizontalAlignment', 'left', 'Tag', 'Select filter function.');
-    popFilter = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', @updateFilter, 'Units', 'Pixel', ...
-        'Position', [108 160 60 20], 'String',s, 'Value',xySel(1),'FontSize',7, 'Tag', 'Select filter function','Tooltipstring','Select filter function');
-    % Filter size
-    txtFilterPar = uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
-        'Position', [167 173 32 20], 'String', 'Par', ...
-        'HorizontalAlignment', 'center', 'Tag', 'Enter filter size (0 = no filter applied)');
-    if withDipimage
-        set(popFilter, 'Tag', 'Select filter function. Functions from DIPImage will be used.','Tooltip', 'Select filter function. Functions from DIPImage will be used.')
-    else
-        set(popFilter, 'Tag', 'Select filter function. Functions from Matlab''s Image Processing Toolbox will be used.', 'Tooltip', 'Select filter function. Functions from Matlab''s Image Processing Toolbox will be used.')
+    ttt = sprintf('Select filter function.\n(works only with ImageProcessingToolbox and DIPimage)'); 
+    if debugMatVis, ttt1 = sprintf('Handle: ''none''\nCallback: ''none'''); else,  ttt1 = ttt; end
+    uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'Position', [125 173 30 20], ...
+        'BackgroundColor', get(gui, 'Color'),'String', 'Filter', 'HorizontalAlignment', 'left', 'Tooltip',ttt1,'Tag',ttt);
+    if withDipimage, ttt = sprintf('Select filter function. Functions from DIPImage will be used.'); 
+    else,            ttt = sprintf('Select filter function. Functions from Matlab''s Image Processing Toolbox will be used.'); 
     end
+    if debugMatVis, ttt1 = sprintf('Handle: ''popFilter''\nCallback: ''updateFilter'''); else,  ttt1 = ttt; end
+    popFilter = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', @updateFilter, 'Units', 'Pixel', ...
+        'Position', [108 160 60 20], 'String',s, 'Value',xySel(1),'FontSize',7, 'Tooltip',ttt1,'Tag',ttt);
+    % Filter size
+    ttt = sprintf('Enter filter size (0 = no filter applied)\n(works only with ImageProcessingToolbox and DIPimage)'); 
+    if debugMatVis, ttt1 = sprintf('Handle: ''txtFilterPar''\nCallback: ''none'''); else,  ttt1 = ttt; end
+    txtFilterPar = uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'Position', [167 173 32 20], ...
+        'BackgroundColor', get(gui, 'Color'),'String', 'Param.', 'HorizontalAlignment', 'center', 'Tooltip',ttt1,'Tag',ttt);
     
+    ttt = sprintf('Enter filter size in pixels (0 = no filter applied).\nUnsharp filter: alpha = size for size <= 10, alpha = 1 for size > 10.'); 
+    if debugMatVis, ttt1 = sprintf('Handle: ''editFilterPar''\nCallback: ''updateFilter'''); else,  ttt1 = ttt; end
     editFilterPar = uicontrol('Parent', panel_imageControls, 'Style', 'edit', 'Callback', @updateFilter, 'Units', 'Pixel', ...
-        'Position', [168 160 30 20], 'String', '1','FontSize',7, 'Tag', 'Enter filter size in pixels (0 = no filter applied). Unsharp filter: alpha = size /10 for size <= 10, alpha = 1 for size > 10.','Tooltipstring','Enter filter size in pixels (0 = no filter applied)');
+        'Position', [168 160 30 20], 'String', '1','FontSize',7, 'Tooltip',ttt1,'Tag',ttt);
 else
     withFilter = 0;
 end
 
 %Projection popup and button
-projText = uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
-    'Position', [200 173 50 20], 'String', 'Projection', ...
-    'HorizontalAlignment', 'left', 'Tag', 'Display projection of data along a certain dimension.');
-projDimText = uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
-    'Position', [255 173 50 20], 'String', 'Proj. dim', ...
-    'HorizontalAlignment', 'left', 'Tag', 'Display projection of data along a certain dimension.');
-projMethodPop  = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', {@projCallback,'method'}, 'Units', 'Pixel','FontSize',7, ...
-    'Position', [200 160 50 20], 'String', {'none';'max';'min';'mean';'std';'var'; 'tile'}, 'Value',projMethod+1,...
-    'Tag', 'Select type of projection.','Tooltipstring', 'Select type of projection.');
+ttt = sprintf('Display projection of data along a specified dimension.'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''projText''\nCallback: ''none'''); else,  ttt1 = ttt; end
+projText = uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel','Position', [200 173 50 20], ...
+    'BackgroundColor', get(gui, 'Color'), 'String', 'Projection', 'HorizontalAlignment', 'left', 'Tooltip',ttt1,'Tag',ttt);
+if debugMatVis, ttt1 = sprintf('Handle: ''projDimText''\nCallback: ''none'''); else,  ttt1 = ttt; end
+projDimText = uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'Position', [255 173 50 20], ...
+    'BackgroundColor', get(gui, 'Color'), 'String', 'Proj. dim', 'HorizontalAlignment', 'left', 'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Select type of projection.'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''projMethodPop''\nCallback: ''projCallback(''method'')'''); else,  ttt1 = ttt; end
+projMethodPop  = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', {@projCallback,'method'}, 'FontSize',7, ...
+    'Units', 'Pixel','Position', [200 160 50 20], 'String', {'none';'max';'min';'mean';'std';'var'; 'tile'}, 'Value',projMethod+1,...
+    'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Select dimension along which data will be projected.\nPlots will be disabled.'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''projDimPop''\nCallback: ''projCallback(''dim'')'''); else,  ttt1 = ttt; end
 projDimPop  = uicontrol('Parent', panel_imageControls,  'Style', 'popupmenu','Callback', {@projCallback,'dim'}, 'Units', 'Pixel', ...
-    'Position', [250 160 50 20],  'Value',1 ,'Tooltipstring', 'Select dimension along which data will be projected' ,...
-    'Enable','on', 'String','Dim 3','FontSize',7,'Tag', 'Select dimension along which to project.');
+    'Position', [250 160 50 20],  'Value',1 , 'Enable','on', 'String','Dim 3','FontSize',7,'Tooltip',ttt1,'Tag',ttt);
 if nDim < 3
     set([projMethodPop projText projDimText projDimPop], 'Enable', 'off');
 else
     set(projDimPop, 'String', dimNames(3:end));  % ToDo: Adjust so it can be used with start parameter
 end
-bt_zoomProj = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Callback', @zoomProj,...
-    'Position', [303 163 15 15], 'Value',0  , 'CData', lockOpen,...
-    'BackgroundColor', get(gui, 'Color'),'Tooltipstring', 'If pressed only data inside zoom interval of the respective dimension are included in the projection.',...
-    'Tag', 'If pressed only data inside zoom interval of the respective dimension are included in the projection.');
+ttt = sprintf('Only data inside zoom interval of the respective dimension are included in the projection.'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_zoomProj''\nCallback: ''zoomProj'''); else,  ttt1 = ttt; end
+bt_zoomProj = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Callback', @zoomProj,...
+    'Units', 'Pixel', 'Position', [303 163 15 15], 'Value',0  , 'CData', lockOpen,...
+    'BackgroundColor', get(gui, 'Color'),'Tooltip',ttt1,'Tag',ttt);
 
 %Button Group Colormap
+ttt = sprintf('Select contrast adjustment.\nGlobal: min/max of complete data set.\nImage: min/max of currently displayed image.\nZoom: min /max of current zoom in displayed image.\nManual: Select min/max using slider or edit control below.'); 
+ttt2 = sprintf('<html>Select contrast adjustment.<br /><b>Global:</b> min/max of complete data set.<br /><b>Image:</b> min/max of currently displayed image.<br /><b>Zoom:</b> min /max of current zoom in displayed image.<br /><b>Manual:</b> Select min/max using slider or edit control below.</html>');
+if debugMatVis, ttt1 = sprintf('Handle: ''bg_colormap''\nSelectionChangeFcn: ''updateColormap''');  else,  ttt1 = ttt; end
 bg_colormap = uibuttongroup('Parent', panel_imageControls, 'Title', '', 'Units', 'Pixel', ...
     'Position', [0 140 customConfig.winPos.gui(3) 24], 'BackgroundColor', get(gui, 'Color'),...
     'TitlePosition', 'centertop', 'BorderType', 'none', 'HighlightColor', 'w',...
-    'SelectionChangeFcn',@updateColormap,'Tag', 'Select contrast adjustment. Global: min/max of complete data set. Image: min/max of currently displayed image. Zoom: min /max of current zoom in displayed image. Manual: Select min/max using slider or edit control below.');
-set(bg_colormap,'UserData',get(bg_colormap,'Tag'));
+    'SelectionChangeFcn',@updateColormap,'UserData',ttt1,'Tag',ttt);
 % Contrast Text
 % uicontrol('Style', 'Text', 'Parent', bg_colormap, 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
 %     'Position', [10 3 50 15], 'String', 'Contrast', ...
 %     'HorizontalAlignment', 'left');
+ttt = sprintf('Select contrast adjustment.\nGlobal: min/max of complete data set.'); 
+ttt2 = sprintf('<html>Select contrast adjustment.<br /><b>Global:</b> min/max of complete data set.</html>');
+if debugMatVis, ttt1 = sprintf('Handle: ''cmGlobal''\nSelectionChangeFcn: ''updateColormap'''); else,  ttt1 = ttt2; end
 cmGlobal = uicontrol('Style', 'Radio', 'String', 'Global', 'Parent', bg_colormap, ...
     'Units', 'pixel', 'Position', [10 3 60 20], 'Value', strcmp(customConfig.colormapMode,'Global'),... %'Tag', 'yScaleOff',...
-    'BackgroundColor', get(gui, 'Color'), 'HorizontalAlignment', 'left','Tag', 'Select contrast adjustment. Global: min/max of complete data set. Image: min/max of currently displayed image. Zoom: min /max of current zoom in displayed image. Manual: Select min/max using slider or edit control below.');
+    'BackgroundColor', get(gui, 'Color'), 'HorizontalAlignment', 'left','Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Select contrast adjustment.\nImage: min/max of currently displayed image.'); 
+ttt2 = sprintf('<html>Select contrast adjustment.<br /><b>Image:</b> min/max of currently displayed image.</html>');
+if debugMatVis, ttt1 = sprintf('Handle: ''cmImage''\nSelectionChangeFcn: ''updateColormap'''); else,  ttt1 = ttt2; end
 cmImage = uicontrol('Style', 'Radio', 'String', 'Image', 'Parent', bg_colormap, ...
-    'Units', 'pixel', 'Position', [65 3 60 20], ...  %'Tag', 'yScaleLocal'
-    'BackgroundColor', get(gui, 'Color'), 'Value', strcmp(customConfig.colormapMode,'Local'), 'HorizontalAlignment', 'left');
+    'Units', 'pixel', 'Position', [65 3 60 20], 'Value', strcmp(customConfig.colormapMode,'Local'), ...  %'Tag', 'yScaleLocal'
+    'BackgroundColor', get(gui, 'Color'), 'HorizontalAlignment', 'left','Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Select contrast adjustment.\nnZoom: min /max of current zoom in displayed image.'); 
+ttt2 = sprintf('<html>Select contrast adjustment.<br /><b>Zoom:</b> min /max of current zoom in displayed image.</html>');
+if debugMatVis, ttt1 = sprintf('Handle: ''cmZoom''\nSelectionChangeFcn: ''updateColormap'''); else,  ttt1 = ttt2; end
 cmZoom = uicontrol('Style', 'Radio', 'String', 'Zoom', 'Parent', bg_colormap, ...
-    'Units', 'pixel', 'Position', [120 3 60 20], ...  %'Tag', 'yScaleLocal'
-    'BackgroundColor', get(gui, 'Color'), 'Value', strcmp(customConfig.colormapMode,'Local'), 'HorizontalAlignment', 'left');
+    'Units', 'pixel', 'Position', [120 3 60 20], 'Value', strcmp(customConfig.colormapMode,'Local'), ...  %'Tag', 'yScaleLocal'
+    'BackgroundColor', get(gui, 'Color'), 'HorizontalAlignment', 'left','Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Select contrast adjustment.\nManual: Select min/max using slider or edit control below.'); 
+ttt2 = sprintf('<html>Select contrast adjustment.<br /><b>Manual:</b> Select min/max using slider or edit control below.</html>');
+if debugMatVis, ttt1 = sprintf('Handle: ''cmManual''\nSelectionChangeFcn: ''updateColormap'''); else,  ttt1 = ttt2; end
 cmManual = uicontrol('Style', 'Radio', 'String', 'Manual', 'Parent', bg_colormap, ...
-    'Units', 'pixel', 'Position', [175 3 60 20], ... %'Tag', 'yScaleGlobal',...
-    'BackgroundColor', get(gui, 'Color'), 'HorizontalAlignment', 'left', 'Value', strcmp(customConfig.colormapMode,'Manual'));
+    'Units', 'pixel', 'Position', [175 3 60 20], 'Value', strcmp(customConfig.colormapMode,'Manual'),... %'Tag', 'yScaleGlobal',...
+    'BackgroundColor', get(gui, 'Color'), 'HorizontalAlignment', 'left','Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Select contrast adjustment.\nThreshold: Selected threshold method is used for min,\nmax can be adjusted using slider or edit control below.'); 
+ttt2 = sprintf('<html>Select contrast adjustment.<br /><b>Threshold:</b> Selected threshold method is used for min,<br />max can be adjusted using slider or edit control below.</html>');
+if debugMatVis, ttt1 = sprintf('Handle: ''cmThresh''\nSelectionChangeFcn: ''updateColormap'''); else,  ttt1 = ttt2; end
 cmThresh = uicontrol('Style', 'Radio', 'String', '', 'Parent', bg_colormap, ...
-    'Units', 'pixel', 'Position', [233 3 60 20], ... %'Tag', 'yScaleGlobal',...
-    'BackgroundColor', get(gui, 'Color'), 'HorizontalAlignment', 'left', 'Value', strcmp(customConfig.colormapMode,'Thresh'));
-popThresh = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', @updateColormap, 'Units', 'Pixel', ...
-    'Position', [250 137 60 24], 'String', {'triangle';'otsu';'isodata';'max entropy'},...
-    'Value',1, 'TooltipString', 'Choose threshold method','FontSize',7, 'Tag','Choose threshold method.');
-% Add additional thresholding algorithms if dipimages' threshold function
-% is available
-if withDipimage
-    set(popThresh,'String',{'triangle';'otsu';'isodata';'min error';'background';'max entropy'});
+    'Units', 'pixel', 'Position', [233 3 60 20], 'Value', strcmp(customConfig.colormapMode,'Thresh'), ... %'Tag', 'yScaleGlobal',...
+    'BackgroundColor', get(gui, 'Color'), 'HorizontalAlignment', 'left','Tooltip',ttt1,'Tag',ttt);
+
+% Threshold types
+if withDipimage,  ttt = sprintf('Choose threshold method. Functions from DIPImage will be used.'); 
+                    s = {'triangle';'otsu';'isodata';'min error';'background';'max entropy'};
+else,             ttt = sprintf('Choose threshold method. Functions from Matlab''s implementation will be used.');
+                    s = {'triangle';'otsu';'isodata';'max entropy'}; 
 end
+if debugMatVis, ttt1 = sprintf('Handle: ''popThresh''\nCallback: ''updateColormap'''); else,  ttt1 = ttt2; end
+popThresh = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', @updateColormap, 'Units', 'Pixel', ...
+  'Position', [250 137 60 24], 'String', s,'FontSize',7, 'Value',1,'Tooltip',ttt1,'Tag',ttt);
+
+ttt = sprintf('Stretch RGB map along dimension.\nPixel color is defined by contribution of all pixels along dimension.'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''cmStretchRGBMean''\nSelectionChangeFcn: ''updateColormap'''); else,  ttt1 = ttt; end
 cmStretchRGBMean = uicontrol('Style', 'Radio', 'String', 'MeanStretch', 'Parent', bg_colormap,  ...
-    'Units', 'pixel', 'Position', [130 3 80 20], 'Tooltipstring', 'Stretch RGB map along dimension',...
-    'BackgroundColor', get(gui, 'Color'), 'HorizontalAlignment', 'left', 'Value', 0,...
-    'Visible', 'off');
+    'Units', 'pixel', 'Position', [130 3 80 20], 'BackgroundColor', get(gui, 'Color'), ...
+    'HorizontalAlignment', 'left', 'Value', 0, 'Visible', 'off','Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Stretch RGB map along dimension.\nPixel color is defined by Pixel with max intensity.'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''cmStretchRGBMean''\nSelectionChangeFcn: ''updateColormap'''); else,  ttt1 = ttt; end
 cmStretchRGBMax = uicontrol('Style', 'Radio', 'String', 'MaxStretch', 'Parent', bg_colormap,  ...
-    'Units', 'pixel', 'Position', [215 3 75 20], 'Tooltipstring', 'Stretch RGB map along dimension',...
-    'BackgroundColor', get(gui, 'Color'), 'HorizontalAlignment', 'left', 'Value', 0,...
-    'Visible', 'off');
+    'Units', 'pixel', 'Position', [215 3 75 20], 'BackgroundColor', get(gui, 'Color'), ...
+    'HorizontalAlignment', 'left', 'Value', 0, 'Visible', 'off','Tooltip',ttt1,'Tag',ttt);
 % Popup for histogram / contrasts par selection
-clear s
 if nMat > 1 %|| withAlpha
-    for i=1:nMat
-        if isempty(varName{i})
-            s{i} = ['Data' num2str(i)];
-        else
-            s{i} = varName{i};
-        end
-    end
-    %     if withAlpha
-    %         for i=1:nMat
-    %             s{i+nMat} = [s{i} '-Alpha'];
-    %         end
-    %     end
+% varName{i} should never be empty (removed 26.02.2017, please delete after some time :-))
+%     clear s
+%     for i=1:nMat
+%         if isempty(varName{i})
+%             s{i} = ['Data' num2str(i)];
+%         else
+%             s{i} = varName{i};
+%         end
+%     end
+%     if withAlpha
+%         for i=1:nMat
+%             s{i+nMat} = [s{i} '-Alpha'];
+%         end
+%     end
     %Popup for selection of data set
-    popContrastSel = uicontrol('Style','popup','FontSize', 7,'Parent',panel_imageControls,'String',s,'value',currContrastSel,'Position',[6 113 47 30],'Value',1,'Callback',@updateContrastSel);
+    ttt = sprintf('Selection of dataset for contrast adjustments.'); 
+    if debugMatVis, ttt1 = sprintf('Handle: ''popContrastSel''\nCallback: ''updateContrastSel'''); else,  ttt1 = ttt; end
+    popContrastSel = uicontrol('Style','popup','Parent',panel_imageControls,'Position',[6 113 47 30],'String',varName,...
+      'FontSize', 7,'Value',currContrastSel,'Callback',@updateContrastSel,'Tooltip',ttt1,'Tag',ttt);
     % Lock contrast adjustments across data sets (manual mode: linear scaling)
-    tb_linkContrastAdjustments = uicontrol('Parent',panel_imageControls, 'Style', 'Togglebutton','Position',[54 125 15 15],'Value',customConfig.linkContrastSettings,  ...
-        'CData', lockOpen , 'Callback', @updateLinkContrast,...
-        'BackgroundColor', get(gui, 'Color'),'Tooltipstring', 'Link contrast adjustments across data sets in manual mode. ',...
-        'Tag', ['Link contrast adjustments across data sets in manual mode. (Linear scaling) ']);  %#ok
+    ttt = sprintf('Link contrast adjustments across data sets in manual mode. (Linear scaling)'); 
+    if debugMatVis, ttt1 = sprintf('Handle: ''popContrastSel''\nCallback: ''updateContrastSel'''); else,  ttt1 = ttt; end
+    tb_linkContrastAdjustments = uicontrol('Parent',panel_imageControls, 'Style', 'Togglebutton','Position',[54 125 15 15], ...
+        'Value',customConfig.linkContrastSettings, 'CData', lockOpen , 'Callback', @updateLinkContrast,...
+        'BackgroundColor', get(gui, 'Color'),'Tooltip',ttt1,'Tag',ttt);  
     if customConfig.linkContrastSettings
         set(tb_linkContrastAdjustments, 'CData', lockClosed);
     end
 end
 linkContrastSettings = customConfig.linkContrastSettings;
 %Values of slider limits
-uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
-    'Position', [6 80 47 40], 'String', {'Slider';'min / max'}, ...
-    'HorizontalAlignment', 'center','FontSize',7, 'Tag', 'Set minimum and maximum of contrast sliders.  The range of the histogram and the display of the colormap in between the sliders will be updated accordingly.');
+ttt = sprintf('Set minimum and maximum of contrast sliders.\nThe range of the histogram and the display of the colormap in between the sliders will be updated accordingly.\nDataset min value %f\nDataset min value %f',minVal(1),maxVal(1));
+if debugMatVis, ttt1 = sprintf('Handle: ''none''\nCallback: ''none'''); else,  ttt1 = ttt; end
+uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'Position', [6 80 47 40], ...
+    'BackgroundColor', get(gui, 'Color'), 'String', {'Slider';'min / max'}, ...
+    'HorizontalAlignment', 'center','FontSize',7,'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Set minimum of contrast sliders.\nDataset min value %f',minVal(1));
+if debugMatVis, ttt1 = sprintf('Handle: ''sldLimMin''\nCallback: ''updateSldLim'''); else,  ttt1 = ttt; end
 sldLimMin = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
     'Position', [7 80 45 12], 'String', num2str(minVal(1)),...
-    'HorizontalAlignment', 'right','Callback', @updateSldLim, 'Tag', 'Set minimum of contrast sliders. The range of the histogram and the display of the colormap in between the sliders will be updated accordingly.');
+    'HorizontalAlignment', 'right','Callback', @updateSldLim,'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Set maximum of contrast sliders.\nDataset max value %f',maxVal(1)');
+if debugMatVis, ttt1 = sprintf('Handle: ''sldLimMax''\nCallback: ''updateSldLim'''); else,  ttt1 = ttt; end
 sldLimMax = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
     'Position', [7 69 45 12], 'String', num2str(maxVal(1)), ...
-    'HorizontalAlignment', 'right','Callback', @updateSldLim, 'Tag', 'Set maximum of contrast sliders. The range of the histogram and the display of the colormap in between the sliders will be updated accordingly.');
+    'HorizontalAlignment', 'right','Callback', @updateSldLim,'Tooltip',ttt1,'Tag',ttt);
 if ~isinteger(data{1})
     set(sldLimMin, 'String', num2str(minVal(1),'%6.3f'));
     set(sldLimMax, 'String', num2str(maxVal(1),'%6.3f'));
 end
 %Slider Colormap
+ttt = sprintf('Set minimum (''black point'') of colormap.\nThis value is linked to the edit box to the right.');
+if debugMatVis, ttt1 = sprintf('Handle: ''sldMin''\nCallback: ''updateColormap'''); else,  ttt1 = ttt; end
 sldMin = uicontrol('Parent', panel_imageControls, 'Style', 'Slider', 'Callback', @updateColormap, 'Units', 'Pixel', ...
     'Position', [56 82 208 10], 'Min', minVal(1), 'Max', maxVal(1), 'Enable', 'off', ...
-    'Value',cmMinMax(1,1),'Tooltipstring','Set minimum of colormap ', 'Tag', 'Set minimum (''black point'') of colormap. This value is linked to the edit box to the right.');
+    'Value',cmMinMax(1,1),'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Set maximum (''white point'') of colormap.\nThis value is linked to the edit box to the right.');
+if debugMatVis, ttt1 = sprintf('Handle: ''sldMax''\nCallback: ''updateColormap'''); else,  ttt1 = ttt; end
 sldMax = uicontrol('Parent', panel_imageControls, 'Style', 'Slider', 'Callback', @updateColormap, 'Units', 'Pixel', ...
     'Position', [56 69 208 10], 'Min', minVal(1), 'Max', maxVal(1), 'Enable', 'off', ...
-    'Value',cmMinMax(1,2),'Tooltipstring','Set maximum of colormap ', 'Tag', 'Set maximum (''white point'') of colormap. This value is linked to the edit box to the right.');
+    'Value',cmMinMax(1,2),'Tooltip',ttt1,'Tag',ttt);
 if isinteger(data)
     set(sldMax,'SliderStep', [1/double(maxVal-minVal-1) 10/double(maxVal-minVal-10)]);
     set(sldMin,'SliderStep', [1/double(maxVal-minVal-1) 10/double(maxVal-minVal-10)]);
@@ -2980,34 +3101,37 @@ else
     set(sldMin, 'SliderStep', [0.005 0.05]);
 end
 %Values of colormap slider
+ttt = sprintf('Set minimum (''black point'') and maximum (''white point'') of colormap.\nThe range of the histogram and the display of the colormap in between the sliders will be updated accordingly.');
+if debugMatVis, ttt1 = sprintf('Handle: ''none''\nCallback: ''none'''); else,  ttt1 = ttt; end
 uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
     'Position', [267 80 47 40], 'String', {'Contrast';'min / max'}, ...
-    'HorizontalAlignment', 'center','FontSize',7, 'Tag', 'Set minimum (''black point'') and maximum (''white point'') of colormap. These values are linked to the sliders to the left.');
+    'HorizontalAlignment', 'center','FontSize',7,'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Set minimum (''black point'') of colormap.\nThis value is linked to the slider to the left.');
+if debugMatVis, ttt1 = sprintf('Handle: ''sldLimMin''\nCallback: ''setColormapFromEdit'''); else,  ttt1 = ttt; end
 valSldMin = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
     'Position', [268 80 45 12], 'String', num2str(minVal(1)), 'Callback', @setColormapFromEdit,...
-    'HorizontalAlignment', 'right', 'Tag', 'Set minimum (''black point'') of colormap. This value is linked to the slider to the left.');
+    'HorizontalAlignment', 'right','Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Set maximum (''white point'') of colormap.\nThis value is linked to the slider to the left.');
+if debugMatVis, ttt1 = sprintf('Handle: ''sldLimMax''\nCallback: ''setColormapFromEdit'''); else,  ttt1 = ttt; end
 valSldMax = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
     'Position', [268 69 45 12], 'String', num2str(maxVal(1)), 'Callback', @setColormapFromEdit,...
-    'HorizontalAlignment', 'right', 'Tag', 'Set maximum (''white point'') of colormap. This value is linked to the slider to the left.');
+    'HorizontalAlignment', 'right','Tooltip',ttt1,'Tag',ttt);
 
 % Small histogram on top of sliders
 histAxGuiPos = [72 93 176 47]; %82
-% histAxGui = axes('Parent', gui,'Units','pixel','Position', histAxGuiPos,'Tag','Histogram of current image. Middle click to change between lin / log y-scale.');
-histAxGui = axes('Parent', panel_imageControls,'Units','pixel','Position', histAxGuiPos,'Tag','Histogram of current image. Middle click to change between lin / log y-scale. Light rectangle in the background indicates current range of colormap.');
+ttt = sprintf('Histogram of current image.\nMiddle click to change between lin / log y-scale.\nLight rectangle in the background indicates current range of colormap.');
+if debugMatVis, ttt1 = sprintf('Handle: ''sldLimMax''\nCallback: ''setColormapFromEdit'''); else,  ttt1 = ttt; end
+histAxGui = axes('Parent', panel_imageControls,'Units','pixel','Position', histAxGuiPos,'Tag',ttt1);
 
-if ~oldMATLAB
-    histAxBg = get(gui, 'Color')*1.1;histAxBg(histAxBg>1)=1; % Avoid >1
-    histAxBg = rectangle('Parent',histAxGui, 'Position',[0 0 176 44], ...
-        'FaceColor',histAxBg, 'EdgeColor','none'); % 'FaceColor',get(gui, 'Color')*1.1, 'EdgeColor','none');
-else
-    histAxBg = rectangle('Parent',histAxGui, 'Position',[0 0 176 44], ...
-    'FaceColor',get(gui, 'Color')*1.1, 'EdgeColor','none');
-end
+histAxBg = get(gui, 'Color')*1.1;histAxBg(histAxBg>1)=1; % Avoid >1
+histAxBg = rectangle('Parent',histAxGui, 'Position',[0 0 176 44], 'FaceColor',histAxBg, 'EdgeColor','none');
+
+ttt = sprintf('Show/hide histogram for RGB stretch mode.');
+if debugMatVis, ttt1 = sprintf('Handle: ''cb_showHist''\nCallback: ''updateGuiHistVal'''); else,  ttt1 = ttt; end
 cb_showHist = uicontrol('Parent', panel_imageControls, 'Style', 'checkbox','Units','pixel',...
     'Position',[histAxGuiPos(1)+histAxGuiPos(3)-15 histAxGuiPos(2)+histAxGuiPos(4)-17 15 17],...
     'BackgroundColor',get(gui,'Color'),'Value', 0, 'String', '','Visible','off',...
-    'Callback',@updateGuiHistVal,...
-    'Tooltipstring', 'Show/hide histogram for RGB stretch mode.','Tag','Show/hide histogram for RGB stretch mode.');
+    'Callback',@updateGuiHistVal,'Tooltip',ttt1,'Tag',ttt);
 
 hold(histAxGui,'on');
 histXData = linspace(minVal(1),maxVal(1),256);
@@ -3016,13 +3140,17 @@ histAxPlot = bar(histXDataBin, zeros(1,numel(histXDataBin)),'Parent',histAxGui, 
 set(histAxGui,'XLim',[minVal(1) maxVal(1)],'Color','none','XTick',[],'YTick',[],'YColor',get(gui,'Color'));
 set([histAxGui get(histAxGui,'Children')'], 'ButtonDownFcn', @buttonDownGuiHist);
 txt_linlog = text(1,1, 'lin','Parent',histAxGui, 'FontSize',8, 'units','pixel','Position',[-13 15],'Rotation',90);
-tb_playHist = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton','Units','pixel',...
-    'Position',[histAxGuiPos(1)+histAxGuiPos(3)+1 histAxGuiPos(2)-1 15 24],'CData',arrowAll(:,9:16,:),'BackgroundColor',get(gui,'Color'),...
-    'Tooltipstring','Toggle update of histogram during playback','Tag','Toggle update of histogram during playback. As updating the histogram takes considerable time, this can be useful for speeding up the playback.','Value',defaultConfig.playHist);
+
+ttt = sprintf('Toggle update of histogram during playback.\nAs updating the histogram takes considerable time, this can be useful for speeding up the playback.');
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_playHist''\nCallback: ''none'''); else,  ttt1 = ttt; end
+tb_playHist = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton','Units','pixel','Position',[histAxGuiPos(1)+histAxGuiPos(3)+1 histAxGuiPos(2)-1 15 24],...
+    'CData',arrowAll(:,9:16,:),'BackgroundColor',get(gui,'Color'),'Value',defaultConfig.playHist,'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf(['Toggle update of histogram during change of current position (either using the sliders or the position lines in the plots).\n',...
+  'As updating the histogram takes considerable time, this can be useful for speeding up the image refresh.']);
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_moveHist''\nCallback: ''none'''); else,  ttt1 = ttt; end
 tb_moveHist = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton','Units','pixel','BackgroundColor',get(gui,'Color'),...
     'Position',[histAxGuiPos(1)+histAxGuiPos(3)+1 histAxGuiPos(2)+23 15 24],'CData',repmat(floor(arrow_lr(:,[3:7 10:14])/2),[1 1 3]),...
-    'Tooltipstring','Toggle update of histogram when dragging the current position indicators.','Tag','Toggle update of histogram during change of current position (either using the sliders or the position lines in the plots). As updating the histogram takes considerable time, this can be useful for speeding up the image refresh.','Value',defaultConfig.moveHist,...
-    'Callback','');  %@toggleMoveHist
+    'Value',defaultConfig.moveHist,'Callback','','Tooltip',ttt1,'Tag',ttt);  %@toggleMoveHist
 % axis(histAxGui,'off');
 set(txt_linlog, 'Visible','on','Position',get(txt_linlog,'Position')+[5 3 0]);
 % Display image for contrast slider
@@ -3030,20 +3158,26 @@ contrastAx = axes('Parent', panel_imageControls,'Units','pixel','Position', [72 
 contrastSldIm = imagesc(histXDataBin,1,linspace(minVal(1),maxVal(1),numel(histXDataBin)) ,'Parent',contrastAx);  %#ok
 set(contrastAx, 'Tag','Current colormap.','Visible','off');
 
-%Slider RGB Stretch
+%Slider & txtEdit for RGB Stretch
+ttt = sprintf('Set lower end of RGB spectrum used for RGB stretch.\nValues <= zero correspond to blue, values >= 1 correspond to red.\nThis value is linked to the edit box to the right.');
+if debugMatVis, ttt1 = sprintf('Handle: ''sldMin_RGB''\nCallback: ''updateRgbStretchPar'''); else,  ttt1 = ttt; end
 sldMin_RGB = uicontrol('Parent', panel_imageControls, 'Style', 'Slider', 'Callback', @updateRgbStretchPar, 'Units', 'Pixel', ...
     'Position', [56 55 208 10], 'Min', -.5, 'Max', 1.5, 'Visible', 'off', ...
-    'Value',rgbStretchSldVal(1),'SliderStep', [1/200, 1/20], 'Tag', 'Set lower end of RGB spectrum used for RGB stretch. Values <= zero correspond to blue, values >= 1 correspond to red. This value is linked to the edit box to the right.');
-sldMax_RGB = uicontrol('Parent', panel_imageControls, 'Style', 'Slider', 'Callback', @updateRgbStretchPar, 'Units', 'Pixel', ...
-    'Position', [56 42 208 10], 'Min', -.5, 'Max', 1.5, 'Visible', 'off', ...
-    'Value',rgbStretchSldVal(2),'SliderStep', [1/200, 1/20], 'Tag', 'Set upper end of RGB spectrum used for RGB stretch. Values <= zero correspond to blue, values >= 1 correspond to red. This value is linked to the edit box to the right.');
-%Values of colormap slider
+    'Value',rgbStretchSldVal(1),'SliderStep', [1/200, 1/20],'Tooltip',ttt1,'Tag',ttt);
+if debugMatVis, ttt1 = sprintf('Handle: ''valSldMin_RGB''\nCallback: ''updateRgbStretchPar'''); else,  ttt1 = ttt; end
 valSldMin_RGB = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
     'Position', [270 53 40 12], 'String', num2str(rgbStretchSldVal(1)), 'Callback', @updateRgbStretchPar,...
-    'HorizontalAlignment', 'right', 'Visible', 'off', 'Tag','Set lower end of RGB spectrum used for RGB stretch. Values <= zero correspond to blue, values >= 1 correspond to red. This value is linked to the slider to the left.');
+    'HorizontalAlignment', 'right', 'Visible', 'off','Tooltip',ttt1,'Tag',ttt);
+
+ttt = sprintf('Set upper end of RGB spectrum used for RGB stretch.\nValues <= zero correspond to blue, values >= 1 correspond to red.\nThis value is linked to the edit box to the right.');
+if debugMatVis, ttt1 = sprintf('Handle: ''sldMax_RGB''\nCallback: ''updateRgbStretchPar'''); else,  ttt1 = ttt; end
+sldMax_RGB = uicontrol('Parent', panel_imageControls, 'Style', 'Slider', 'Callback', @updateRgbStretchPar, 'Units', 'Pixel', ...
+    'Position', [56 42 208 10], 'Min', -.5, 'Max', 1.5, 'Visible', 'off', ...
+    'Value',rgbStretchSldVal(2),'SliderStep', [1/200, 1/20],'Tooltip',ttt1,'Tag',ttt);
+if debugMatVis, ttt1 = sprintf('Handle: ''valSldMax_RGB''\nCallback: ''updateRgbStretchPar'''); else,  ttt1 = ttt; end
 valSldMax_RGB = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
     'Position', [270 42 40 12], 'String', num2str(rgbStretchSldVal(2)), 'Callback', @updateRgbStretchPar,...
-    'HorizontalAlignment', 'right', 'Visible', 'off', 'Tag','Set upper end of RGB spectrum used for RGB stretch. Values <= zero correspond to blue, values >= 1 correspond to red. This value is linked to the slider to the left.');
+    'HorizontalAlignment', 'right', 'Visible', 'off','Tooltip',ttt1,'Tag',ttt);
 % Display image for RGB Stretch slider
 rgbTmp = zeros(101,3);
 for i=1:101
@@ -3055,46 +3189,63 @@ rgbSldIm = imagesc(rgbTmp,'Parent',rgbAx,'Visible','off');
 axis(rgbAx,'off');
 
 %Gamma Value Slider and etxt
+ttt = sprintf('Gamma value to provide non-linear colormaps.');
+if debugMatVis, ttt1 = sprintf('Handle: ''sldGamma''\nCallback: ''updateGamma(''sld'',''data'')'''); else,  ttt1 = ttt; end
 sldGamma = uicontrol('Parent', panel_imageControls, 'Style', 'Slider', 'Callback', {@updateGamma,'sld','data'}, 'Units', 'Pixel', ...
     'Position', [56 55 208 10], 'Min', 0, 'Max', 5, 'SliderStep', [0.01 .05], ...
-    'Value',customConfig.gamma(1), 'ToolTipString', 'Set Gamma Value','Tag', 'Gamma value to provide non-linear colormaps.');
+    'Value',customConfig.gamma(1),'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Gamma value to provide non-linear colormaps.\nThis value is linked to the slider to the left.');
+if debugMatVis, ttt1 = sprintf('Handle: ''valSldGamma''\nCallback: ''updateGamma(''etxt'',''data'')'''); else,  ttt1 = ttt; end
 valSldGamma = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
     'Position', [268 53 45 12], 'String', num2str(customConfig.gamma(1),'%6.3f'), 'Callback', {@updateGamma,'etxt','data'},...
-    'HorizontalAlignment', 'right', 'ToolTipString', 'Set Gamma Value','Tag', 'Gamma value to provide non-linear colormaps. This value is linked to the slider to the left.');
+    'HorizontalAlignment', 'right','Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Gamma value to provide non-linear colormaps.\nThis value is linked to the edit box to the right.');
+if debugMatVis, ttt1 = sprintf('Handle: ''strGamma''\nCallback: ''none''\n%s',ttt); else,  ttt1 = ttt; end
 strGamma = text('Units', 'Pixel', 'Parent',rgbAx,...
-    'Position', [-32 8 1], 'String', '$\gamma$','Interpreter','Latex','Tag', 'Gamma value to provide non-linear colormaps. This value is linked to the edit box to the right.');
+    'Position', [-32 8 1], 'String', '$\gamma$','Interpreter','Latex','Tag',ttt1);
 
 if withAlpha
     set(sldGamma, 'Position',[86 55 178 10]); % Make space for gamma contrast edit fields
     set(strGamma, 'Position',[-2 8 1]);
     text('Units', 'Pixel', 'Parent',rgbAx,...
-    'Position', [-60 8 1], 'String', '$\alpha_{\mathrm{min}}$','Interpreter','Latex','Tag', 'Minimum of alpha contrast');
-    edt_alphaMin = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
-        'Position', [7 42 31 12], 'String', num2str(cmMinMax(nMat+1,1),'%6.2f'), 'Callback', {@updateAlphaContrast,'etxt'},...
-        'HorizontalAlignment', 'right', 'ToolTipString', 'Set minimum of alpha contrast','Tag', 'Set minimum of alpha contrast');
+        'Position', [-60 8 1], 'String', '$\alpha_{\mathrm{min}}$','Interpreter','Latex','Tag', 'Minimum of alpha contrast');
+    ttt = sprintf('Set minimum of alpha contrast');
+    if debugMatVis, ttt1 = sprintf('Handle: ''edt_alphaMin''\nCallback: ''updateAlphaContrast(''etxt'')'''); else,  ttt1 = ttt; end
+    edt_alphaMin = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', 'Position', [7 42 31 12], ...
+        'String', num2str(cmMinMax(nMat+1,1),'%6.2f'), 'Callback', {@updateAlphaContrast,'etxt'},...
+        'HorizontalAlignment', 'right','Tooltip',ttt1,'Tag',ttt);
     text('Units', 'Pixel', 'Parent',rgbAx,...
-    'Position', [-30 8 1], 'String', '$\alpha_{\mathrm{max}}$','Interpreter','Latex','Tag', 'Maximum of alpha contrast');
-    edt_alphaMax = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
-        'Position', [37 42 31 12], 'String', num2str(cmMinMax(nMat+1,2),'%6.2f'), 'Callback', {@updateAlphaContrast,'etxt'},...
-        'HorizontalAlignment', 'right', 'ToolTipString', 'Set maximum of alpha contrast','Tag', 'Set maximum of alpha contrast');
+        'Position', [-30 8 1], 'String', '$\alpha_{\mathrm{max}}$','Interpreter','Latex','Tag', 'Maximum of alpha contrast');
+    ttt = sprintf('Set maximum of alpha contrast');
+    if debugMatVis, ttt1 = sprintf('Handle: ''edt_alphaMax''\nCallback: ''updateAlphaContrast(''etxt'')'''); else,  ttt1 = ttt; end
+    edt_alphaMax = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', 'Position', [37 42 31 12], ...
+        'String', num2str(cmMinMax(nMat+1,2),'%6.2f'), 'Callback', {@updateAlphaContrast,'etxt'},...
+        'HorizontalAlignment', 'right','Tooltip',ttt1,'Tag',ttt);
     % Gamma for alpha data: Gamma Value Slider and etxt
-    sldGamma(2) = uicontrol('Parent', panel_imageControls, 'Style', 'Slider', 'Callback', {@updateGamma,'sld','alpha'}, 'Units', 'Pixel', ...
-        'Position', [86 42 178 10], 'Min', 0, 'Max', 5, 'SliderStep', [0.01 .05], ...
-        'Value',customConfig.gamma(min(nMat+1,numel(customConfig.gamma))), 'ToolTipString', 'Set Gamma Value','Tag', 'Gamma value to provide non-linear colormaps.');
-    valSldGamma(2) = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
-        'Position', [268 42 45 12], 'String', num2str(customConfig.gamma(min(nMat+1,numel(customConfig.gamma))),'%6.3f'), 'Callback', {@updateGamma,'etxt','alpha'},...
-        'HorizontalAlignment', 'right', 'ToolTipString', 'Set Gamma Value','Tag', 'Gamma value to provide non-linear colormaps. This value is linked to the slider to the left.');
+    ttt = sprintf('Gamma value to provide non-linear colormaps.');
+    if debugMatVis, ttt1 = sprintf('Handle: ''sldGamma(2)''\nCallback: ''updateGamma(''sld'',''alpha'')'''); else,  ttt1 = ttt; end
+    sldGamma(2) = uicontrol('Parent', panel_imageControls, 'Style', 'Slider', 'Units', 'Pixel', 'Position', [86 42 178 10], ...
+        'Min', 0, 'Max', 5, 'SliderStep', [0.01 .05], 'Callback', {@updateGamma,'sld','alpha'}, ...
+        'Value',customConfig.gamma(min(nMat+1,numel(customConfig.gamma))),'Tooltip',ttt1,'Tag',ttt);
+    ttt = sprintf('Gamma value to provide non-linear colormaps.\nThis value is linked to the slider to the left.');
+    if debugMatVis, ttt1 = sprintf('Handle: ''valSldGamma(2)''\nCallback: ''updateGamma(''etxt'',''alpha'')'''); else,  ttt1 = ttt; end
+    valSldGamma(2) = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', 'Position', [268 42 45 12], ...
+        'String', num2str(customConfig.gamma(min(nMat+1,numel(customConfig.gamma))),'%6.3f'), 'Callback', {@updateGamma,'etxt','alpha'},...
+        'HorizontalAlignment', 'right','Tooltip',ttt1,'Tag',ttt);
+    ttt = sprintf('Gamma value to provide non-linear colormaps.\nThis value is linked to the edit box to the right.');
+    if debugMatVis, ttt1 = sprintf('Handle: ''strGamma(2)''\nCallback: ''none''\n%s', ttt); else,  ttt1 = ttt; end
     strGamma(2) = text('Units', 'Pixel', 'Parent',rgbAx,...
-        'Position', [-2 -5 1], 'String', '$\gamma_{\alpha}$','Interpreter','Latex','Tag', 'Gamma value to provide non-linear colormaps. This value is linked to the edit box to the right.');
+        'Position', [-2 -5 1], 'String', '$\gamma_{\alpha}$','Interpreter','Latex','Tag', ttt1);
 end
 
 %popup for colormap (look up table)
+ttt = sprintf('Choose colormap.');
+if debugMatVis, ttt1 = sprintf('Handle: ''popLut''\nCallback: ''updateColormap'''); else,  ttt1 = ttt; end
 popLut = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', @updateColormap, 'Units', 'Pixel', ...
     'Position', [7 14 80 15], 'String', {'Gray';'Gray (Range)';'4 x Gray';'Parula'; 'Jet'; 'HSV'; 'Hot'; 'Cool';...
-    'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2'; ...
-    'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';...
+    'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2'; 'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';...
     'Blue-Gray-Yellow (0 centered)';'Blue-Gray-Red (0 centered)';'Magenta-Gray-Green (0 centered)'},...
-    'Value',customConfig.colormap, 'TooltipString', 'Choose colormap','FontSize',7, 'Tag','Select colormap.');
+    'Value',customConfig.colormap,'FontSize',7,'Tooltip',ttt1,'Tag',ttt);
 
 if ~isempty(defaultColormap{1})
     set(popLut, 'String', [get(popLut, 'String');'Default']);
@@ -3105,45 +3256,55 @@ btPos = 90;
 btWidth = 24;
 
 %Invert Colormap
-tbInvert = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Value', 0,  ...
-    'Position', [btPos 8 24 24], 'Enable', 'on', 'CData', invertBt, 'Callback', @updateInvertMode,...
-    'ToolTipString', 'Invert Colormap','Tag','Invert colormap');
+ttt = sprintf('Invert colormap.\nBright colors become dark and dark colors bright.');
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_invert''\nCallback: ''updateInvertMode'''); else,  ttt1 = ttt; end
+tb_invert = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Value', 0,  ...
+    'Position', [btPos 8 24 24], 'Enable', 'on', 'CData', invertBt, 'Callback', @updateInvertMode,'Tooltip',ttt1,'Tag',ttt);
 btPos = btPos + btGap + btWidth;
 %Flip Colormap
-tbFlip = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Value', 0,  ...
-    'Position', [btPos 8 24 24], 'Enable', 'on', 'CData', flipBt, 'Callback', @updateFlipMode,...
-    'ToolTipString', 'Flip colormap','Tag','Flip colormap');
+ttt = sprintf('Flip colormap range.');
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_flip''\nCallback: ''updateFlipMode'''); else,  ttt1 = ttt; end
+tb_flip = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Value', 0,  ...
+    'Position', [btPos 8 24 24], 'Enable', 'on', 'CData', flipBt, 'Callback', @updateFlipMode,'Tooltip',ttt1,'Tag',ttt);
 btPos = btPos + btGap + btWidth;
 %Toggle button for RGB display (disabled for 2D data)
-tbSwitchRGB = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel',  ...
-    'Position', [btPos 8 24 24],  'Callback', @switchRGB, 'CData', RGB,...
-    'TooltipString', 'Display three consecutive slices as RGB image','Tag', 'Display three consecutive slices as RGB image or use ''stretch modes'' to create color-coded projections along the RGB dimension.');
+ttt = sprintf('Display three consecutive slices as RGB image or use ''stretch modes'' to create color-coded projections along the RGB dimension.');
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_switchRGB''\nCallback: ''switchRGB'''); else,  ttt1 = ttt; end
+tb_switchRGB = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel',  ...
+    'Position', [btPos 8 24 24],  'Callback', @switchRGB, 'CData', RGB,'Tooltip',ttt1,'Tag',ttt);
 if nDim < 3 || withAlpha
-    set(tbSwitchRGB, 'Enable', 'off');
+    set(tb_switchRGB, 'Enable', 'off');
 end
 btPos = btPos + btGap + btWidth;
 
 %toggle button for display of colorbar
+ttt = sprintf('Show / hide colorbar in the image window.');
+if debugMatVis, ttt1 = sprintf('Handle: ''tbColorbar''\nCallback: ''showColorbar'''); else,  ttt1 = ttt; end
 tbColorbar = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'CData', colorbarIcon, ...
-    'Position', [btPos 8 24 24], 'String', '', 'Value', 0, 'Callback', @showColorbar, 'TooltipString', ' Show / hide colorbar ', 'Tag','Show / hide colorbar in the image window.');
+    'Position', [btPos 8 24 24], 'String', '', 'Value', 0, 'Callback', @showColorbar,'Tooltip',ttt1,'Tag',ttt);
 btPos = btPos + btGap + btWidth;
 %Toggle button for equal axes property
+ttt = sprintf('Switch axes between filling the figure or having a fixed aspect ratio.\n- Left click: Toggle fill / fixed.\n- Right click: Set aspect ratio.');
+ttt2 = sprintf('<html>Switch axes between filling the figure or having a fixed aspect ratio.<br /><b>Left click:</b> Toggle fill / fixed.<br /><b>Right click:</b> Set aspect ratio.</html>');
+if debugMatVis, ttt1 = sprintf('Handle: ''tbAspRatio''\nCallback: ''updateAspRatio'''); else,  ttt1 = ttt2; end
 tbAspRatio = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel',  ...
     'Position', [btPos 8 24 24], 'String', '1:1', 'Value', 1  , 'FontSize', 7, ...
-    'Callback', @updateAspRatio,'Value', customConfig.aspectRatio, 'TooltipString', ['Switch axes between filling the figure or having a fixed aspect ratio.' char(10) '- Left click: Toggle fill / fixed.' char(10) '- Right click: Set aspect ratio.'],...
-    'Tag', ['Switch axes between filling the figure or having a fixed aspect ratio.' char(10) '- Left click: Toggle fill / fixed.' char(10) '- Right click: Set aspect ratio.']);
+    'Callback', @updateAspRatio,'Value', customConfig.aspectRatio,'Tooltip',ttt1,'Tag',ttt);
 btPos = btPos + btGap + btWidth;
 %Toggle button for display of objects
+ttt = sprintf('Show / hide colorbar in the image window.');
+if debugMatVis, ttt1 = sprintf('Handle: ''tbShowObjects''\nCallback: ''toggleShowObjects'''); else,  ttt1 = ttt; end
 tbShowObjects = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel',  ...
-    'Position', [btPos 8 24 24], 'CData', objBt, 'Callback', @toggleShowObjects, ...
-    'TooltipString', 'Toggle display of objects in Image/Zoom windows', 'Value', customConfig.lineVis, ...
-    'Tag', 'Toggle display of objects (position lines and zoom indicator) in Image/Zoom windows');
+    'Position', [btPos 8 24 24], 'CData', objBt, 'Callback', @toggleShowObjects, 'Value', customConfig.lineVis, ...
+    'Tooltip',ttt1,'Tag',ttt);
 btPos = btPos + btGap + btWidth;
 %100 % button
+ttt = sprintf('Set display size of zoom window to 100 %% (1 image pixel equals 1 screen pixel). Right click to specify another pixel scale.');
+ttt2 = sprintf('<html>Set display size of zoom window to 100 %% (1 image pixel equals 1 screen pixel).<br /><b>Right click</b> to specify another pixel scale.</html>');
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_100pct''\nCallback: ''set100Pct'''); else,  ttt1 = ttt2; end
 bt_100pct = uicontrol('Parent', panel_imageControls, 'Style', 'pushbutton', 'Units', 'Pixel',  ...
-    'Position', [btPos 8 24 24], 'String', '100%','FontSize',6, 'Callback', @set100Pct, ...
-    'TooltipString', 'Set display size to 100 % (1 image pixel equals 1 screen pixel). Right click to specify another pixel scale.', 'Value', 0, ...
-    'Tag', 'Set display size of zoom window to 100 % (1 image pixel equals 1 screen pixel). Right click to specify another pixel scale.'); %#ok
+    'Position', [btPos 8 24 24], 'String', '100%','FontSize',6, 'Callback', @set100Pct, 'Value', 0, ...
+    'Tooltip',ttt1,'Tag',ttt); 
 
 %Separator line
 sepLine(2) = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
@@ -3159,54 +3320,72 @@ txt_titles(end+1) = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'Backgroun
 panel_windowButtons = uipanel(gui, 'units','pixel','Position', [-1 75 customConfig.winPos.gui(4)+2 30],...
     'BackgroundColor',get(gui, 'Color'),'BorderType','none'); %
 %For image windows
-tbWin(1) = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel', 'TooltipString', 'Show / hide Image window(s)', ...
-    'Position', [3 1 28 28], 'CData', double(icon_image_24x24)/255, 'Value', customConfig.winVis.imageWin, 'Callback',{@windowVisibility,1},...
-    'Tag', 'Show / hide image window(s)','BackgroundColor',get(gui,'Color'));
+ttt = sprintf('Show / hide Image window(s)');
+if debugMatVis, ttt1 = sprintf('Handle: ''tbWin(1)''\nCallback: ''windowVisibility(1)'''); else,  ttt1 = ttt; end
+tbWin(1) = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel','Position', [3 1 28 28], ...
+     'CData', double(icon_image_24x24)/255, 'Value', customConfig.winVis.imageWin, 'Callback',{@windowVisibility,1},...
+    'BackgroundColor',get(gui,'Color'),'Tooltip',ttt1,'Tag',ttt);
 %For zoom windows
-tbWin(2) = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel', 'TooltipString', 'Show / hide Zoom window(s)',...
-    'Position', [31 1 28 28], 'CData', double(icon_zoom_24x24)/255, 'Value', customConfig.winVis.zoomWin, 'Callback',{@windowVisibility,2},...
-    'Tag', 'Show / hide zoom window(s)','BackgroundColor',get(gui,'Color'));
+ttt = sprintf('Show / hide Zoom window(s)');
+if debugMatVis, ttt1 = sprintf('Handle: ''tbWin(2)''\nCallback: ''windowVisibility(2)'''); else,  ttt1 = ttt; end
+tbWin(2) = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Position', [31 1 28 28], ...
+    'CData', double(icon_zoom_24x24)/255, 'Value', customConfig.winVis.zoomWin, 'Callback',{@windowVisibility,2},...
+    'BackgroundColor',get(gui,'Color'),'Tooltip',ttt1,'Tag',ttt);
 %For plot windows
-tbWin(3) = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel', 'TooltipString', 'Show / hide Plots window(s)',...
-    'Position', [59 1 28 28], 'CData', double(icon_plot_24x24)/255, 'Value', customConfig.winVis.plotWin, 'Callback',{@windowVisibility,3},...
-    'Tag', 'Show / hide plot window(s)','BackgroundColor',get(gui,'Color'));
+ttt = sprintf('Show / hide Plot window(s)');
+if debugMatVis, ttt1 = sprintf('Handle: ''tbWin(3)''\nCallback: ''windowVisibility(3)'''); else,  ttt1 = ttt; end
+tbWin(3) = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel','Position', [59 1 28 28], ...
+    'CData', double(icon_plot_24x24)/255, 'Value', customConfig.winVis.plotWin, 'Callback',{@windowVisibility,3},...
+    'BackgroundColor',get(gui,'Color'),'Tooltip',ttt1,'Tag',ttt);
 %Histogram
-tbHist = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Value', 0,  ...
-    'Position', [87 1 28 28], 'Enable', 'on', 'CData', histIcon, 'Callback',@showHist ,...
-    'ToolTipString', 'Show histogram of complete data set. Histogram not yet calculated. Press button to calculate and display.', 'FontSize',7,...
-    'Tag', 'Show / hide histogram window','BackgroundColor',get(gui,'Color'));  %
+ttt = sprintf('Show / hide histogram of complete data set.\nHistogram not yet calculated.\nPress button to calculate and display.');
+if debugMatVis, if withAlpha, ttt1 = sprintf('Handle: ''tbHist''\nCallback: ''showHist''');
+                else;         ttt1 = sprintf('Handle: ''tbHist''\nCallback: ''update2DHist'''); 
+                end; 
+else,  ttt1 = ttt; 
+end
+tbHist = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Position', [87 1 28 28], ...
+    'Value', 0, 'Enable', 'on', 'FontSize',7, 'CData', histIcon, 'Callback',@showHist, ...
+    'BackgroundColor',get(gui,'Color'), 'Tooltip',ttt1,'Tag',ttt);  %
 if withAlpha
     set(tbHist, 'Callback', @update2DHist);
 end
 % ROI Manager
-tbRoi = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Callback', @roiGui,  ...
-    'Position', [115 1 28 28],  'Value', 0, 'Enable','on','CData',double(icon_roi_24x24)/255,...
-    'ToolTipString', 'Show / hide ROI Manager',...
-    'Tag', 'Show / hide ROI Manager','BackgroundColor',get(gui,'Color'));  %[175 85 24 24]
-tbProfile = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Callback', @profileGui,  ...
-    'Position', [143 1 28 28],  'Value', 0, 'Enable','on','String','Prof',...
-    'ToolTipString', 'Show / hide profile Manager',...
-    'Tag', 'Show / hide profile Manager','BackgroundColor',get(gui,'Color'));  %[175 85 24 24]
+ttt = sprintf('Show / hide ROI Manager');
+if debugMatVis, ttt1 = sprintf('Handle: ''tbRoi''\nCallback: ''roiGui'''); else,  ttt1 = ttt; end
+tbRoi = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Position', [115 1 28 28], ...
+    'Callback', @roiGui, 'Value', 0, 'Enable','on','CData',double(icon_roi_24x24)/255,...
+    'BackgroundColor',get(gui,'Color'), 'Tooltip',ttt1,'Tag',ttt);  %[175 85 24 24]
+ttt = sprintf('Show / hide Profile Manager');
+if debugMatVis, ttt1 = sprintf('Handle: ''tbProfile''\nCallback: ''profileGui'''); else,  ttt1 = ttt; end
+tbProfile = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Position', [143 1 28 28], ...
+    'Callback', @profileGui, 'Value', 0, 'Enable','on','String','Prof',...
+    'BackgroundColor',get(gui,'Color'), 'Tooltip',ttt1,'Tag',ttt);  %[175 85 24 24]
 % Record button
-tbRecord = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Callback', @vidGenerator,  ...
-    'Position', [171 1 28 28],  'Value', 0, 'Enable','on','CData',double(icon_Record),...
-    'ToolTipString', 'Show /hide video recording tool','String','REC','FontSize',8,'Foregroundcolor','w','FontWeight','bold',...
-    'Tag', 'Show / hide video recording tool','BackgroundColor',0.2*[1 1 1],'tag','Open video generator tool to record videos');  %[175 85 24 24]
+ttt = sprintf('Show / hide Video Recorder');
+if debugMatVis, ttt1 = sprintf('Handle: ''tbRecord''\nCallback: ''vidGenerator'''); else,  ttt1 = ttt; end
+tbRecord = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Position', [171 1 28 28], ...
+    'Callback', @vidGenerator, 'Value', 0, 'Enable','on','CData',double(icon_Record),...
+    'String','REC','FontSize',8,'Foregroundcolor','w','FontWeight','bold',...
+    'BackgroundColor',0.2*[1 1 1], 'Tooltip',ttt1,'Tag',ttt);  %[175 85 24 24]
 % tooltips button
-tbTooltips = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel',...
-    'Position', [199 1 28 28],  'CData', double(icon_tooltips_24x24)/255,...
-    'Tooltipstring', 'Show / hide tooltips','ForegroundColor',get(gui,'Color'),'Value',1, 'Callback', @toggleTooltipDisplay,...
-    'Tag', 'Show / hide tooltips','BackgroundColor',get(gui,'Color'));
+ttt = sprintf('Show / hide Tooltips');
+if debugMatVis, ttt1 = sprintf('Handle: ''tbTooltips''\nCallback: ''toggleTooltipDisplay'''); else,  ttt1 = ttt; end
+tbTooltips = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Position', [199 1 28 28], ...
+    'CData', double(icon_tooltips_24x24)/255, 'ForegroundColor',get(gui,'Color'),'Value',1, 'Callback', @toggleTooltipDisplay,...
+    'BackgroundColor',get(gui,'Color'), 'Tooltip',ttt1,'Tag',ttt);
 % matVisGuide button
+ttt = sprintf('Open matVis Guide.\nOpens a pdf-file in a webbrowser.\nOnly available with internet connection.');
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_matVisGuide''\nCallback: ''openMatVisGuide'''); else,  ttt1 = ttt; end
 bt_matVisGuide = uicontrol('Parent',panel_windowButtons, 'Style', 'Pushbutton', 'Units', 'Pixel', 'Callback', @openMatVisGuide,...
     'Position', [227 1 28 28],  'CData', icon_manual(5:28,5:28,:),...
-    'Tooltipstring', 'Open matVis Guide','ForegroundColor',get(gui,'Color'),...
-    'Tag','Open matVis Guide. Opens a pdf-file in a webbrowser. Only available with internet connection.');  %#ok
+    'ForegroundColor',get(gui,'Color'), 'Tooltip',ttt1,'Tag',ttt);  %#ok
 % update matVis
+ttt = sprintf('Check online whether a new version of matVis is available.\nOlder versions can either be overwritten or backed up with the respective version number.');
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_updateMatVis''\nCallback: ''updateMatVis'''); else,  ttt1 = ttt; end
 bt_updateMatVis = uicontrol('Parent',panel_windowButtons, 'Style', 'Pushbutton', 'Units', 'Pixel', 'Callback', @updateMatVis,...
-    'Position', [255 1 28 28],  'CData', double(icon_update_24x24)/255,...
-    'Tooltipstring', 'Check online for matVis update.','ForegroundColor',get(gui,'Color'),...
-    'Tag','Check online whether a new version of matVis is available. Older versions can either be overwritten or backed up with the respective version number.'); %#ok
+    'Position', [255 1 28 28],  'CData', double(icon_update_24x24)/255,'ForegroundColor',get(gui,'Color'),...
+    'Tooltip',ttt1,'Tag',ttt); %#ok
 % % Check for availability of website hosting the latest matVis version and
 % % the matVisGuide
 % [w flag] = urlread('http://www.colors-and-contrasts.com/');
@@ -3214,12 +3393,16 @@ bt_updateMatVis = uicontrol('Parent',panel_windowButtons, 'Style', 'Pushbutton',
 %     set([bt_matVisGuide bt_updateMatVis], 'Enable','off');
 % end
 %Toggle default and custom window position / visibility
-btConfig = uicontrol('Parent',panel_windowButtons, 'Style', 'Pushbutton', 'Units', 'Pixel', 'TooltipString', 'Switch configuration: Custom - Default',...
+ttt = sprintf('Switches matVis configuration between default and custom configuration.\nSeparat configurations are saved for single and multiple datasets.\nThe matVis configuration includes many but not all parameters.');
+if debugMatVis, ttt1 = sprintf('Handle: ''btConfig''\nCallback: ''switchConfig'''); else,  ttt1 = ttt; end
+btConfig = uicontrol('Parent',panel_windowButtons, 'Style', 'Pushbutton', 'Units', 'Pixel',...
     'Position', [283 15 45 15], 'String', 'CustConf','Callback',@switchConfig, 'FontSize',7,...
-    'UserData', 0,'Tag','Switches matVis configuration between default and custom configuration. The matVis configuration includes position and visibility of windows, colormap, contrast mode, aspect ratio and many other parameters.');
+    'UserData', 0,'Tooltip',ttt1,'Tag',ttt);
 % btSaveConfig
-uicontrol('Parent',panel_windowButtons, 'Style', 'Pushbutton', 'Units', 'Pixel', 'TooltipString', 'Save Configuration', 'FontSize',7,...
-    'Position', [283 1 45 15], 'String', 'SaveConf', 'Callback',@saveConfig,'Tag','Saves the current matVis configuration as the custom configuration. The config file (''matVisConfig.mat'') is saved in the same directory as the matVis.m file.');
+ttt = sprintf('Saves the current matVis configuration as the custom configuration.\nThe config file (''matVisConfig_%s.mat'') is saved in the same directory as the matVis.m file.',strtrim(getenv('Computername')));
+if debugMatVis, ttt1 = sprintf('Handle: ''none''\nCallback: ''saveConfig'''); else,  ttt1 = ttt; end
+uicontrol('Parent',panel_windowButtons, 'Style', 'Pushbutton', 'Units', 'Pixel', 'Position', [283 1 45 15], ...
+    'FontSize',7, 'String','SaveConf', 'Callback',@saveConfig, 'Tooltip',ttt1,'Tag',ttt);
 
 %Separator line
 sepLine(3) = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
@@ -3417,10 +3600,14 @@ end
         updateSelection(1:nDim);
     end
     function setJumpPos(hO, ev, num)  %#ok
+        if debugMatVis, debugMatVisFcn(1); end
         savedPos(:,num) = currPos;
         savedZoom(:,:,num) = zoomVal;
-        set(bt_getJumpPos(num), 'Enable','on', 'ToolTipString', ['Click to go to saved position: [' num2str(currPos) ']'],...
-            'Tag',['Click to go to saved position: [' num2str(currPos) ']']);
+        if debugMatVis, ttt1 = sprintf('Handle: ''bt_getJumpPos(%d)''\nCallback: ''jumpPos(%d)''\n[%s].',i,i,sprintf('%d ',currPos));
+        else,           ttt = sprintf('Click to go saved position [%s].',sprintf('%d ',currPos));
+        end
+        set(bt_getJumpPos(num), 'Enable','on', 'Tooltip',ttt1,'Tag',ttt);
+        if debugMatVis, debugMatVisFcn(2); end
     end
 
 %Callback for keyboard: number keys change selected position of
@@ -3531,7 +3718,7 @@ end
         if rgbCount
             rgbCount = nDim - 2;
         end
-        if get(tbSwitchRGB, 'Value')
+        if get(tb_switchRGB, 'Value')
             switchRGB;
         end
         if projMethod
@@ -3565,10 +3752,10 @@ end
         if debugMatVis, debugMatVisFcn(1); end
         if nargin == 0
             for ii = 1:nDim
-                plotSel(ii) = get(cbPlots(ii), 'Value');
+                plotSel(ii) = get(cb_plots(ii), 'Value');
             end
         else
-            plotSel(dimNum) = get(cbPlots(dimNum), 'Value');
+            plotSel(dimNum) = get(cb_plots(dimNum), 'Value');
         end
         drawPlots;
         if debugMatVis, debugMatVisFcn(2); end
@@ -3585,35 +3772,35 @@ end
         else
           set(projMethodPop, 'Enable','on')
         end
-        set([sld etxt btPlayAll btPlayZoom cbPlots tb_lockPlots2Zoom], 'Enable', 'on');
+        set([sld etxt bt_playAll bt_playZoom cb_plots tb_lockPlots2Zoom], 'Enable', 'on');
         if projMethod
             if isPlaying
                 isPlaying = 0;
-                set(btPlayAll, 'CData', arrows, 'Value', 0);
+                set(bt_playAll, 'CData', arrows, 'Value', 0);
             end
-            %set(tbSwitchRGB, 'Enable', 'off');
-            set(btMean, 'Enable', 'off', 'CData', squeeze(meanBt{1}));
+            %set(tb_switchRGB, 'Enable', 'off');
+            set(bt_mean, 'Enable', 'off', 'CData', squeeze(meanBt{1}));
             %Update projection dimension
             notXY = setdiff(1:nDim, xySel);
             projDim = notXY(get(projDimPop, 'Value'));
-            set([sld(projDim) etxt(projDim) btPlayAll(projDim) btPlayZoom(projDim) tb_lockPlots2Zoom(projDim)], 'Enable', 'off');
+            set([sld(projDim) etxt(projDim) bt_playAll(projDim) bt_playZoom(projDim) tb_lockPlots2Zoom(projDim)], 'Enable', 'off');
             %Allow no plots other than xy dimension (plot dimensions)
-            set(cbPlots(notXY),  'Value', 0 ,'Enable', 'off'); %necessary when call from WindowCloseRequestFcn
+            set(cb_plots(notXY),  'Value', 0 ,'Enable', 'off'); %necessary when call from WindowCloseRequestFcn
             plotSel(notXY) = 0;
         else
-            %set(tbSwitchRGB, 'Enable', 'on');
-            set(btMean, 'Enable', 'on', 'CData', squeeze(meanBt{get(btMean, 'UserData')+1}));
-            set([tbWin(3) cbPlots tbShowObjects], 'Enable', 'on');
+            %set(tb_switchRGB, 'Enable', 'on');
+            set(bt_mean, 'Enable', 'on', 'CData', squeeze(meanBt{get(bt_mean, 'UserData')+1}));
+            set([tbWin(3) cb_plots tbShowObjects], 'Enable', 'on');
         end
         updateImages;  %drawImages;
         %Disable position lines and plots in tile mode
         if projMethod == 6
             set([lineHorIm lineVertIm lineHorZoom lineVertZoom], 'Visible', 'off');
             set(plotWin, 'Visible', 'off');
-            set([tbWin(3) cbPlots tbShowObjects], 'Enable', 'off');
-            set(cbPlots, 'Value', 0);
+            set([tbWin(3) cb_plots tbShowObjects], 'Enable', 'off');
+            set(cb_plots, 'Value', 0);
             set(zoomReg, 'Visible', 'on');
-            set([sld(xySel) etxt(xySel) btPlayAll(xySel) btPlayZoom(xySel)],'Enable','off');
+            set([sld(xySel) etxt(xySel) bt_playAll(xySel) bt_playZoom(xySel)],'Enable','off');
             set([sld_up(xySel(1)) sld_down(xySel(1))], 'Max', size(currIm{1},1));
             set([sld_up(xySel(2)) sld_down(xySel(2))], 'Max', size(currIm{1},2));
             if customDimScale
@@ -3623,7 +3810,7 @@ end
             end
         else
             if prevProjMethod == 6
-                set([sld(xySel) etxt(xySel) btPlayAll(xySel) btPlayZoom(xySel)],'Enable','on');
+                set([sld(xySel) etxt(xySel) bt_playAll(xySel) bt_playZoom(xySel)],'Enable','on');
                 set([sld_down(xySel(1)) sld_down(xySel(2))], 'Value', 1);
                 set(sld_up(xySel(1)), 'Value',dim(xySel(1)));
                 set(sld_up(xySel(2)), 'Value',dim(xySel(2)));
@@ -3654,19 +3841,19 @@ end
     function playCallback(hObject, event, pD, allZoom, increase)  %#ok
         if debugMatVis, debugMatVisFcn(1); end
         playDim = pD;
-        set([btPlayAll btPlayZoom], 'Enable', 'off');
+        set([bt_playAll bt_playZoom], 'Enable', 'off');
         switch allZoom
             case 'zoom'
                 startZoom = zoomVal(playDim,1);
                 stopZoom = zoomVal(playDim,1) + zoomVal(playDim,2) - 1;
-                set(btPlayZoom(playDim), 'Enable', 'on', 'CData', pausebt, 'Callback', @pauseCallback);
+                set(bt_playZoom(playDim), 'Enable', 'on', 'CData', pausebt, 'Callback', @pauseCallback);
                 if currPos(playDim) < startZoom
                     currPos(playDim) = startZoom;
                 end
             case 'all'
                 startZoom = 1;
                 stopZoom = dim(playDim);
-                set(btPlayAll(playDim), 'Enable', 'on', 'CData', pausebt, 'Callback', @pauseCallback);
+                set(bt_playAll(playDim), 'Enable', 'on', 'CData', pausebt, 'Callback', @pauseCallback);
         end
         isPlaying = 1;
         if movdata.rec
@@ -3683,7 +3870,7 @@ end
         playTime = nan(1,10);
         playCt = 0;
         while isPlaying == 1 
-            v = get(sldPlaySpeed, 'Value');
+            v = get(sld_playSpeed, 'Value');
             if round(v) < 0 % faster playback: frame skipping
                 inc = ((-1*round(v))+1)*(-1)^(increase+1);
                 ps = 0;
@@ -3731,12 +3918,12 @@ end
         isPlaying = 0;
         set(gui, 'Name', ['matVis: ', allNames]);
         for ii = 1:nDim
-            set(btPlayAll(ii), 'Enable', 'on', 'Callback', {@playCallback,ii,'all',1}, 'CData', arrowAll);
-            set(btPlayZoom(ii), 'Enable', 'on', 'Callback', {@playCallback,ii,'zoom',1}, 'CData', arrowZoom);
+            set(bt_playAll(ii), 'Enable', 'on', 'Callback', {@playCallback,ii,'all',1}, 'CData', arrowAll);
+            set(bt_playZoom(ii), 'Enable', 'on', 'Callback', {@playCallback,ii,'zoom',1}, 'CData', arrowZoom);
         end
         if movdata.rec
-            set(btPlayAll,'CData',icon_RecordAll);
-            set(btPlayZoom,'CData',icon_RecordZoom);
+            set(bt_playAll,'CData',icon_RecordAll);
+            set(bt_playZoom,'CData',icon_RecordZoom);
         end
         % Update GUI hist
         if ~get(tb_playHist,'Value')
@@ -3769,9 +3956,12 @@ end
 %Callback for play speed slider
     function playSpeedCallback(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        set(sldPlaySpeed, 'Value', round(get(sldPlaySpeed, 'Value')));
-        set(sldPlaySpeed,'TooltipString',['Playspeed: ',num2str(get(sldPlaySpeed,'Value'))],...
-            'Tag', ['Speed of playback. Current value: ' num2str(get(sldPlaySpeed,'Value')) '.' char(10) 'Negative values: faster speed by skipping over images.' char(10) 'Positive values: slower speed by introducing pauses.'] );
+        set(sld_playSpeed, 'Value', round(get(sld_playSpeed, 'Value')));
+        if debugMatVis, ttt1 = sprintf('Handle: ''sld_playSpeed = %d''\nCallback: ''playSpeedCallback''\n',get(sld_playSpeed, 'Value'));
+        else,           ttt = sprintf('<html>Speed of playback. Current value %d.<br /><b>Moving up:</b> slower speed by introducing pauses.<br /><b>Moving down:</b> faster speed by skipping images.</html>',get(sld_playSpeed, 'Value'));
+        end
+        ttt1 = sprintf('Speed of playback. Current value %d\nMoving up: slower speed by introducing pauses.\nMoving down: faster speed by skipping images.',get(sld_playSpeed, 'Value'));
+        set(sld_playSpeed,'Tooltip',ttt,'Tag',ttt1);
         updateTooltips;
         if debugMatVis, debugMatVisFcn(2); end
     end
@@ -3779,7 +3969,7 @@ end
 %Callback for menu-display toggle button
     function toggleMenuBars(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        if get(tbMenuBars, 'Value') && strcmp(get(imageWin(1), 'MenuBar'), 'none')
+        if get(tb_menuBars, 'Value') && strcmp(get(imageWin(1), 'MenuBar'), 'none')
             for ii=1:nMat
                 set(imageWin(ii), 'Position', get(imageWin(ii), 'Position') + [0 0 0 -winWidthMenuBar], 'MenuBar', 'figure', 'WindowButtonMotionFcn', '');
                 set(zoomWin(ii), 'Position', get(zoomWin(ii), 'Position') + [0 0 0 -winWidthMenuBar], 'MenuBar', 'figure', 'WindowButtonMotionFcn', '');
@@ -3790,7 +3980,7 @@ end
                 set(hh, 'Position', get(hh, 'Position') + [0 0 0 -winWidthMenuBar], 'MenuBar', 'figure');
               end
             end
-        elseif ~get(tbMenuBars, 'Value') && strcmp(get(imageWin(1), 'MenuBar'), 'figure')
+        elseif ~get(tb_menuBars, 'Value') && strcmp(get(imageWin(1), 'MenuBar'), 'figure')
             for ii=1:nMat
                 set(imageWin(ii), 'Position', get(imageWin(ii), 'Position') + [0 0 0 winWidthMenuBar], 'MenuBar', 'none', 'WindowButtonMotionFcn', @mouseMotion);
                 set(zoomWin(ii), 'Position', get(zoomWin(ii), 'Position') + [0 0 0 winWidthMenuBar], 'MenuBar', 'none', 'WindowButtonMotionFcn', @mouseMotion);
@@ -3812,7 +4002,7 @@ end
         %RGB mode off
         if rgbCount == 0
             set(bg_colormap, 'SelectedObject', cmManual);
-            set(tbSwitchRGB, 'String', '', 'CData', RGB, 'Value', 0);
+            set(tb_switchRGB, 'String', '', 'CData', RGB, 'Value', 0);
             set(cmImage, 'String', 'Image','ToolTipString', '');
             set(cmZoom, 'Visible','on');
             set(cmManual, 'Visible', 'on');
@@ -3823,11 +4013,11 @@ end
             set([cmStretchRGBMean cmStretchRGBMax], 'Visible', 'off');
             set(projMethodPop ,'Enable', 'on');
             set([sldGamma valSldGamma strGamma], 'Visible', 'on');
-            set(btMean, 'UserData', mod(get(btMean, 'UserData')  ,5));
-            set(btMean, 'CData', squeeze(meanBt{get(btMean, 'UserData')+1}));
+            set(bt_mean, 'UserData', mod(get(bt_mean, 'UserData')  ,5));
+            set(bt_mean, 'CData', squeeze(meanBt{get(bt_mean, 'UserData')+1}));
             set([sldMax_RGB sldMin_RGB valSldMax_RGB valSldMin_RGB rgbSldIm], 'Visible','off');
             set([sldMin sldMax], 'Callback',@updateColormap);
-            set([sld etxt btPlayAll btPlayZoom], 'Enable','on');
+            set([sld etxt bt_playAll bt_playZoom], 'Enable','on');
             drawGuiHist(1);
             drawPlots;
             updateImages;
@@ -3842,7 +4032,7 @@ end
             end
             notXY = setdiff(1:nDim, xySel);
             rgbDim = notXY(rgbCount);
-            set(tbSwitchRGB, 'String', dimNames(rgbDim), 'CData', RGB2, 'FontSize', 7, 'Value', 1);
+            set(tb_switchRGB, 'String', dimNames(rgbDim), 'CData', RGB2, 'FontSize', 7, 'Value', 1);
             set(cmImage, 'String', 'Channel','ToolTipString', 'Scale each color channel to its range.');
             set(cmManual, 'Visible', 'off');
             set(cmZoom, 'Visible','off');
@@ -3868,7 +4058,7 @@ end
                 'Tag','Color adjustment. Global: Scale RGB images according to slider settings. Channel: Equalize range of images before applying slider settings. MeanStretch / MaxStretch: Stretch RGB over entire dimension with color coding for position.');
             rgbDisplay;
             colormap(contrastAx,gray(255));
-            if get(btMean, 'UserData') == 5
+            if get(bt_mean, 'UserData') == 5
                 drawPlots;
             end
         end
@@ -3878,7 +4068,7 @@ end
 %Options for RGB display (Global/Channel/Image vs. Stretch)
     function rgbDisplay(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        set([sld etxt btPlayAll btPlayZoom], 'Enable','on');
+        set([sld etxt bt_playAll bt_playZoom], 'Enable','on');
         if nargin == 3
             if get(sldMin_RGB, 'Value') > get(sldMax_RGB, 'Value')
                 set(sldMin_RGB, 'Value', get(sldMax_RGB, 'Value') - 0.01);
@@ -3886,7 +4076,7 @@ end
         elseif any(get(bg_colormap, 'SelectedObject') ==  [cmStretchRGBMean cmStretchRGBMax])
             set([sldGamma valSldGamma strGamma], 'Visible', 'off');
             set([valSldMin_RGB valSldMax_RGB sldMin_RGB sldMax_RGB rgbSldIm], 'Visible', 'on');
-            set([sld(rgbDim) etxt(rgbDim) btPlayAll(rgbDim) btPlayZoom(rgbDim)], 'Enable','off');
+            set([sld(rgbDim) etxt(rgbDim) bt_playAll(rgbDim) bt_playZoom(rgbDim)], 'Enable','off');
             drawGuiHist(dim(rgbDim));
         else
             set([sldGamma valSldGamma strGamma], 'Visible', 'on');
@@ -3898,7 +4088,7 @@ end
             end
         end
         updateImages('forceUpdateGuiHist');
-        if get(btMean, 'UserData') == 5  %for RGB plots
+        if get(bt_mean, 'UserData') == 5  %for RGB plots
             drawPlots;
         end
         if debugMatVis, debugMatVisFcn(2); end
@@ -3963,11 +4153,11 @@ end
             incr = 1;
         end
         if rgbCount
-            set(btMean, 'UserData', mod(get(btMean, 'UserData')+incr  ,6));
+            set(bt_mean, 'UserData', mod(get(bt_mean, 'UserData')+incr  ,6));
         else
-            set(btMean, 'UserData', mod(get(btMean, 'UserData')+incr  ,5));
+            set(bt_mean, 'UserData', mod(get(bt_mean, 'UserData')+incr  ,5));
         end
-        set(btMean, 'CData', squeeze(meanBt{get(btMean, 'UserData')+1}));
+        set(bt_mean, 'CData', squeeze(meanBt{get(bt_mean, 'UserData')+1}));
         drawPlots;
         if ~isempty(plotDim)
             updateObjects;
@@ -4288,15 +4478,15 @@ end
         if strcmp(get(gui,'SelectionType'),'alt')
             p1 = round(get(gui,'CurrentPoint'));
             btPosAspectRatio = get(tbAspRatio,  'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0];
-            btPosPlotsXLim   = get(tbPlotsXLim, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
-            btPosPlotsYLim   = get(tbPlotsYLim, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
-            btPosMean        = get(btMean,      'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
+            btPosPlotsXLim   = get(tb_plotsXLim, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
+            btPosPlotsYLim   = get(tb_plotsYLim, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
+            btPosMean        = get(bt_mean,      'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
             btPos_100pct     = get(bt_100pct,   'Position') + get(panel_imageControls, 'Position') .* [1 1 0 0];
             % Right click on play buttons: play backwards
             revPlay = NaN;
             for ii = 1:nDim
-                btPosPlay = get(btPlayAll(ii), 'Position')+ get(panel_positionControls, 'Position') .* [1 1 0 0];
-                btPosPlayZoom = get(btPlayZoom(ii), 'Position')+ get(panel_positionControls, 'Position') .* [1 1 0 0];
+                btPosPlay = get(bt_playAll(ii), 'Position')+ get(panel_positionControls, 'Position') .* [1 1 0 0];
+                btPosPlayZoom = get(bt_playZoom(ii), 'Position')+ get(panel_positionControls, 'Position') .* [1 1 0 0];
                 if pointInArea(p1,btPosPlay)
                     revPlay = ii;
                 elseif pointInArea(p1,btPosPlayZoom)
@@ -4305,10 +4495,10 @@ end
             end
             if ~isnan(revPlay)
                 if revPlay > 0
-                    set(btPlayAll(revPlay), 'Value',1);
+                    set(bt_playAll(revPlay), 'Value',1);
                     playCallback(0,0,revPlay,'all',0);
                 else
-                    set(btPlayZoom(-1*revPlay), 'Value',1);
+                    set(bt_playZoom(-1*revPlay), 'Value',1);
                     playCallback(0,0,-1*revPlay,'zoom',0);
                 end
             %Right click on aspect ratio button: set aspect ratio if
@@ -4333,7 +4523,7 @@ end
                     'HorizontalAlignment', 'center', 'Callback', @updateAspRatio);
                 %Right click on XLim button: set plot XLim if
                 %button value is 1
-            elseif pointInArea(p1,btPosPlotsXLim) && get(tbPlotsXLim, 'Value')
+            elseif pointInArea(p1,btPosPlotsXLim) && get(tb_plotsXLim, 'Value')
                 gp = get(gui,'Position');
                 set(tempWin, 'HandleVisibility', 'on');
                 if ~isempty(tempWin) && any(get(0,'Children') == tempWin)
@@ -4357,7 +4547,7 @@ end
                 end
                 %Right click on YLim button: set plot YLim if
                 %button value is 1
-            elseif pointInArea(p1, btPosPlotsYLim) && get(tbPlotsYLim, 'Value')
+            elseif pointInArea(p1, btPosPlotsYLim) && get(tb_plotsYLim, 'Value')
                 gp = get(gui,'Position');
                 set(tempWin, 'HandleVisibility', 'on');
                 if ~isempty(tempWin) && any(get(0,'Children') == tempWin)
@@ -4402,7 +4592,7 @@ end
                     'HorizontalAlignment', 'center');
             else
                 %Right click on main gui: Bring all visible windows to front
-                if get(tbTifPar, 'Value')
+                if get(tb_tifPar, 'Value')
                     figure(tifParFig);
                 end
                 if get(tbHist,'Value') && ~withAlpha
@@ -4437,7 +4627,7 @@ end
                 if get(roiBtRename, 'Value')
                     figure(tempRoiPropWin);
                 end
-                if get(btExport, 'Value')
+                if get(bt_export, 'Value')
                     figure(exportWin);
                 end
             end
@@ -4479,7 +4669,7 @@ end
 % change to all corresponding figures (e.g. all plot figures)
     function resizeWin(varargin)
         if debugMatVis > 1, debugMatVisFcn(1); end
-        if nMat > 1 && get(tbLinkWin, 'Value') && any(myGcf==[zoomWin imageWin plotWin])
+        if nMat > 1 && get(tb_linkWin, 'Value') && any(myGcf==[zoomWin imageWin plotWin])
             switch varargin{3}
                 case 'zoom'
                     figHandles = zoomWin;
@@ -4506,8 +4696,8 @@ end
 % and size
     function linkWins(varargin)
         if debugMatVis > 1, debugMatVisFcn(1); end
-        if get(tbLinkWin, 'Value')
-            set(tbLinkWin, 'CData', icon_linkWins);
+        if get(tb_linkWin, 'Value')
+            set(tb_linkWin, 'CData', icon_linkWins);
             set([imageWin zoomWin plotWin], 'ResizeFcn', '');
             resizeWin(0,0,'image', imageWin(1));
             drawnow
@@ -4519,7 +4709,7 @@ end
             set(zoomWin, 'ResizeFcn', {@resizeWin, 'zoom'});
             set(plotWin, 'ResizeFcn', {@resizeWin, 'plot'});
         else
-            set(tbLinkWin, 'CData', icon_unlinkWins);
+            set(tb_linkWin, 'CData', icon_unlinkWins);
         end
         if debugMatVis > 1, debugMatVisFcn(2); end
     end
@@ -4693,7 +4883,7 @@ end
                 set(zoomWin(ii), 'Name', ['Zoom (',varName{ii},') - Pos: (', num2str(currPos(xySel)),') Val: ',...
                     num2str(currImVal{ii}(currPos(xySel(1)),currPos(xySel(2)),:)), '  Zoom: (', num2str(zoomValXY), ')']);
             end
-            if get(btMean, 'UserData') == 4 && any(currWin == imageWin)
+            if get(bt_mean, 'UserData') == 4 && any(currWin == imageWin)
                 zoomValXY = [currPos(xySel(2))-round(zoomValXY(3)/2) currPos(xySel(1))-round(zoomValXY(4)/2) zoomValXY(3) zoomValXY(4)];
                 updateZoom;
             end
@@ -4811,7 +5001,7 @@ end
             zoomValXY(1:2) = p - zoomValXY(3:4) / 2;
         end
         updateZoom;
-        if get(tbWin(3),'Value') && get(btMean, 'UserData') == 4 % Plot average over zoom area
+        if get(tbWin(3),'Value') && get(bt_mean, 'UserData') == 4 % Plot average over zoom area
             updatePlots;
         end
         if debugMatVis, debugMatVisFcn(2); end
@@ -4847,7 +5037,7 @@ end
                 set(zoomWin(ii), 'Name', ['Zoom (',varName{ii},') - Pos: (', num2str(currPos(xySel)),') Val: ',...
                     num2str(currImVal{ii}(currPos(xySel(1)),currPos(xySel(2)),:)), '  Zoom: (', num2str(zoomValXY), ')']);
             end
-            if get(btMean, 'UserData') == 4 && any(currWin == imageWin)
+            if get(bt_mean, 'UserData') == 4 && any(currWin == imageWin)
                 zoomValXY = [currPos(xySel(2))-round(zoomValXY(3)/2) currPos(xySel(1))-round(zoomValXY(4)/2) zoomValXY(3) zoomValXY(4)];
                 updateZoom;
             end
@@ -4925,7 +5115,7 @@ end
               updateRoiSelection(get(roiListbox, 'Value')); % updateRoiProperties(0);
             end
         end
-        if any(get(bg_colormap, 'SelectedObject') == [cmImage cmZoom cmThresh]) && ~get(tbSwitchRGB, 'Value')
+        if any(get(bg_colormap, 'SelectedObject') == [cmImage cmZoom cmThresh]) && ~get(tb_switchRGB, 'Value')
             updateColormap;
         end
         if movdata.rec
@@ -5023,7 +5213,7 @@ end
         end
         updateImages;
         drawPlots;
-        if any(get(bg_colormap, 'SelectedObject') == [cmImage cmZoom cmThresh]) && ~get(tbSwitchRGB, 'Value')
+        if any(get(bg_colormap, 'SelectedObject') == [cmImage cmZoom cmThresh]) && ~get(tb_switchRGB, 'Value')
             updateColormap;
         end
         if debugMatVis, debugMatVisFcn(2); end
@@ -5148,7 +5338,7 @@ end
                     currAlphaMap{ii} = cA;
                 end
             end
-        elseif get(tbSwitchRGB, 'Value')
+        elseif get(tb_switchRGB, 'Value')
             if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value'))
                 imIndex{rgbDim} = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;  
             else
@@ -5166,7 +5356,7 @@ end
         if projMethod == 0
                 for ii = 1:nMat
                     c = squeeze(data{ii}(imIndex{:}));
-                    if get(tbSwitchRGB, 'Value')
+                    if get(tb_switchRGB, 'Value')
                       [s,ind] = sort([xySel,rgbDim]);
                       currIm{ii} = ipermute(c, ind);
                     else
@@ -5187,7 +5377,7 @@ end
                 end
                 % Find number of dimension of xySel(1), xySel(2) and projDim with
                 % respect to extracted 3D data volume
-                if get(tbSwitchRGB, 'Value') == 0
+                if get(tb_switchRGB, 'Value') == 0
                   xx  = find(xySel(1) == sort([xySel projDim]));
                   yy  = find(xySel(2) == sort([xySel projDim]));
                   p   = find(projDim == sort([xySel projDim]));
@@ -5199,7 +5389,7 @@ end
                 end
                 for ii = 1:nMat
                     % Sort dimension to [xySel(1) xySel(2) projDim]
-                    if get(tbSwitchRGB, 'Value') == 0
+                    if get(tb_switchRGB, 'Value') == 0
                       c = squeeze(permute(squeeze(data{ii}(imIndex{:})),[xx yy p]));
                       if withAlpha
                         cA = squeeze(permute(squeeze(alphaMap{ii}(imIndex{:})),[xx yy p]));
@@ -5215,7 +5405,7 @@ end
                             [currAlphaMap{ii},cAInd] = max(cA, [], 3); %squeeze() % used to be nanmax
                             cAInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cAInd(:)-1);
                             currIm{ii}  = reshape(c(cAInd), sz1(1:2));
-                          elseif get(tbSwitchRGB, 'Value')
+                          elseif get(tb_switchRGB, 'Value')
                             [~,cInd] = max(sum(c,4), [], 3); %squeeze() % used to be nanmax
                             cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
                             c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
@@ -5227,7 +5417,7 @@ end
                           if withAlpha
                             warning(sprintf('MIN PROJECTION not understood in combination with alphaMap\nmin values of datamatrix is shown instead'))
                           end
-                          if get(tbSwitchRGB, 'Value')
+                          if get(tb_switchRGB, 'Value')
                             [~,cInd] = min(sum(c,4), [], 3); %squeeze() % used to be nanmax
                             cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
                             c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
@@ -5249,7 +5439,7 @@ end
                             % standard error of mean:  SEM = sum( (x - <x>)^2.*w, 3) ./ sum(w, 3) ./ sz(3)
                             %currIm{ii}       = sqrt( sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'))./sqrt(sum(~isnan(c),3));
                             currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')  ./sum(cA,3, 'omitnan');           % mean Intensity
-                          elseif get(tbSwitchRGB, 'Value')
+                          elseif get(tb_switchRGB, 'Value')
                             [~,cInd] = std(sum(c,4), [], 3, 'omitnan'); %squeeze() % used to be nanmax
                             cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
                             c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
@@ -5262,7 +5452,7 @@ end
                             currIm{ii}       = sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')...
                               ./sum(cA.*~isnan(c),3, 'omitnan');  % standard error of currIm{ii} -> SEM ././sqrt(sum(~isnan(A_rr),3))
                             currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')  ./sum(cA,3, 'omitnan');          % mean Intensity
-                          elseif get(tbSwitchRGB, 'Value')
+                          elseif get(tb_switchRGB, 'Value')
                             [~,cInd] = var(sum(c,4), [], 3, 'omitnan'); 
                             cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
                             c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
@@ -5310,7 +5500,7 @@ end
                 busy(0);
             end
         %Non-RGB mode
-        if get(tbSwitchRGB, 'Value') == 0
+        if get(tb_switchRGB, 'Value') == 0
             currImVal = currIm; % Remember "original" values
             if withAlpha
                 currAlphaMapVal = currAlphaMap;
@@ -5473,10 +5663,10 @@ end
                     max_currStack_rel = (single(cmMinMax(ii,2))-minVal(ii)) / (maxVal(ii) - minVal(ii)); % contrast maximum scaled to interval [0,1]
                     currIm{ii} = rgbContrastAdjust(single(currIm{ii}),min_currStack_rel, max_currStack_rel);
                 end
-                if get(tbInvert, 'Value')
+                if get(tb_invert, 'Value')
                     currIm{ii} = 1 - currIm{ii};
                 end
-                if get(tbFlip, 'Value') 
+                if get(tb_flip, 'Value') 
                   currIm{ii} = flipdim(currIm{ii},3); 
                 end
                 %                 if (forceUpdateGuiHist || updateGuiHistState)
@@ -5557,7 +5747,7 @@ end
                     end
                     currIm{ii} = rgbContrastAdjust(currIm{ii},min_currStack_rel, max_currStack_rel);
                 end
-                if get(tbInvert, 'Value')
+                if get(tb_invert, 'Value')
                     currIm{ii} = 1 - currIm{ii};
                 end
                 if max(histValCurrIm(:))>1
@@ -5665,7 +5855,7 @@ end
             % Channel RGB-mode requires switching of RGB
             pCol = flipdim(pCol,2);
           end
-          if get(tbFlip, 'Value') % flip colormap
+          if get(tb_flip, 'Value') % flip colormap
             pCol = flipdim(pCol,2);
           end
           for ii = 1:n
@@ -5980,7 +6170,7 @@ end
     function updateObjects(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         if get(tbWin(1), 'Value') || get(tbWin(2), 'Value')
-            meanPlotVal = 2*mod(get(btMean, 'UserData'),5)+1;
+            meanPlotVal = 2*mod(get(bt_mean, 'UserData'),5)+1;
             if customDimScale
                 set(zoomReg, 'Position',zoomPxXY-[pxWidth(xySel([2 1])) 0 0]/2);
                 currLoc = scaledLocation(currPos(xySel([2 1])));
@@ -6049,7 +6239,7 @@ end
             for ii = 1:nPlots
                 plotIndex = imIndex;
                 if ~get(tbRoi, 'Value')
-                    w = get(btMean, 'UserData');  %0: no averaging, 1: 3x3 average, 2: 5x5 average, 3:1x1,3x3,5x5 as red,green and blue plots, 4: across zoom region
+                    w = get(bt_mean, 'UserData');  %0: no averaging, 1: 3x3 average, 2: 5x5 average, 3:1x1,3x3,5x5 as red,green and blue plots, 4: across zoom region
                     % Averaging of area [x+w:x-w, y+w:y-w]
                     if w < 3
                         w(2) = w;  %for x and y
@@ -6069,7 +6259,7 @@ end
                         plotIndex{plotDim(ii)} = ':';
                         % Plot along x direction
                         if plotDim(ii) == xySel(1)
-                            if get(btMean, 'UserData')==5   %RGB plot
+                            if get(bt_mean, 'UserData')==5   %RGB plot
                                 if get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value') % Stretch RGB mode
                                     for ll = 1:dim(rgbDim)
                                         plotIndex{rgbDim} = ll;
@@ -6096,7 +6286,7 @@ end
                             end
                             % Plot along y direction
                         elseif plotDim(ii) == xySel(2)
-                            if get(btMean, 'UserData')==5   %RGB plot
+                            if get(bt_mean, 'UserData')==5   %RGB plot
                                 if get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value')  % Stretch RGB mode
                                     for ll = 1:dim(rgbDim)
                                         plotIndex{rgbDim} = ll;
@@ -6122,8 +6312,8 @@ end
                                 end
                             end
                             % Plot along any other direction
-                        elseif get(btMean, 'UserData')==5 && rgbDim ~= plotDim(ii)  %RGB plot - not possible if plot dimension and RGB dimension are identical
-                            if get(tbSwitchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMean, 'Value'))% Stretch RGB mode
+                        elseif get(bt_mean, 'UserData')==5 && rgbDim ~= plotDim(ii)  %RGB plot - not possible if plot dimension and RGB dimension are identical
+                            if get(tb_switchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMean, 'Value'))% Stretch RGB mode
                                 for ll = 1:dim(rgbDim)
                                     plotIndex{rgbDim} = ll;
                                     plotValues{jj,ii,ll} = data{jj}(plotIndex{:});
@@ -6215,7 +6405,7 @@ end
                     for kk = 1:size(plotValues,3)
                         subPlotHandles(jj,ii) = subplot(nPlotCol, nPlotRow, ii);
                         if ~get(tbRoi, 'Value')
-                            if get(btMean, 'UserData') == 5  %RGB plot mode
+                            if get(bt_mean, 'UserData') == 5  %RGB plot mode
                                 if get(cmStretchRGBMean,'Value') || get(cmStretchRGBMax, 'Value')  %RGB stretch mode
                                     try   %for dimensions with less plots, e.g. rgbDim in RGB plot mode
                                         if customDimScale
@@ -6294,7 +6484,7 @@ end
                         legend('off');
                     end
                     hold off;
-                    if get(tbPlotsXLim, 'Value') == 1 && sum(plotDim(ii) == xySel) > 0
+                    if get(tb_plotsXLim, 'Value') == 1 && sum(plotDim(ii) == xySel) > 0
                         kk = find(xySel == plotDim(ii));
                         set(subPlotHandles(jj,ii), 'XLim', [zoomValXY(kk) zoomValXY(kk)+zoomValXY(kk+2)]);
                     else
@@ -6373,7 +6563,7 @@ end
                         end
                     end
                     %Set XLim
-                    if get(tbPlotsXLim, 'Value')
+                    if get(tb_plotsXLim, 'Value')
                         try
                             if customDimScale
                                 set(subPlotHandles(jj,ii), 'XLim', plotXLimScale(plotDim(ii),:));
@@ -6393,7 +6583,7 @@ end
                         end
                     end
                     %Set YLim
-                    if get(tbPlotsYLim, 'Value')
+                    if get(tb_plotsYLim, 'Value')
                         set(subPlotHandles(jj,ii), 'YLim', plotYLim(jj,:));
                     else
                         minValY = min(min(pV(:,plotXLim(plotDim(ii),1):plotXLim(plotDim(ii),2))));
@@ -6412,14 +6602,14 @@ end
                         end
                     end
                     %                     %Apply zoom intervals to axes if "Zoom axes" is selected
-                    %                     if get(tbPlotsXLim, 'Value') == 1 && sum(plotDim(ii) == xySel) > 0
+                    %                     if get(tb_plotsXLim, 'Value') == 1 && sum(plotDim(ii) == xySel) > 0
                     %                         kk = abs(find(xySel == plotDim(ii))-3);
                     %                         set(subPlotHandles(jj,ii), 'XLim', [zoomValXY(kk) zoomValXY(kk)+zoomValXY(kk+2)]);
                     %                     else
                     %                         %axis(subPlotHandles(jj,ii),'tight');
                     %                     end
                     %                     %Scale plots in y-direction if selected
-                    %                     if get(tbPlotsYLim, 'Value') == 1
+                    %                     if get(tb_plotsYLim, 'Value') == 1
                     %                         try set(subPlotHandles(jj,ii), ...
                     %                                 'YLim',[min([plotValues{jj,ii,:}]) max([plotValues{jj,ii,:}])]); catch    %#ok end
                     %                     else
@@ -6429,7 +6619,7 @@ end
                     clear pV pVA
                 end
                 if ~isempty(subPlotPlots)
-                    if get(tbMarker, 'Value') == 1
+                    if get(tb_marker, 'Value') == 1
                         set([subPlotPlots{:}], 'Marker', 'd', 'MarkerSize', 3);
                         if withAlpha && ~verLessThan('matlab','9.0')
                           set([subPlotPlotsAlpha{:}], 'Marker', 'd', 'MarkerSize', 3);
@@ -6893,10 +7083,10 @@ end
         if any(currGamma ~= 1)
             updateImages;
         end
-        if get(tbInvert, 'Value')
+        if get(tb_invert, 'Value')
             cmap = 1 - cmap;
         end
-        if get(tbFlip, 'Value')
+        if get(tb_flip, 'Value')
             cmap = flipdim(cmap,1);
         end
         if get(tbWin(1), 'Value')
@@ -7187,7 +7377,7 @@ end
                 case 'lockBt'
                     if get(tb_lockPlots2Zoom(dimNum), 'Value')
                         set(tb_lockPlots2Zoom(dimNum), 'CData', lockClosed);
-                        set(tbPlotsXLim, 'Value',1); % "Push" button as selecting the zoom lock will only have an effect with the XLim button pressed
+                        set(tb_plotsXLim, 'Value',1); % "Push" button as selecting the zoom lock will only have an effect with the XLim button pressed
                     else
                         set(tb_lockPlots2Zoom(dimNum), 'CData', lockOpen);
                         plotXLim(dimNum,:) = [1 dim(dimNum)];
@@ -7282,10 +7472,10 @@ end
             %             updateColormap;
             updateObjects; % Adjust length of position lines in zoom window to new zoom setting
         end
-        if get(tbSwitchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value')) && get(tb_lockPlots2Zoom(rgbDim), 'Value')
+        if get(tb_switchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value')) && get(tb_lockPlots2Zoom(rgbDim), 'Value')
             updateImages;
         end
-        if get(tbPlotsXLim, 'Value') && get(tbWin(3),'Value')
+        if get(tb_plotsXLim, 'Value') && get(tbWin(3),'Value')
             updatePlots;
         end
         if strcmp('Zoom', get(get(bg_colormap, 'SelectedObject'),'String'))
@@ -7537,7 +7727,7 @@ end
         if debugMatVis, debugMatVisFcn(1); end
         function hideTifPar(varargin)
             set(tifParFig, 'Visible', 'off');
-            set(tbTifPar, 'Value', 0);
+            set(tb_tifPar, 'Value', 0);
         end
         if isempty(tifParFig)
             tifParFig = figure('name', ['CustomTif Parameter',' (',varName{1},')'], 'Number', 'off',...
@@ -7613,7 +7803,7 @@ end
             % Save button
             uicontrol(tifParFig, 'Position', [0.3*figSize(3) figSize(4)*0.3+7 100 20], 'Style', 'pushbutton', 'Callback', @saveCTif, 'String','Save description');
         end
-        if get(tbTifPar, 'Value')
+        if get(tb_tifPar, 'Value')
             set(tifParFig, 'Visible', 'on');
         else
             set(tifParFig, 'Visible', 'off');
@@ -7889,25 +8079,25 @@ end
         %Gamma
         currConfig.gamma  = currGamma;
         %RGB Mode
-        currConfig.RGB = get(tbSwitchRGB, 'Value');
+        currConfig.RGB = get(tb_switchRGB, 'Value');
         currConfig.rgbCount = rgbCount;
         %Colormap Mode (Global, Local or Manual)
         currConfig.colormapMode = get(get(bg_colormap, 'SelectedObject'), 'String');   %Default: 'Global'
         %Lines Visibility
         currConfig.lineVis = get(tbShowObjects, 'Value');               %Default: 1
         %Menu Bar
-        currConfig.menuBarVis = get(tbMenuBars, 'Value');            %Default: 0
+        currConfig.menuBarVis = get(tb_menuBars, 'Value');            %Default: 0
         % Plot Options
         %Plot Dimensions
         currConfig.plotDim = plotDim;           %Default: [1 2]
         %Plot Zoom
-        currConfig.plotZoom = get(tbPlotsXLim, 'Value');              %Default: 0
+        currConfig.plotZoom = get(tb_plotsXLim, 'Value');              %Default: 0
         %Scale Plot
-        currConfig.plotScale = get(tbPlotsYLim, 'Value');       %Default: 0
+        currConfig.plotScale = get(tb_plotsYLim, 'Value');       %Default: 0
         %Marker
-        currConfig.marker = get(tbMarker, 'Value');                %Default: 0
+        currConfig.marker = get(tb_marker, 'Value');                %Default: 0
         %Average
-        currConfig.plotMean = get(btMean, 'UserData');              %Default: 0 (no averaging)
+        currConfig.plotMean = get(bt_mean, 'UserData');              %Default: 0 (no averaging)
         % Tooltips
         currConfig.tooltips = get(tbTooltips, 'Value');   %Default: 1 (display tooltips)
         % Histogram update during playback
@@ -7915,7 +8105,7 @@ end
         % Histogram update during change of position indicators
         currConfig.moveHist = get(tb_moveHist, 'Value');  % Default: 0 (don't update)
         % Link figure size / position
-        currConfig.linkFigSize = get(tbLinkWin, 'Value'); % Default: 1 (link figures)
+        currConfig.linkFigSize = get(tb_linkWin, 'Value'); % Default: 1 (link figures)
         % Link contrast settings between different data sets
         currConfig.linkContrastSettings = linkContrastSettings; % Default: 1 (link contrast)
         % Jump to ROI selection position
@@ -7936,7 +8126,7 @@ end
         set(tbWin(3), 'Value', config.winVis.plotWin);       %Default: 1
         %Window Position
         %Menu Bar
-        set(tbMenuBars, 'Value', config.menuBarVis);            %Default: 0
+        set(tb_menuBars, 'Value', config.menuBarVis);            %Default: 0
         toggleMenuBars;
         % Checks if customCinfig.winPos fits to monSize
         if monSizeMin(1) <= min([config.winPos.imageWin(:,1); config.winPos.zoomWin(:,1); config.winPos.plotWin(:,1)]) && ...
@@ -8005,7 +8195,7 @@ end
         %RGB Mode
         if config.RGB && ~withAlpha && nDim>2
             set(cmImage, 'String', 'Channel');
-            set(tbSwitchRGB, 'Value', 1);
+            set(tb_switchRGB, 'Value', 1);
             if oldMATLAB
               set(bg_colormap, 'SelectedObject',...
                 strcmp(get(get(bg_colormap,'Children'),'String'),config.colormapMode)'*get(bg_colormap,'Children'));   %Default: 'Global'
@@ -8031,25 +8221,25 @@ end
         %Plot Dimensions
         plotDim = config.plotDim;           %Default: [1 2]
         %Plot Zoom
-        set(tbPlotsXLim, 'Value', config.plotZoom);              %Default: 0
+        set(tb_plotsXLim, 'Value', config.plotZoom);              %Default: 0
         %Scale Plot
-        set(tbPlotsYLim, 'Value', config.plotScale);       %Default: 0
+        set(tb_plotsYLim, 'Value', config.plotScale);       %Default: 0
         %Marker
-        set(tbMarker, 'Value', config.marker);                %Default: 0
+        set(tb_marker, 'Value', config.marker);                %Default: 0
         %Average
-        set(btMean, 'UserData', config.plotMean) ;              %Default: 0 (no averaging)
+        set(bt_mean, 'UserData', config.plotMean) ;              %Default: 0 (no averaging)
         set(tbTooltips, 'Value', config.tooltips);         %Default: 1 (display tooltips)
         % Update of histogram
         set(tb_playHist, 'Value',config.playHist);
         set(tb_moveHist, 'Value',config.moveHist);
         % Lin figure size / position
-        set(tbLinkWin, 'Value', config.linkFigSize);
+        set(tb_linkWin, 'Value', config.linkFigSize);
         % Link contrast settings between different data sets
         linkContrastSettings = config.linkContrastSettings; % Default: 1 (link contrast)
         %         toggleMoveHist
         %Update
-        set(cbPlots, 'Value', 0);
-        set(cbPlots(plotDim), 'Value', 1);
+        set(cb_plots, 'Value', 0);
+        set(cb_plots(plotDim), 'Value', 1);
         windowVisibility;
         updateImages;
         updateColormap;
@@ -8175,7 +8365,7 @@ end
         clear d dA;
         delete(exportWin);
         exportWin = [];
-        set(btExport, 'Value', 0);
+        set(bt_export, 'Value', 0);
         if debugMatVis, debugMatVisFcn(2); end
       end
       function newMatVis(varargin)
@@ -8246,7 +8436,7 @@ end
         matVis(inputArg{:});
         delete(exportWin);
         exportWin = [];
-        set(btExport, 'Value', 0);
+        set(bt_export, 'Value', 0);
         if debugMatVis, debugMatVisFcn(2); end
       end
    end
@@ -8293,8 +8483,8 @@ end
         if nargin == 3 || ~get(tbProfile,'Value')
             set(profileWin, 'Visible','off');
             set(profileTraceWin, 'Visible','off');
-            set(btMean, 'Enable','on');
-            set(cbPlots(xySel),'Enable', 'on');
+            set(bt_mean, 'Enable','on');
+            set(cb_plots(xySel),'Enable', 'on');
             set(tbProfile,'Value',0)
             if nProfiles >0
                 set([profileLine.im(:)', profileLine.zoom(:)', profileText.im(:)', profileText.zoom(:)'],  'Visible', 'off');
@@ -8310,14 +8500,14 @@ end
         end
         %Make profile Gui and all related objects visible
         set(profileWin, 'Visible','on');
-        set(btMean, 'Enable','off');
+        set(bt_mean, 'Enable','off');
         if nProfiles > 0 && get(tb_profileShowNames, 'Value')
             set([profileLine.im(:)', profileLine.zoom(:)', profileText.im(:)', profileText.zoom(:)'], 'Visible', 'on');
             showProfileDirection;
         elseif nProfiles > 0
             set([profileLine.im(:)', profileLine.zoom(:)', profileDirection.im(:)', profileDirection.zoom(:)', profileText.im(:)', profileText.zoom(:)'], 'Visible', 'off');
         end
-        set(cbPlots(xySel),  'Value', 0 ,'Enable', 'off'); %necessary when call from WindowCloseRequestFcn
+        set(cb_plots(xySel),  'Value', 0 ,'Enable', 'off'); %necessary when call from WindowCloseRequestFcn
         plotSel(xySel) = 0;
         drawPlots;
         %   drawProfiles;
@@ -8430,14 +8620,14 @@ end
               edt_lineWidt = uicontrol(profileWin, 'Style', 'Edit','Position', [85,28,20,16],...
                 'String', sprintf('%.1f',profileStruct.show.width*diff(dimScale(xySel(1),:),1,2)/(dim(xySel(1))'-1)),...
                 'Callback', @changeProfileWidth,'Enable','off',...
-                'Tooltip',ttt,'Tag',ttt);
+                'Tooltip',ttt1,'Tag',ttt);
               uicontrol(profileWin, 'Style', 'Text','Position', [105,28,20,16],'String', 'um');
             else
               ttt = sprintf('Line width in pixels');
               edt_lineWidt = uicontrol(profileWin, 'Style', 'Edit','Position', [85,28,20,16],...
                 'String', sprintf('%d',profileStruct.show.width),...
                 'Callback', @changeProfileWidth,'Enable','off',...
-                'Tooltip',ttt,'Tag',ttt);
+                'Tooltip',ttt1,'Tag',ttt);
               uicontrol(profileWin, 'Style', 'Text','Position', [105,28,20,16],'String', 'px');
             end
               
@@ -9220,8 +9410,8 @@ end
         %% Make Roi Gui and all related objects invisible
         if nargin == 3 || ~get(tbRoi,'Value')
             set(roiWin, 'Visible','off');
-            set(btMean, 'Enable','on');
-            set(cbPlots(xySel),'Enable', 'on');
+            set(bt_mean, 'Enable','on');
+            set(cb_plots(xySel),'Enable', 'on');
             set(tbRoi,'Value',0)
             if nRois >0
                 set([roiLine.im, roiLine.zoom, roiText.im, roiText.zoom, roiCenterIndicator'],  'Visible', 'off');
@@ -9239,7 +9429,7 @@ end
         end
         %% Make Roi Gui and all related objects visible
         set(roiWin, 'Visible','on');
-        set(btMean, 'Enable','off');
+        set(bt_mean, 'Enable','off');
         if get(roiBtRename, 'UserData')
           set(tempRoiPropWin, 'Visible','on');
         end
@@ -9248,7 +9438,7 @@ end
         elseif nRois > 0
             set([roiLine.im, roiLine.zoom, roiText.im, roiText.zoom, roiCenterIndicator'], 'Visible', 'off');
         end
-        set(cbPlots(xySel),  'Value', 0 ,'Enable', 'off'); %necessary when call from WindowCloseRequestFcn
+        set(cb_plots(xySel),  'Value', 0 ,'Enable', 'off'); %necessary when call from WindowCloseRequestFcn
         plotSel(xySel) = 0;
         drawPlots;
         drawRois;
@@ -9850,14 +10040,14 @@ end
             plotIndex{xySel(1)} = roiList(numberRoi).index.x;                       %Fill xySel dimension indices with roi indices
             plotIndex{xySel(2)} = roiList(numberRoi).index.y;
             plotIndex{projDim} = ones(size(roiList(numberRoi).index.x,1),1);        %Fill plot-dimension with ones (for first point)
-            if get(tbSwitchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value'))
+            if get(tb_switchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value'))
               plotIndex{rgbDim} = ones(size(roiList(numberRoi).index.x,1),1);        %Fill plot-dimension with ones (for first point)
             end
             plotIndex = sub2ind(dim, plotIndex{:});                         %Determine linear index of roi pixels for first point
             plotIndex = repmat(plotIndex, [1 dim(projDim)]);                %Replicate linear index
             deltaIndex = prod(dim(1:projDim-1));                             %Difference value of indices along plotted dimension
             plotIndex = plotIndex + repmat(deltaIndex * (0:dim(projDim)-1),[size(roiList(numberRoi).index.x,1) 1]);   %Extend to all other points by adding deltaInd for each step
-            if get(tbSwitchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value'))
+            if get(tb_switchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value'))
               plotIndex = repmat(plotIndex(:), [1 dim(rgbDim)]);                %Replicate linear index
               deltaIndex = prod(dim(1:rgbDim-1));                             %Difference value of indices along plotted dimension
               plotIndex = plotIndex + repmat(deltaIndex * (0:dim(rgbDim)-1),[size(roiList(numberRoi).index.x,1)*dim(projDim) 1]);   %Extend to all other points by adding deltaInd for each step
@@ -11028,7 +11218,7 @@ end
     end
     function closeExportWin(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        set(btExport,'Value',0);
+        set(bt_export,'Value',0);
         delete(exportWin);
         exportWin = [];
         if debugMatVis, debugMatVisFcn(2); end
@@ -11050,7 +11240,8 @@ end
         % if ~flag
         %     set([bt_matVisGuide bt_updateMatVis], 'Enable','off');
         % end
-        [newMatVis flag] = urlread('http://www.colors-and-contrasts.com/Documents/matVis.m');
+        %[newMatVis, flag] = urlread('http://www.colors-and-contrasts.com/Documents/matVis.m');
+        [newMatVis, flag] = urlread('https://raw.githubusercontent.com/sjunek/matVis/master/matVis.m');
         if ~flag
             delete(m);
             msgbox('Internet connection or webhost not available. Connect to the internet or try later.');
@@ -11067,9 +11258,9 @@ end
                 switch a
                     case questString{1}
                         movefile(currMatVis, [mvDir filesep 'matVis_v' num2str(floor(versionNumber)) '-' num2str(1000*(versionNumber-floor(versionNumber)),'%03.0f') '.m'],'f');
-                        urlwrite('http://www.colors-and-contrasts.com/Documents/matVis.m',[mvDir filesep 'matVis.m']);
+                        urlwrite('https://raw.githubusercontent.com/sjunek/matVis/master/matVis.m',[mvDir filesep 'matVis.m']);
                     case questString{2}
-                        urlwrite('http://www.colors-and-contrasts.com/Documents/matVis.m',[mvDir filesep 'matVis.m']);
+                        urlwrite('https://raw.githubusercontent.com/sjunek/matVis/master/matVis.m',[mvDir filesep 'matVis.m']);
                     case questString{3}
                       if debugMatVis, debugMatVisFcn(2); end
                       return;
@@ -11085,12 +11276,12 @@ end
                 %             end
                 a = questdlg('View log file?' , 'Log file','Yes','No','Yes');
                 if strcmp(a,'Yes')
-                    system('start http://www.colors-and-contrasts.com/Documents/matVis_logFile.pdf')
+                    system('start https://github.com/sjunek/matVis/commits/master')
                 end
             else
                 a = questdlg(['Your matVis is up to date. Current version: ' num2str(versionNumber,'%6.3f')],'','View log-file','Close','Close');
                 if strcmp(a,'View log-file')
-                    system('start http://www.colors-and-contrasts.com/Documents/matVis_logFile.pdf')
+                    system('start https://github.com/sjunek/matVis/commits/master')
                 end
             end
         end
@@ -11284,10 +11475,10 @@ end
     function vidGenerator(varargin)
       if debugMatVis, debugMatVisFcn(1); end
       if ~get(tbRecord, 'Value')
-        set(tbPlotsYLim, 'Value',0);
+        set(tb_plotsYLim, 'Value',0);
         vidGeneratorShowHide(0,0,'hide');
-        set(tbLinkWin, 'Enable','on');
-        if get(tbLinkWin, 'Value')
+        set(tb_linkWin, 'Enable','on');
+        if get(tb_linkWin, 'Value')
           set(imageWin, 'ResizeFcn', {@resizeWin, 'image'});
           set(zoomWin, 'ResizeFcn', {@resizeWin, 'zoom'});
           set(plotWin, 'ResizeFcn', {@resizeWin, 'plot'});
@@ -11298,13 +11489,13 @@ end
         pos0=[gp(1)+gp(3)+20 gp(2)]; % Position of vidGenerator windows x0 y0
         res = 3; % internal parameter print resolution for 'hardcopy'
         set([imageWin, zoomWin, plotWin], 'ResizeFcn','');
-        set(tbLinkWin, 'Enable','off');
-        set(tbPlotsYLim, 'Value',1);
+        set(tb_linkWin, 'Enable','off');
+        set(tb_plotsYLim, 'Value',1);
         vidGeneratorInitialize;
       else
         set([imageWin, zoomWin, plotWin], 'ResizeFcn','');
-        set(tbLinkWin, 'Enable','off');
-        set(tbPlotsYLim, 'Value',1);
+        set(tb_linkWin, 'Enable','off');
+        set(tb_plotsYLim, 'Value',1);
         vidGeneratorShowHide(0,0,'show');
       end
 
@@ -12047,13 +12238,13 @@ end
         if movdata.rec
           vidWriter('initiate');
           set(movdata.gui.hvidgen1,'CData',icon_Stop);
-          set(btPlayAll , 'CData',0.9*icon_RecordAll);
-          set(btPlayZoom, 'CData',0.9*icon_RecordZoom);
+          set(bt_playAll , 'CData',0.9*icon_RecordAll);
+          set(bt_playZoom, 'CData',0.9*icon_RecordZoom);
         else
           vidWriter('terminate');
           set(movdata.gui.hvidgen1,'CData',icon_Record);
-          set(btPlayAll , 'CData',arrowAll);
-          set(btPlayZoom , 'CData',arrowZoom);
+          set(bt_playAll , 'CData',arrowAll);
+          set(bt_playZoom , 'CData',arrowZoom);
         end
         if debugMatVis, debugMatVisFcn(2); end
       end
