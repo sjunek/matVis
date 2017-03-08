@@ -555,6 +555,9 @@ else
             case 'startPar'
                 startPar = val;
             case 'dimScale'
+                if ~all(size(val) == [ndims(varargin{1}) 2])
+                    error(sprintf('Dimension of ''dimScale'' mut fit matrix dimension!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
+                end
                 dimScale = val;
                 customDimScale = 1;
                 pxWidth = diff(dimScale,1,2)'./(size(data{1})-1);
@@ -571,19 +574,25 @@ fctCount = [];                           %Function Counter for debug mode
 if debugMatVis, debugMatVisFcn(1); end
 
 %Check for 1D data or singular dimensions
-if size(size(data{1}),2) == 2 && (size(data{1},1)==1 || size(data{1},2)==1)
+dim = size(data{1});                     %Dimensions of data set
+nDim = length(dim);                      %Number of dimensions
+if length(data{1})==numel(data{1})
     disp('Error: matVis not suitable for (1D) vectors. Ever heard of the function ''plot''?');
     figure; plot(data{1});
     return
-elseif  sum(size(data{1}) == 1) > 0
-    dimNames(size(data{1}) == 1) = [];
+elseif  any(dim == 1)
+    indC = false(1,nDim);
+    indC(size(data{1}) == 1) = 1;
+    dimNames(indC) = [];
+    if withDimUnits,  dimUnits(indC) = []; end
+    if customDimScale, dimScale(indC,:) = []; pxWidth(indC) = []; end
     for i=1:nMat
         data{i} = squeeze(data{i});  %#ok
     end
 end
 %% Set initial values
 dim = size(data{1});                     %Dimensions of data set
-nDim = size(dim,2);                      %Number of dimensions
+nDim = length(dim);                      %Number of dimensions
 if customDimScale
     pxWidth(pxWidth==0) = 1;  % Avoid error messages
 end
@@ -8302,11 +8311,11 @@ end
         ind = []; indC = false(1,nDim);
         for iii = 1:nDim
           ind{iii} = eval(get(exportTxt(iii), 'String'));    %#ok
-          indC(iii) = length(ind{iii})==1;
         end
+        indC(iii) = length(ind{iii})==1;
         assignin('base', strrep(sprintf('%s_index',get(exportName, 'String')),' ','_'), ind);
         expProp = [];lEA = 1;
-        if exist('dimScale','var') && ~isempty(dimScale)
+        if customDimScale
           expProp{lEA} = 'dimScale';
           for iii=1:length(ind)
             expProp{lEA+1}(iii,:) = dimScale(iii,1) + diff(dimScale(iii,:))/(dim(iii)-1)*(ind{iii}([1 end])-1);
@@ -8314,23 +8323,23 @@ end
           expProp{lEA+1}(indC,:) = [];
           lEA = lEA+2;
         end
-        if exist('dimNames','var') && ~isempty(dimNames)
+        %if exist('dimNames','var') && ~isempty(dimNames)
           expProp{lEA} = 'dimNames';
           expProp{lEA+1} = dimNames;
           expProp{lEA+1}(indC) = [];
           lEA = lEA+2;
-        end
-        if exist('dimUnits','var') && ~isempty(dimUnits)
+        %end
+        if withDimUnits
           expProp{lEA} = 'dimUnits';
           expProp{lEA+1} = dimUnits;
           expProp{lEA+1}(indC) = [];
           lEA = lEA+2;
         end
-        if exist('allNames','var') && ~isempty(allNames)
+        %if exist('allNames','var') && ~isempty(allNames)
           expProp{lEA} = 'matNames';
           expProp{lEA+1} = {allNames};
           lEA = lEA+2;
-        end
+        %end
         assignin('base', strrep(sprintf('%s_props',get(exportName, 'String')),' ','_'), expProp);
         if nMat == 1
           d = data{1}(ind{:});
@@ -8373,8 +8382,8 @@ end
         ind = []; indC = false(1,nDim);
         for iii = 1:nDim
           ind{iii} = eval(get(exportTxt(iii), 'String'));    %#ok
-          indC(iii) = length(ind{iii})==1;
         end
+        indC(iii) = length(ind{iii})==1;
         for iii = 1:numel(data)
           inputArg{iii} = data{iii}(ind{:});
         end
@@ -8382,7 +8391,7 @@ end
           inputArg{end+1} = 'alphaMap';
           inputArg{end+1} = alphaMap{1}(ind{:});
         end
-        if exist('dimScale','var') && ~isempty(dimScale)
+        if customDimScale
           inputArg{end+1} = 'dimScale';
           lIA = length(inputArg)+1;
           for iii=1:length(ind)
@@ -8390,20 +8399,20 @@ end
           end
           inputArg{lIA}(indC,:) = [];
         end
-        if exist('dimNames','var') && ~isempty(dimNames)
+        %if exist('dimNames','var') && ~isempty(dimNames)
           inputArg{end+1} = 'dimNames';
           inputArg{end+1} = dimNames;
           inputArg{end}(indC) = [];
-        end
-        if exist('dimUnits','var') && ~isempty(dimUnits)
+        %end
+        if withDimUnits
           inputArg{end+1} = 'dimUnits';
           inputArg{end+1} = dimUnits;
           inputArg{end}(indC) = [];
         end
-        if exist('allNames','var') && ~isempty(allNames)
+        %if exist('allNames','var') && ~isempty(allNames)
           inputArg{end+1} = 'matNames';
           inputArg{end+1} = {allNames};
-        end
+        %end
         %         for iii = 1:numberOptionalArgs
         %           switch  optionalArgIdentifier{iii}
         %             case 'alphaMap'
