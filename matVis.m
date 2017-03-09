@@ -9459,6 +9459,9 @@ end
             set(roiWin,'Units', 'Pixel', 'Name', 'ROI Manager',...
                 'MenuBar', 'none', 'NumberTitle', 'off','CloseRequestFcn', {@roiGui,0}, 'HandleVisibility', 'off',...
                 'WindowStyle','normal', 'Position', [gp(1) gp(2)-362 320 330]);
+            if ismac
+                set(roiWin, 'Resize','off');
+            end
             warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
             roi_jf = get(roiWin,'JavaFrame');
             roi_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_roi))));
