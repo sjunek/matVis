@@ -2840,20 +2840,20 @@ bt_mean = uicontrol('Parent',panel_positionControls, 'Style', 'Pushbutton', 'Uni
 ttt = sprintf('Export subset of data either as a new variable in the workspace or into a new matVis.');
 if debugMatVis, ttt1 = sprintf('Handle: ''bt_export''\nCallback: ''exportData'''); else,  ttt1 = ttt; end
 bt_export = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'CData', exportBt,  ...
-    'Position', [200 10 24 24], 'Callback', @exportData,  'Value', 0,'Tooltip',ttt1,'Tag',ttt);  %[115 85 24 24]
+    'Position', [160 10 24 24], 'Callback', @exportData,  'Value', 0,'Tooltip',ttt1,'Tag',ttt);  %[115 85 24 24]
 
 %Toggle button for display of menu bars in all windows (excpett gui)
 ttt = sprintf('Toggle display of menu bars in Image/Zoom/Plot windows'); 
 if debugMatVis, ttt1 = sprintf('Handle: ''tb_menuBars''\nCallback: ''toggleMenuBars'''); else,  ttt1 = ttt; end
 tb_menuBars = uicontrol('Parent', panel_positionControls, 'Style', 'Togglebutton', 'Value', customConfig.menuBarVis, ...
-    'Units', 'Pixel', 'Position', [230 10 24 24], 'CData', menuBarIcon, 'Callback', @toggleMenuBars, ...
+    'Units', 'Pixel', 'Position', [190 10 24 24], 'CData', menuBarIcon, 'Callback', @toggleMenuBars, ...
     'Tooltip',ttt1,'Tag',ttt);
 
 %Button to link/unlink window position/size
 ttt = sprintf('Link window positions and sizes'); 
 if debugMatVis, ttt1 = sprintf('Handle: ''tb_linkWin''\nCallback: ''linkWins'''); else,  ttt1 = ttt; end
 tb_linkWin = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'CData', icon_linkWins,  ...
-    'Position', [260 10 24 24], 'Callback', @linkWins,  'Value', 1, 'Tooltip',ttt1,'Tag',ttt); %[145 85 24 24]
+    'Position', [220 10 24 24], 'Callback', @linkWins,  'Value', 1, 'Tooltip',ttt1,'Tag',ttt); %[145 85 24 24]
 if numel(data) == 1
     set(tb_linkWin, 'Visible','off', 'Value', 0);
 end
@@ -2862,7 +2862,7 @@ end
 ttt = sprintf('Display parameters of custom tif files used in the Schild lab (University of Göttingen).'); 
 if debugMatVis, ttt1 = sprintf('Handle: ''tb_tifPar''\nCallback: ''linkWins''');else,  ttt1 = ttt; end
 tb_tifPar = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'CData', tifParBt,  ...
-    'Position', [290 10 24 24], 'Callback', @showTifPar,  'Value', 0, 'Tooltip',ttt1,'Tag',ttt); %[145 85 24 24]
+    'Position', [250 10 24 24], 'Callback', @showTifPar,  'Value', 0, 'Tooltip',ttt1,'Tag',ttt); %[145 85 24 24]
 if ~isCustomTif
     set(tb_tifPar, 'Visible', 'off');
 end
@@ -4261,12 +4261,12 @@ end
                 for ii = 1:nMat
                     if customDimScale
                         if withDimUnits
-                            set(zoomWin(ii), 'Name', ['Image (',varName{ii},') - Value: ',num2str(currImVal{ii}(p(1),p(2),:)) '  /  Position: (' num2str(round(pLoc(2)/pxWidth(xySel(1)))*pxWidth(xySel(1))) ' ' dimUnits{xySel(1)} ', ' num2str(round(pLoc(1)/pxWidth(xySel(2)))*pxWidth(xySel(2))) ' ' dimUnits{xySel(2)} ')  /  Pixelpos.: (', num2str(p(1)) ', ' num2str(p(2)),')']);
+                            set(zoomWin(ii), 'Name', ['Zoom (',varName{ii},') - Value: ',num2str(currImVal{ii}(p(1),p(2),:)) '  /  Position: (' num2str(round(pLoc(2)/pxWidth(xySel(1)))*pxWidth(xySel(1))) ' ' dimUnits{xySel(1)} ', ' num2str(round(pLoc(1)/pxWidth(xySel(2)))*pxWidth(xySel(2))) ' ' dimUnits{xySel(2)} ')  /  Pixelpos.: (', num2str(p(1)) ', ' num2str(p(2)),')']);
                         else
-                            set(zoomWin(ii), 'Name', ['Image (',varName{ii},') - Value: ',num2str(currImVal{ii}(p(1),p(2),:)) '  /  Position: (' num2str(pLoc(2)) ', ' num2str(pLoc(1))  ')  /  Pixelpos.: (', num2str(p(1)) ', ' num2str(p(2)),')']);
+                            set(zoomWin(ii), 'Name', ['Zoom (',varName{ii},') - Value: ',num2str(currImVal{ii}(p(1),p(2),:)) '  /  Position: (' num2str(pLoc(2)) ', ' num2str(pLoc(1))  ')  /  Pixelpos.: (', num2str(p(1)) ', ' num2str(p(2)),')']);
                         end
                     else
-                        set(zoomWin(ii), 'Name', ['Image (',varName{ii},') - Value: ',...
+                        set(zoomWin(ii), 'Name', ['Zoom (',varName{ii},') - Value: ',...
                             num2str(currImVal{ii}(p(1),p(2),:)) ' / Position: (', num2str(p(1)) ', ' num2str(p(2)),')']);
                     end
                 end
