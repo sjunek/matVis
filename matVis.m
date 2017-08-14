@@ -8621,7 +8621,7 @@ end
                 %Export profile Data Button
                 bt_exportProfileData = uicontrol(profileWin, 'Style', 'Pushbutton','Position', [88,50,32,22],...
                     'CData', roiExportDataBt,'Callback', @exportProfileData,'Enable','on','ToolTipString', ' Export profile data along specified dimension ',...
-                    'Tag', 'Export profile data along specified dimension into the workspace.', 'Enable', 'off');
+                    'Tag', 'Export profile data along specified dimension into the workspace.', 'Enable', 'on');
             end
             profileStruct.show.width = 5;
             if customDimScale
@@ -9240,6 +9240,81 @@ end
             set([tb_editProfile tb_profileDirection tb_profileShowNames bt_deleteProfile bt_profileExport edt_lineWidt bt_exportProfileData],'Enable','on');
             updateProfileSelection;
             if debugMatVis, debugMatVisFcn(2); end
+        end
+        function exportProfileData(varargin)
+            % Extract profile data along one user-defined dimension
+            % and send it to the workspace. The output will be 3D or 4D: width
+            % and length of the line profile (like shown in the image axis
+            % of the profile window), color channel for RGB display
+            % (optional) and the selected dimension. If an alpha map is
+            % presented this will generate a second variable with the same
+            % dimensions.
+            
+            % Find user-selected dimension
+            exportDimNames = get(profilePopDataExport, 'String');
+            exportDimIdx = get(profilePopDataExport, 'Val');
+            exportDim = strcmp(exportDimNames{exportDimIdx}, dimNames);
+            profileStruct.trace.mat = profileList(currProfile).mat;
+            % Pre-allocate matrix
+            dataExportProfile = zeros([size(profileStruct.trace.mat,1) size(profileStruct.trace.mat,2) profileStruct.show.chsz dim(exportDim)]);
+            if withAlpha
+                dataExportProfileAlpha = dataExportProfile;
+            end 
+            % Loop through dimension and extract values
+            for eIdx = 1:dim(exportDim)
+                % Create index for current image
+                for ii = 1:nDim
+                    imIndexProfExp{ii} = currPos(ii);  %#ok
+                end
+                imIndexProfExp{xySel(1)} = ':';
+                imIndexProfExp{xySel(2)} = ':';
+                imIndexProfExp{exportDim} = eIdx;
+                if withAlpha
+                    for ii = 1:1 % nMat
+                        cA = squeeze(alphaMap{ii}(imIndexProfExp{:}));
+                        if xySel(1) > xySel(2)
+                            currAlphaMapProfExp{ii} = cA';
+                        else
+                            currAlphaMapProfExp{ii} = cA;
+                        end
+                    end
+                elseif get(tb_switchRGB, 'Value')
+                    if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value'))
+                        imIndexProfExp{rgbDim} = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;
+                    else
+                        if get(tb_lockPlots2Zoom(rgbDim), 'Value')
+                            imIndexProfExp{rgbDim} = zoomVal(rgbDim,1):sum(zoomVal(rgbDim,:))-1;
+                        else
+                            imIndexProfExp{rgbDim} = ':';
+                        end
+                    end
+                end
+                for ii = 1:1 % nMat
+                    c = squeeze(data{ii}(imIndexProfExp{:}));
+                    if get(tb_switchRGB, 'Value')
+                        [s,ind] = sort([xySel,rgbDim]);
+                        currImProfExp{ii} = ipermute(c, ind);
+                    else
+                        if xySel(1) > xySel(2)
+                            currImProfExp{ii} = permute(c,[2 1 3]);
+                        else
+                            currImProfExp{ii} = c;
+                        end
+                    end
+                end
+                for nt=1:profileStruct.show.chsz
+                    dataExportProfile(:,:,nt, eIdx) = interp2(double(currImProfExp{1}(:,:,nt)),profileStruct.trace.mat(:,:,1),profileStruct.trace.mat(:,:,2));
+                    if withAlpha
+                        dataExportProfileAlpha(:,:,nt, eIdx) = interp2(double(currAlphaMapProfExp{1}(:,:,nt)),profileStruct.trace.mat(:,:,1),profileStruct.trace.mat(:,:,2));
+                    end
+                end
+            end
+            dataExportProfile = squeeze(dataExportProfile);
+            assignin('base','matVisProfileExportData',dataExportProfile);
+            if withAlpha
+                dataExportProfileAlpha = squeeze(dataExportProfileAlpha);
+                assignin('base','matVisProfileExportAlpha',dataExportProfileAlpha);
+            end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
