@@ -8668,7 +8668,7 @@ end
             profileStruct.gui.tracewidth = 1; % has to be implemented as edit field
             
             profileStruct.imgsz = size(currIm{1});
-            profileStruct.show.chsz = 1;
+            profileStruct.show.chsz = 1; % not used, = 1; do not remember, maybe 'channel size'?
             profileStruct.show.scale = 'abs';
             profileStruct.show.colors = [1 0 0]; % see SPECTRUM functions
             profileStruct.instance = 1; % not clear what this is used for
@@ -9242,6 +9242,7 @@ end
             if debugMatVis, debugMatVisFcn(2); end
         end
         function exportProfileData(varargin)
+            if debugMatVis, debugMatVisFcn(1); end
             % Extract profile data along one user-defined dimension
             % and send it to the workspace. The output will be 3D or 4D: width
             % and length of the line profile (like shown in the image axis
@@ -9249,25 +9250,39 @@ end
             % (optional) and the selected dimension. If an alpha map is
             % presented this will generate a second variable with the same
             % dimensions.
-            
             % Find user-selected dimension
             exportDimNames = get(profilePopDataExport, 'String');
             exportDimIdx = get(profilePopDataExport, 'Val');
             exportDim = strcmp(exportDimNames{exportDimIdx}, dimNames);
             profileStruct.trace.mat = profileList(currProfile).mat;
+            profileMat = profileStruct.trace.mat;
+            % Create index for current image
+            for ii = 1:nDim
+                imIndexProfExp{ii} = currPos(ii);  %#ok
+            end
+            imIndexProfExp{xySel(1)} = ':';
+            imIndexProfExp{xySel(2)} = ':';
+            if get(tb_switchRGB, 'Value')
+                if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value'))
+                    imIndexProfExp{rgbDim} = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;
+                else
+                    if get(tb_lockPlots2Zoom(rgbDim), 'Value')
+                        imIndexProfExp{rgbDim} = zoomVal(rgbDim,1):sum(zoomVal(rgbDim,:))-1;
+                    else
+                        imIndexProfExp{rgbDim} = 1:dim(rgbDim);
+                    end
+                end
+                szrgbDim = length(imIndexProfExp{rgbDim});
+            else
+                szrgbDim = 1;
+            end
             % Pre-allocate matrix
-            dataExportProfile = zeros([size(profileStruct.trace.mat,1) size(profileStruct.trace.mat,2) profileStruct.show.chsz dim(exportDim)]);
+            dataExportProfile = zeros([size(profileMat,1) size(profileMat,2) szrgbDim dim(exportDim)]);
             if withAlpha
                 dataExportProfileAlpha = dataExportProfile;
-            end 
+            end
             % Loop through dimension and extract values
             for eIdx = 1:dim(exportDim)
-                % Create index for current image
-                for ii = 1:nDim
-                    imIndexProfExp{ii} = currPos(ii);  %#ok
-                end
-                imIndexProfExp{xySel(1)} = ':';
-                imIndexProfExp{xySel(2)} = ':';
                 imIndexProfExp{exportDim} = eIdx;
                 if withAlpha
                     for ii = 1:1 % nMat
@@ -9276,16 +9291,6 @@ end
                             currAlphaMapProfExp{ii} = cA';
                         else
                             currAlphaMapProfExp{ii} = cA;
-                        end
-                    end
-                elseif get(tb_switchRGB, 'Value')
-                    if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value'))
-                        imIndexProfExp{rgbDim} = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;
-                    else
-                        if get(tb_lockPlots2Zoom(rgbDim), 'Value')
-                            imIndexProfExp{rgbDim} = zoomVal(rgbDim,1):sum(zoomVal(rgbDim,:))-1;
-                        else
-                            imIndexProfExp{rgbDim} = ':';
                         end
                     end
                 end
@@ -9302,10 +9307,10 @@ end
                         end
                     end
                 end
-                for nt=1:profileStruct.show.chsz
-                    dataExportProfile(:,:,nt, eIdx) = interp2(double(currImProfExp{1}(:,:,nt)),profileStruct.trace.mat(:,:,1),profileStruct.trace.mat(:,:,2));
+                for nt=1:szrgbDim
+                    dataExportProfile(:,:,nt,eIdx) = interp2(double(currImProfExp{1}(:,:,nt)),profileMat(:,:,1),profileMat(:,:,2));
                     if withAlpha
-                        dataExportProfileAlpha(:,:,nt, eIdx) = interp2(double(currAlphaMapProfExp{1}(:,:,nt)),profileStruct.trace.mat(:,:,1),profileStruct.trace.mat(:,:,2));
+                        dataExportProfileAlpha(:,:,nt,eIdx) = interp2(double(currAlphaMapProfExp{1}(:,:,nt)),profileMat(:,:,1),profileMat(:,:,2));
                     end
                 end
             end
@@ -9315,6 +9320,7 @@ end
                 dataExportProfileAlpha = squeeze(dataExportProfileAlpha);
                 assignin('base','matVisProfileExportAlpha',dataExportProfileAlpha);
             end
+            if debugMatVis, debugMatVisFcn(2); end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
@@ -10940,8 +10946,16 @@ end
                     dataIndex = repmat(dataIndex, [1 dim(exportDim)]);                %Replicate linear index
                     dataIndex = dataIndex + repmat(deltaIndex * (0:dim(exportDim)-1),[size(roiList(selRois(kk)).index.x,1) 1]);   %Extend to all other points by adding deltaInd for each step
                     exportValues(kk,:) = mean(data{ii}(dataIndex),1,'omitnan');   %#ok
+                    if withAlpha
+                        exportValuesAlpha(kk,:) = mean(alphaMap{1}(dataIndex),1,'omitnan');   %#ok
+                        exportValuesAlphaWeighted(kk,:) = sum(data{ii}(dataIndex).*alphaMap{1}(dataIndex),'omitnan')./sum(alphaMap{1}(dataIndex),'omitnan');%#ok
+                    end
                 end
-                assignin('base',['roiData_set' num2str(ii,'%02d') '_',dimNames{exportDim}], exportValues);
+                assignin('base',sprintf('roiData_set%02d_%s',ii,dimNames{exportDim}), exportValues);
+                if withAlpha
+                    assignin('base',sprintf('roiDataAlpha_set%02d_%s',ii,dimNames{exportDim}), exportValuesAlpha);
+                    assignin('base',sprintf('roiDataAlphaWeighted_set%02d_%s',ii,dimNames{exportDim}), exportValuesAlphaWeighted);
+                end
             end
         end
         if debugMatVis, debugMatVisFcn(2); end
@@ -12749,6 +12763,10 @@ end
 end
 
 %% To do:
+% - zoom window position when pressing ZOOM button
+% - histogram for int values
+% - RGB mode: requires gamma
+% - two side sliders for zoom and other issues
 % - alphaMap: Open subset in new matVis does not export ‚alphaMap‘
 % - alphaMap: ROIdata are not updated while 'playing'
 % - alphaMap: Plot window could show (weighted mean) of ratio data AND (scaled?) alpha data
