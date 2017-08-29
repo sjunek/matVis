@@ -62,6 +62,8 @@ function varargout = matVis(varargin)
 %       'alphaMap'              Alphamap, has to be of same size as data
 %                               matrix. Useful for masking images. Background color will
 %                               be set to black.
+%       'matVisROIs'            ROI structure 'matVisRoiExport' generated
+%                               by matVis, will be automatically imported.
 %       'startPar'              List of configuration settings. These
 %                               settings 'override' the custom settings saved in a customConfig
 %                               file (if available). The list should be a cell array with the
@@ -166,6 +168,7 @@ customDimScale = 0;  % Flag to indicate whether dimension scales are provided
 dimNames = [];       % Dimensions names
 withDimUnits = 0;    % Dimension units
 fromFile = 0;        % Flag indicating whether data are loaded from file
+withMatVisROIs = false; % Flag for RoiData as start parameter
 os = computer;       % Operating system
 macScaleFactor = [1.05 1.05]; % Scaling factor to adjust width and height of GUI and uicontrols for Mac OS-X
 %% Read Data ...
@@ -531,11 +534,14 @@ else
                 end
                 withAlpha = 1;
                 currAlphaMap = [];
+            case 'matVisROIs'
+              withMatVisROIs = true;
+              matVisRoiExport = val;
             case 'dimNames'
-                if length(val) ~= ndims(varargin{1})
-                    error(sprintf('Dimension of matrix and number of ''dimNames'' have to be equal!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
-                end
-                dimNames = val;
+                  if length(val) ~= ndims(varargin{1})
+                      error(sprintf('Dimension of matrix and number of ''dimNames'' have to be equal!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
+                  end
+                  dimNames = val;
             case 'dimUnits'
                 if length(val) ~= ndims(varargin{1})
                     error(sprintf('Dimension of ''dimUnits'' mut fit matrix dimension!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
@@ -3513,9 +3519,7 @@ if updateRGB   %Update value of RGB dimenions popmenu if RGB dimension is given 
     rgbCount = mod(rgbDim , nDim-1);
     switchRGB;
 end
-updateColormap;
 drawObjects;
-drawPlots;
 if ~get(tb_moveHist, 'Value')
     updateGuiHistVal;
 end
@@ -3525,6 +3529,17 @@ setConfig(customConfig);
 set(imageWin, 'ResizeFcn',{@resizeWin, 'image'});
 set(zoomWin, 'ResizeFcn',{@resizeWin, 'zoom'});
 set(plotWin, 'ResizeFcn',{@resizeWin, 'plot'});
+% Update ROI structure
+if withMatVisROIs
+  set(tbRoi, 'Value', 1)
+  roiGui()
+  importRois([],[],matVisRoiExport)
+else
+  % following functions are disabled since they seem not required here
+  % (called before)
+  %updateColormap;
+  %drawPlots;
+end
 warning off MATLAB:gui:latexsup:UnsupportedFont  % Supress warning due to supposedly missing latex font cmss10: bug since Matlab 2011b
 figure(gui);
 % warning on MATLAB:gui:latexsup:UnsupportedFont
@@ -3623,7 +3638,7 @@ end
 %respective dimension, without modifier advance, with control go back.
 %With shift, go to position according to saved positions
     function keyPress(src,evnt)   %#ok
-        if debugMatVis, debugMatVisFcn(1); end
+        if debugMatVis>1, debugMatVisFcn(1); end
         if length(evnt.Modifier) == 1
             if strcmp(evnt.Modifier{:}, 'alt')  % Jump to saved position
                 if size(evnt.Key,2) > 6  % Numpad Keys ('numpad1', 'numpad2',...)
@@ -3651,7 +3666,7 @@ end
             currPos(dimNum) = min([currPos(dimNum)+1  ,dim(dimNum)]);
             updateSelection(dimNum);
         end
-        if debugMatVis, debugMatVisFcn(2); end
+        if debugMatVis>1, debugMatVisFcn(2); end
     end
 
 %Callback for change of xy dimension popups
@@ -9710,7 +9725,7 @@ end
             if debugMatVis, debugMatVisFcn(2); end
         end
         function buttonDownRoiGui(varargin)
-			if debugMatVis, debugMatVisFcn(1); end
+            if debugMatVis, debugMatVisFcn(1); end
             if strcmp(get(roiWin,'SelectionType'),'alt')
                 %Check for mouse position to enable fake 'button right-clicks'
                 p1 = round(get(myGcf,'CurrentPoint'));
@@ -10870,6 +10885,9 @@ end
     end
     function importRois(varargin)
         if debugMatVis, debugMatVisFcn(1); end
+        if nargin>2 
+          matVisRoiExport = varargin{3};
+        else
         [f,p] = uigetfile('.mat','Choose file to load rois!');
         if isequal(f,0)
           if debugMatVis, debugMatVisFcn(2); end
@@ -10881,6 +10899,7 @@ end
             errordlg('Chosen file does not contain rois exported using matVis (''matVisRoiExport'')!');
             if debugMatVis, debugMatVisFcn(2); end
             return
+        end
         end
         if customDimScale
             for ii=1:numel(matVisRoiExport)
@@ -12763,6 +12782,7 @@ end
 end
 
 %% To do:
+% - Error in matVis/exportData/exportNow (line 8364) when exporting subRegion matVis(d1,d2)
 % - zoom window position when pressing ZOOM button
 % - histogram for int values
 % - RGB mode: requires gamma
