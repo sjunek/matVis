@@ -282,50 +282,52 @@ if nargin == 0 || ischar(varargin{1})
                 data{i} = squeeze(data{i});  %#ok
                 %Tif (possibly multi-image)
             elseif strcmp(ext, '.tif') || strcmp(ext, '.tiff')
-                tic
-                % Speed optimized version, not tested on color tifs
-                ww = imfinfo([p,f{i}]);  % Tif file information
-                nCol = ww(1).SamplesPerPixel;  % Number of color channels (NOT TESTED!)
-                nImg = numel(ww);  % Number of frames
-                if ww(1).BitsPerSample(1) <= 16
-                    out = zeros(ww(1).Height, ww(1).Width,nCol, nImg,'uint16');
-                else
-                    out = zeros(ww(1).Height, ww(1).Width, nCol, nImg);
+                % changed back to old version since fast version added 2016-08-09 does not
+                % work
+                %   tic
+                %   % Speed optimized version, not tested on color tifs
+                %   ww = imfinfo([p,f{i}]);  % Tif file information
+                %   nCol = ww(1).SamplesPerPixel;  % Number of color channels (NOT TESTED!)
+                %   nImg = numel(ww);  % Number of frames
+                %   if ww(1).BitsPerSample(1) <= 16
+                %       out = zeros(ww(1).Height, ww(1).Width,nCol, nImg,'uint16');
+                %   else
+                %       out = zeros(ww(1).Height, ww(1).Width, nCol, nImg);
+                %   end
+                %   readLength = [ww(1).Width ww(1).Height]; % order has to be reversed for correct reading of data (don't know why)
+                %   gl_fid = fopen ([p,f{i}], 'r', 'l');
+                %   for j=1:nImg
+                %       for colIdx=1:nCol
+                %           fseek(gl_fid, ww(j).StripOffsets(colIdx) , 'bof');
+                %           if ww(j).BitsPerSample(colIdx) <=8
+                %               out(:,:,colIdx,j) = uint16(fread(gl_fid,readLength, '*uint8'))';
+                %           elseif ww(j).BitsPerSample(colIdx) <=16
+                %               out(:,:,colIdx,j) = fread(gl_fid, readLength, '*uint16')';
+                %           else ww(j).BitsPerSample(colIdx)
+                %               out(:,:,colIdx,j) = fread(gl_fid,readLength, 'uint32')';
+                %           end
+                %       end
+                %   end
+                %   fclose(gl_fid);
+                %   data{i} = squeeze(out);
+                %   clear out;
+                %   toc
+                % Old (slow) version:
+                ww = imfinfo([p,f{i}]);
+                im1 = imread([p f{i}],1);
+                switch ww(1).BitDepth
+                    case 8
+                        d{i} = zeros([size(im1),numel(ww)],'uint8');  %#ok
+                    case 16
+                        d{i} = zeros([size(im1),numel(ww)],'uint16'); %#ok
                 end
-                readLength = [ww(1).Width ww(1).Height]; % order has to be reversed for correct reading of data (don't know why)
-                gl_fid = fopen ([p,f{i}], 'r', 'l');
-                for j=1:nImg
-                    for colIdx=1:nCol
-                        fseek(gl_fid, ww(j).StripOffsets(colIdx) , 'bof');
-                        if ww(j).BitsPerSample(colIdx) <=8
-                            out(:,:,colIdx,j) = uint16(fread(gl_fid,readLength, '*uint8'))';
-                        elseif ww(j).BitsPerSample(colIdx) <=16
-                            out(:,:,colIdx,j) = fread(gl_fid, readLength, '*uint16')';
-                        else ww(j).BitsPerSample(colIdx)
-                            out(:,:,colIdx,j) = fread(gl_fid,readLength, 'uint32')';
-                        end
+                if strcmp(ww(1).PhotometricInterpretation, 'RGB')
+                    data{i} = imread([p,f{i}]);  %#ok
+                else
+                    for j = 1:numel(ww)
+                        data{i}(:,:,j) = imread([p,f{i}],j,'Info',ww);  %#ok
                     end
                 end
-                fclose(gl_fid);
-                data{i} = squeeze(out);
-                clear out;
-                toc
-                % Old (slow) version:
-%                 ww = imfinfo([p,f{i}]);
-%                 im1 = imread([p f{i}],1);
-%                 switch ww(1).BitDepth
-%                     case 8
-%                         d{i} = zeros([size(im1),numel(ww)],'uint8');  %#ok
-%                     case 16
-%                         d{i} = zeros([size(im1),numel(ww)],'uint16'); %#ok
-%                 end
-%                 if strcmp(ww(1).PhotometricInterpretation, 'RGB')
-%                     data{i} = imread([p,f{i}]);  %#ok
-%                 else
-%                     for j = 1:numel(ww)
-%                         data{i}(:,:,j) = imread([p,f{i}],j,'Info',ww);  %#ok
-%                     end
-%                 end
                 defaultColormap{i} = []; %#ok
             elseif strcmp(ext, '.lsm')
                 if i==1  % Data size and scaling, assume it's the same for all files
