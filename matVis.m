@@ -10280,7 +10280,8 @@ end
         nRois = nRois - size(roiSel,2);
         if nRois > 0
             set(roiListbox, 'Value',min(roiSel(1),nRois));
-            updateRoiSelection(min(roiSel(1),nRois));
+            listboxCallback()
+            %updateRoiSelection(min(roiSel(1),nRois));
         else
             set(roiListbox, 'Value',0, 'String', '');
             set([roiBtRename tbRoiShift tbRoiRotate tbRoiScale roiBtReplace bt_roiExport bt_deleteRoi bt_exportRoiData] , 'Enable', 'off');
@@ -10289,8 +10290,8 @@ end
                 set(bt_exportRoiData, 'Enable','off')
             end
             set(bt_copyRoi, 'Enable', 'off');
+            drawPlots;
         end
-        drawPlots;
         if debugMatVis, debugMatVisFcn(2); end
     end
     function updateRoiSettings(varargin)
@@ -10491,10 +10492,12 @@ end
           zoomVal(zoomVal(1:matchDims,2) > dim(1:matchDims)',2) = dim(zoomVal(1:matchDims,2)' > dim(1:matchDims));
           updateZoom(1,1,1:nDim,'ROIupdate');
           updateSelection(1:length(currPos));
+        else
+          updateRoiSelection(numberRoi);
         end
         drawPlots;
         
-        updateRoiSelection(numberRoi);
+        
 
         if debugMatVis, debugMatVisFcn(2); end
     end
