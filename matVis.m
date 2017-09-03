@@ -3152,7 +3152,11 @@ cb_showHist = uicontrol('Parent', panel_imageControls, 'Style', 'checkbox','Unit
     'Callback',@updateGuiHistVal,'Tooltip',ttt1,'Tag',ttt);
 
 hold(histAxGui,'on');
-histXData = linspace(minVal(1),maxVal(1),256);
+if isinteger(data{1})
+  histXData = minVal(1):ceil((maxVal(1)-minVal(1))/1024):maxVal(1)+ceil((maxVal(1)-minVal(1))/1024)-1;
+else
+  histXData = linspace(minVal(1),maxVal(1),1024);
+end
 histXDataBin = histXData(1:end-1)+.5*diff(histXData(1:2));
 histAxPlot = bar(histXDataBin, zeros(1,numel(histXDataBin)),'Parent',histAxGui, 'BaseValue',0,'BarWidth',1,'EdgeColor','k');
 set(histAxGui,'XLim',[minVal(1) maxVal(1)],'Color','none','XTick',[],'YTick',[],'YColor',get(gui,'Color'));
