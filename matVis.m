@@ -552,7 +552,7 @@ else
                 withDimUnits = 1;
             case 'matNames'
                 if length(val) ~= length(data)
-                    error(sprintf('Dimension of ''matNames'' mut fit number of provided data sets!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
+                    error(sprintf('Dimension of ''matNames'' must fit number of provided data sets!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
                 end
                 varName = val;
                 allNames = '';
@@ -8354,7 +8354,7 @@ end
         end
         %if exist('allNames','var') && ~isempty(allNames)
           expProp{lEA} = 'matNames';
-          expProp{lEA+1} = {allNames};
+          expProp{lEA+1} = varName;%{allNames};
           lEA = lEA+2;
         %end
         assignin('base', strrep(sprintf('%s_props',get(exportName, 'String')),' ','_'), expProp);
@@ -8378,7 +8378,7 @@ end
                 [~, vn] = fileparts(varName{iii});
                 vn = sprintf('_%s',vn);
               else
-                vn = sprintf('_%s',varName({iii}));
+                vn = sprintf('_%s',varName{iii});
               end
             end
             assignin('base', strrep(sprintf('%s%s',get(exportName, 'String'),vn),' ','_') , d);
@@ -8428,37 +8428,39 @@ end
         end
         %if exist('allNames','var') && ~isempty(allNames)
           inputArg{end+1} = 'matNames';
-          inputArg{end+1} = {allNames};
+          inputArg{end+1} = varName;%{allNames};
         %end
-        %         for iii = 1:numberOptionalArgs
-        %           switch  optionalArgIdentifier{iii}
-        %             case 'alphaMap'
-        %               inputArg{end+1} = 'alphaMap';
-        %               inputArg{end+1} = alphaMap{1}(ind{:});
-        %             case 'dimNames'
-        %               inputArg{end+1} = 'dimNames';
-        %               inputArg{end+1} = dimNames;
-        %               inputArg{end+1}(indC) = [];
-        %             case 'dimUnits'
-        %               inputArg{end+1} = 'dimUnits';
-        %               inputArg{end+1} = dimUnits;
-        %               inputArg{end+1}(indC) = [];
-        %             case 'matNames'
-        %               inputArg{end+1} = 'matNames';
-        %               inputArg{end+1} = allNames;
-        %               inputArg{end+1}(indC) = [];
-        %             case 'startPar'
-        %               inputArg{end+1} = 'startPar';
-        %               inputArg{end+1} = startPar;
-        %             case 'dimScale'
-        %               inputArg{end+1} = 'dimScale';
-        %               lIA = length(inputArg)+1;
-        %               for n = 1:length(ind)
-        %                 inputArg{lIA}(n,:) = dimScale(n,1) + diff(dimScale(n,:))/(dim(n)-1)*(ind{iiii}([1 end])-1);
-        %               end
-        %               inputArg{lIA}(indC,:) = [];
-        %           end
-        %         end
+        %{         
+        for iii = 1:numberOptionalArgs
+          switch  optionalArgIdentifier{iii}
+            case 'alphaMap'
+              inputArg{end+1} = 'alphaMap';
+              inputArg{end+1} = alphaMap{1}(ind{:});
+            case 'dimNames'
+              inputArg{end+1} = 'dimNames';
+              inputArg{end+1} = dimNames;
+              inputArg{end+1}(indC) = [];
+            case 'dimUnits'
+              inputArg{end+1} = 'dimUnits';
+              inputArg{end+1} = dimUnits;
+              inputArg{end+1}(indC) = [];
+            case 'matNames'
+              inputArg{end+1} = 'matNames';
+              inputArg{end+1} = allNames;
+              inputArg{end+1}(indC) = [];
+            case 'startPar'
+              inputArg{end+1} = 'startPar';
+              inputArg{end+1} = startPar;
+            case 'dimScale'
+              inputArg{end+1} = 'dimScale';
+              lIA = length(inputArg)+1;
+              for n = 1:length(ind)
+                inputArg{lIA}(n,:) = dimScale(n,1) + diff(dimScale(n,:))/(dim(n)-1)*(ind{iiii}([1 end])-1);
+              end
+              inputArg{lIA}(indC,:) = [];
+          end
+        end
+        %}
         matVis(inputArg{:});
         delete(exportWin);
         exportWin = [];
@@ -12787,7 +12789,6 @@ end
 end
 
 %% To do:
-% - Error in matVis/exportData/exportNow (line 8364) when exporting subRegion matVis(d1,d2)
 % - zoom window position when pressing ZOOM button
 % - histogram for int values
 % - RGB mode: requires gamma
