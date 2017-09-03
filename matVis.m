@@ -701,6 +701,7 @@ if oldMATLAB
   zoomAx = [];                             %Handle of Axes in Zoom Window
   zoomReg = [];                            %Handle of Rectangle indicating Zoom Region
   tempWin = [];                            %Temp. window used for user input (aspect ratio, axes limits)
+  tempWinEtxt = [];                        %Handle to Edit field in temp win
   exportWin = [];                          %Temp. window used for data export
   subPlotHandles = [];                     %Handles to subplot axes in Plots Window
   subPlotPlots = [];                       %Handles to data displayed in Plots Window
@@ -919,7 +920,7 @@ scnSize = get(0,'ScreenSize'); %
 monSize = get(0,'MonitorPosition');
 monSizeMin = min(monSize(:,[1 2]),[],1);         % min x y position
 monSizeMax = [max(sum(monSize(:,[1 3]),2)-1,[],1) max(sum(monSize(:,[2 4]),2)-1,[],1)]; % max x y position
-
+screenSizeScaling = getScreenSizeScaling;
 % Create main gui already here to be able to find the correct width of the
 % window borders (depend on OS)
 % Calculation of MenuBar width does not work. For some reason, the figure
@@ -4613,7 +4614,7 @@ end
                 uicontrol(tempWin, 'Style', 'Text', 'Position', [10 nDim*20+10 130 15], ...
                     'String','Window scaling factor [%]','FontWeight', 'bold',...
                     'BackgroundColor', get(tempWin, 'Color'), 'HorizontalAlignment', 'left');
-                uicontrol(tempWin, 'Style', 'Edit', 'Position', [50 10 40 15], ...
+                tempWinEtxt = uicontrol(tempWin, 'Style', 'Edit', 'Position', [50 10 40 15], ...
                     'String',[num2str(currWinScale)],'Callback',@setWinScale,...
                     'HorizontalAlignment', 'center');
             else
@@ -7576,10 +7577,31 @@ end
         set(zoomWin, 'ResizeFcn','');
         for ii=1:nMat
             winPos = get(zoomWin(ii), 'Position');
-            if winPos(2)+round(zoomValXY(4)*currWinScale/100) > scnSize(4)
-                winPos(2) = scnSize(4)-round(zoomValXY(4)*currWinScale/100)-30;
+            winPos2 = [winPos(1) winPos(2) round(screenSizeScaling*currWinScale/100*zoomValXY(3)) round(screenSizeScaling*currWinScale/100*zoomValXY(4))];
+            if winPos2(2)+round(zoomValXY(4)*currWinScale/100) > scnSize(4)
+                winPos2(2) = scnSize(4)-round(zoomValXY(4)*currWinScale/100)-30;
+            else
+              winPos2(2) = winPos(2)+winPos(4)-round(zoomValXY(4)*currWinScale/100);
             end
-            set(zoomWin(ii), 'Position', [winPos(1) winPos(2) round(screenSizeScaling*currWinScale/100*zoomValXY(3)) round(screenSizeScaling*currWinScale/100*zoomValXY(4))]);
+            set(zoomWin(ii), 'Position', winPos2);
+            % Note:   The Windows operating system enforces a minimum window width and a maximum window size. 
+            %         If you specify a figure size outside of those limits, the displayed figure will conform to the limits instead of the size you specified.
+            drawnow; % workaround to find operating system's maximum window size
+            winPos3 = get(zoomWin(ii), 'Position');
+            if any(winPos3(3:4)<winPos2(3:4))
+              currWinScale = floor(min(winPos3(3:4)./winPos2(3:4))*100);
+              set(bt_100pct, 'String',[num2str(currWinScale) '%']);
+              if ~isempty(tempWin)
+                set(tempWinEtxt,'String',[num2str(currWinScale)])
+              end
+              winPos2 = [winPos(1) winPos(2) round(screenSizeScaling*currWinScale/100*zoomValXY(3)) round(screenSizeScaling*currWinScale/100*zoomValXY(4))];
+              if winPos2(2)+round(zoomValXY(4)*currWinScale/100) > scnSize(4)
+                winPos2(2) = scnSize(4)-round(zoomValXY(4)*currWinScale/100)-30;
+              else
+                winPos2(2) = winPos(2)+winPos(4)-round(zoomValXY(4)*currWinScale/100);
+              end
+              set(zoomWin(ii), 'Position', winPos2);
+            end
         end
         drawnow
         set(zoomWin, 'ResizeFcn',{@resizeWin, 'zoom'});
@@ -7587,7 +7609,7 @@ end
         resizeWin(0,0,'zoom');
         if debugMatVis, debugMatVisFcn(2); end
     end
-    function scalingFct = screenSizeScaling
+    function scalingFct = getScreenSizeScaling
         % Determine and return scaling due to OS settings (e.g. Windows
         % font scaling affects the way Matlab reports screen resolution)
         % So far only tested on Windows!
@@ -12789,7 +12811,6 @@ end
 end
 
 %% To do:
-% - zoom window position when pressing ZOOM button
 % - histogram for int values
 % - RGB mode: requires gamma
 % - two side sliders for zoom and other issues
