@@ -4243,95 +4243,106 @@ end
             updateTooltips;
         end
         if any(myGcf == imageWin) || any(myGcf == zoomWin)
-            %Get current position of cursor
-            p = get(myGca, 'CurrentPoint');
-            p = p(1 ,1:2);
-            if customDimScale
-                pLoc = p;
-                p = pixelLocation(p);
-            end
-            p = round(p([2 1]));
-            p(1) = max([min([p(1),size(currIm{1},1)]),1]);            %max([min([p(1),dim(xySel(2))]),1]);
-            p(2) = max([min([p(2),size(currIm{1},2)]),1]);
-            %Display position / value of current point while inside Image
-            %window
-            if any(myGcf == imageWin)
-                for ii = 1:nMat
-                    if customDimScale
-                        if withDimUnits
-                            set(imageWin(ii), 'Name', ['Image (',varName{ii},') - Value: ',num2str(currImVal{ii}(p(1),p(2),:)) '  /  Position: (' num2str(round(pLoc(2)/pxWidth(xySel(1)))*pxWidth(xySel(1))) ' ' dimUnits{xySel(1)} ', ' num2str(round(pLoc(1)/pxWidth(xySel(2)))*pxWidth(xySel(2))) ' ' dimUnits{xySel(2)} ')  /  Pixelpos.: (', num2str(p(1)) ', ' num2str(p(2)),')']);
-                        else
-                            set(imageWin(ii), 'Name', ['Image (',varName{ii},') - Value: ',num2str(currImVal{ii}(p(1),p(2),:)) '  /  Position: (' num2str(pLoc(2)) ', ' num2str(pLoc(1))  ')  /  Pixelpos.: (', num2str(p(1)) ', ' num2str(p(2)),')']);
-                        end
-                    else
-                        set(imageWin(ii), 'Name', ['Image (',varName{ii},') - Value: ',...
-                            num2str(currImVal{ii}(p(1),p(2),:)) ' / Position: (', num2str(p(1)) ', ' num2str(p(2)),')']);
-                    end
-                end
-                %Change cursor while inside / outside zoom region in
-                %image window if not in roi selection mode
-                if ~any(cell2mat(get(tb_newRoi, 'Value')))
-                    if pointInArea(p([2 1]),zoomValXY) && (zoomValXY(3) < size(currIm{1},2) || zoomValXY(4) < size(currIm{1},1))
-                        posInZoomArea = 1;
-                        set(imageWin,'Pointer','custom','PointerShapeCData',hand, 'PointerShapeHotSpot',[9 9]);
-                    else
-                        posInZoomArea = 0;
-                    end
-                end
+          %Get current position of cursor
+          p = get(myGca, 'CurrentPoint');
+          p = p(1 ,1:2);
+          if customDimScale
+            pLoc = p;
+            p = pixelLocation(p);
+          end
+          p = round(p([2 1]));
+          p(1) = max([min([p(1),size(currIm{1},1)]),1]);            %max([min([p(1),dim(xySel(2))]),1]);
+          p(2) = max([min([p(2),size(currIm{1},2)]),1]);
+          %Display position / value of current point while inside Image
+          %window
+          % update imageWin / zoomWin Name
+          if customDimScale
+            if withDimUnits
+              myDU1 = sprintf(' %s',dimUnits{xySel(1)});
+              myDU2 = sprintf(' %s',dimUnits{xySel(2)});
             else
+              myDU1 = []; myDU2 = [];
+            end
+            myPosStr = sprintf(' /  Position: (%f%s, %f%s)',...
+              num2str(round(pLoc(2)/pxWidth(xySel(1)))*pxWidth(xySel(1))),myDU1,...
+              num2str(round(pLoc(1)/pxWidth(xySel(2)))*pxWidth(xySel(2))),myDU2);
+          else
+            myPosStr = [];
+          end
+          myPixPos = sprintf(' /  Pixelpos.: (%d, %d)', p(1), p(2));
+          if any(myGcf == imageWin)
+            for ii = 1:nMat
+              if withAlpha
+                set(imageWin(ii), 'Name', sprintf('Image (%s) - Value: %s, alphaValue: %s%s%s',...
+                  varName{ii},sprintf(' %f',currImVal{ii}(p(1),p(2),:)),...
+                  sprintf(' %f',currAlphaMap{ii}(p(1),p(2),:)),myPosStr,myPixPos))
+              else
+                set(imageWin(ii), 'Name', sprintf('Image (%s) - Value: %s%s%s',varName{ii},...
+                  sprintf(' %f',currImVal{ii}(p(1),p(2),:)),myPosStr,myPixPos))
+              end
+            end
+            %Change cursor while inside / outside zoom region in
+            %image window if not in roi selection mode
+            if ~any(cell2mat(get(tb_newRoi, 'Value')))
+              if pointInArea(p([2 1]),zoomValXY) && (zoomValXY(3) < size(currIm{1},2) || zoomValXY(4) < size(currIm{1},1))
+                posInZoomArea = 1;
+                set(imageWin,'Pointer','custom','PointerShapeCData',hand, 'PointerShapeHotSpot',[9 9]);
+              else
                 posInZoomArea = 0;
+              end
             end
-            pointOnLine = zeros(1,2);
-            if ~any(cell2mat(get(tb_newRoi, 'Value'))) %~get(tbRoi,'Value')
-                if get(tbShowObjects, 'Value')
-                    % Check whether cursor is close to position lines and change
-                    % properties
-                    if any(myGcf == zoomWin)
-                        interv = zoomVal(xySel,2)*.01;
-                    else
-                        interv = dim(xySel)*.01;
-                    end
-                    for ii=1:2
-                        if pointInArea(p(ii), [currPos(xySel(ii))-interv(ii) 2*interv(ii)])
-                            pointOnLine(ii) = 1;
-                        end
-                    end
+          else
+            posInZoomArea = 0;
+          end
+          pointOnLine = zeros(1,2);
+          if ~any(cell2mat(get(tb_newRoi, 'Value'))) %~get(tbRoi,'Value')
+            if get(tbShowObjects, 'Value')
+              % Check whether cursor is close to position lines and change
+              % properties
+              if any(myGcf == zoomWin)
+                interv = zoomVal(xySel,2)*.01;
+              else
+                interv = dim(xySel)*.01;
+              end
+              for ii=1:2
+                if pointInArea(p(ii), [currPos(xySel(ii))-interv(ii) 2*interv(ii)])
+                  pointOnLine(ii) = 1;
                 end
-                if any(pointOnLine)
-                    if sum(pointOnLine) == 2
-                        set(myGcf,'Pointer','fleur');
-                    elseif pointOnLine(1)
-                        set(myGcf,'Pointer','custom','PointerShapeCData',arrow_ud, 'PointerShapeHotSpot',[9 9]);
-                    else
-                        set(myGcf,'Pointer','custom','PointerShapeCData',arrow_lr, 'PointerShapeHotSpot',[9 9]);
-                    end
-                    set(myGcf, 'WindowButtonDownFcn', {@placePosLine,pointOnLine});
-                elseif posInZoomArea
-                    set(imageWin,'Pointer','custom','PointerShapeCData',hand, 'PointerShapeHotSpot',[9 9]);
-                    set(imageWin, 'WindowButtonUpFcn', @endPanWindow);
-                    set(imageWin, 'WindowButtonDownFcn', @startPanZoom);
-                else
-                    set(myGcf,'Pointer','arrow');
-                    set(myGcf, 'WindowButtonUpFcn', '');
-                    set(myGcf, 'WindowButtonDownFcn', @buttonDownCallback);
-                end
+              end
             end
-            %Display position / value of current point while inside Zoom
-            %window
-            if any(myGcf == zoomWin)
-                for ii = 1:nMat
-                    if customDimScale
-                        if withDimUnits
-                            set(zoomWin(ii), 'Name', ['Zoom (',varName{ii},') - Value: ',num2str(currImVal{ii}(p(1),p(2),:)) '  /  Position: (' num2str(round(pLoc(2)/pxWidth(xySel(1)))*pxWidth(xySel(1))) ' ' dimUnits{xySel(1)} ', ' num2str(round(pLoc(1)/pxWidth(xySel(2)))*pxWidth(xySel(2))) ' ' dimUnits{xySel(2)} ')  /  Pixelpos.: (', num2str(p(1)) ', ' num2str(p(2)),')']);
-                        else
-                            set(zoomWin(ii), 'Name', ['Zoom (',varName{ii},') - Value: ',num2str(currImVal{ii}(p(1),p(2),:)) '  /  Position: (' num2str(pLoc(2)) ', ' num2str(pLoc(1))  ')  /  Pixelpos.: (', num2str(p(1)) ', ' num2str(p(2)),')']);
-                        end
-                    else
-                        set(zoomWin(ii), 'Name', ['Zoom (',varName{ii},') - Value: ',...
-                            num2str(currImVal{ii}(p(1),p(2),:)) ' / Position: (', num2str(p(1)) ', ' num2str(p(2)),')']);
-                    end
-                end
+            if any(pointOnLine)
+              if sum(pointOnLine) == 2
+                set(myGcf,'Pointer','fleur');
+              elseif pointOnLine(1)
+                set(myGcf,'Pointer','custom','PointerShapeCData',arrow_ud, 'PointerShapeHotSpot',[9 9]);
+              else
+                set(myGcf,'Pointer','custom','PointerShapeCData',arrow_lr, 'PointerShapeHotSpot',[9 9]);
+              end
+              set(myGcf, 'WindowButtonDownFcn', {@placePosLine,pointOnLine});
+            elseif posInZoomArea
+              set(imageWin,'Pointer','custom','PointerShapeCData',hand, 'PointerShapeHotSpot',[9 9]);
+              set(imageWin, 'WindowButtonUpFcn', @endPanWindow);
+              set(imageWin, 'WindowButtonDownFcn', @startPanZoom);
+            else
+              set(myGcf,'Pointer','arrow');
+              set(myGcf, 'WindowButtonUpFcn', '');
+              set(myGcf, 'WindowButtonDownFcn', @buttonDownCallback);
             end
+          end
+          %Display position / value of current point while inside Zoom
+          %window
+          if any(myGcf == zoomWin)
+            for ii = 1:nMat
+              if withAlpha
+                set(zoomWin(ii), 'Name', sprintf('Zoom (%s) - Value: %s, alphaValue: %s%s%s',...
+                  varName{ii},sprintf(' %f',currImVal{ii}(p(1),p(2),:)),...
+                  sprintf(' %f',currAlphaMap{ii}(p(1),p(2),:)),myPosStr,myPixPos))
+              else
+                set(zoomWin(ii), 'Name', sprintf('Zoom (%s) - Value: %s%s%s',varName{ii},...
+                  sprintf(' %f',currImVal{ii}(p(1),p(2),:)),myPosStr,myPixPos))
+              end
+            end
+          end
         end
         % Code for dragging position line with left click when mouse is close
         % to current position.
@@ -5119,10 +5130,20 @@ end
                 end
             end
             for ii = 1:nMat
+              if withAlpha
+                set(imageWin(ii), 'Name', ['Image (',varName{ii},') - Pos: (', num2str(currPos(xySel)),...
+                  ')  Val: ', num2str(currImVal{ii}(currPos(xySel(1)),currPos(xySel(2)),:)),...
+                  ',  alphaVal: ', num2str(currAlphaMap{ii}(currPos(xySel(1)),currPos(xySel(2)),:))]);
+                set(zoomWin(ii), 'Name', ['Zoom (',varName{ii},') - Pos: (', num2str(currPos(xySel)),...
+                  ') Val: ',num2str(currImVal{ii}(currPos(xySel(1)),currPos(xySel(2)),:)),...
+                  ', alphaVal: ',num2str(currAlphaMap{ii}(currPos(xySel(1)),currPos(xySel(2)),:)),...
+                  ', Zoom: (', num2str(zoomValXY), ')']);
+              else
                 set(imageWin(ii), 'Name', ['Image (',varName{ii},') - Pos: (', num2str(currPos(xySel)),')  Val: ',...
-                    num2str(currImVal{ii}(currPos(xySel(1)),currPos(xySel(2)),:))]);
+                  num2str(currImVal{ii}(currPos(xySel(1)),currPos(xySel(2)),:))]);
                 set(zoomWin(ii), 'Name', ['Zoom (',varName{ii},') - Pos: (', num2str(currPos(xySel)),') Val: ',...
-                    num2str(currImVal{ii}(currPos(xySel(1)),currPos(xySel(2)),:)), '  Zoom: (', num2str(zoomValXY), ')']);
+                  num2str(currImVal{ii}(currPos(xySel(1)),currPos(xySel(2)),:)), '  Zoom: (', num2str(zoomValXY), ')']);
+              end
             end
             if get(bt_mean, 'UserData') == 4 && any(currWin == imageWin)
                 zoomValXY = [currPos(xySel(2))-round(zoomValXY(3)/2) currPos(xySel(1))-round(zoomValXY(4)/2) zoomValXY(3) zoomValXY(4)];
