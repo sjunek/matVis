@@ -2775,43 +2775,65 @@ for i=1:4
 end
 % Lock to zoom
 ttt = sprintf('Pressed: Apply saved zoom setting together with position.\nUnressed: Only jump to position, leave zoom unchanged.'); 
-
 if debugMatVis, ttt1 = sprintf('Handle: ''bt_savedZoom'''); 
 else,  ttt = sprintf('<html><b>Pressed:</b> Apply saved zoom setting together with position.<br /><b>Unressed:</b> Only jump to position, leave zoom unchanged.</html>'); end
 bt_savedZoom = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'FontSize',7,...
-    'Position', [120 45 38 30], 'String', {'+Zoom'}, 'Value',0,'Tooltip',ttt1,'Tag',ttt);
+    'Position', [120 45 30 30], 'String', '<html><div align="center">+<br />Zoom</html>', 'Value',0,'Tooltip',ttt1,'Tag',ttt);
+
 % Go to global min/max
-ttt = sprintf('Jump to (first) position with the minimum value of the data set: %s', sprintf('%d\t',minPos)); 
+% Find Min/Max Buttons
+uicontrol('Parent',panel_positionControls, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', get(gui, 'Color'),...
+    'Position', [150 45 28 25], 'String', {'Min:';'Max:'}, ...
+    'HorizontalAlignment', 'center','FontSize',7);  
+
+ttt = sprintf('Jump to (first) position with the minimum value of the data set: %s\nIn case of ''alphaMap'': leftClick: min of alphamap, rightClick: min of data.', sprintf('%d\t',minPos)); 
 if debugMatVis, ttt1 = sprintf('Handle: ''bt_jumpMin''\nCallback: ''jumpPos(''min'')'''); else,  ttt1 = ttt; end
-bt_jumpMin = uicontrol('Parent',panel_positionControls, 'Style', 'Pushbutton', 'Callback', {@jumpPos,'min'}, 'Units', 'Pixel', ...
-    'Position', [160 60 50 15],  'String', 'Min-global', 'FontSize',7,...
+bt_jumpMin = uicontrol('Parent',panel_positionControls, 'Style', 'Pushbutton', 'Callback', {@jumpPos,'min',1}, 'Units', 'Pixel', ...
+    'Position', [175 60 30 15],  'String', 'global', 'FontSize',7,...
     'BackgroundColor', get(gui, 'Color'),'Tooltip',ttt1,'Tag',ttt);  %#ok
-ttt = sprintf('Jump to (first) position with the maximum value of the data set: %s', sprintf('%d\t',minPos)); 
+ttt = sprintf('Jump to (first) position with the maximum value of the data set: %s\nIn case of ''alphaMap'': leftClick: max of alphamap, rightClick: max of data.', sprintf('%d\t',maxPos)); 
 if debugMatVis, ttt1 = sprintf('Handle: ''bt_jumpMax''\nCallback: ''jumpPos(''max'')'''); else,  ttt1 = ttt; end
-bt_jumpMax = uicontrol('Parent',panel_positionControls, 'Style', 'Pushbutton', 'Callback', {@jumpPos,'max'}, 'Units', 'Pixel', 'FontSize',7, ...
-    'Position', [160 45 50 15],  'String', 'Max-global', ...
+bt_jumpMax = uicontrol('Parent',panel_positionControls, 'Style', 'Pushbutton', ...
+    'Callback', {@jumpPos,'max',1}, 'Units', 'Pixel', ...
+    'Position', [175 45 30 15],  'String', 'global', 'FontSize',7,...
     'BackgroundColor', get(gui, 'Color'),'Tooltip',ttt1,'Tag',ttt);  %#ok
 % Push button: find min/max in zoom/image
-ttt = sprintf('Find minimum in current image'); 
-if debugMatVis, ttt1 = sprintf('Handle: ''tb_findLocalMinImg''\nCallback: ''findExtremum(''min'',''image'')'''); else,  ttt1 = ttt; end
-tb_findLocalMinImg = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton', ...
-    'Callback', {@findExtremum,'min','image'}, 'Units', 'Pixel', 'Position', [213 60 50 15], ...
-    'String', 'Min-Img','BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tooltip',ttt1,'Tag',ttt);
-ttt = sprintf('Find maximum in current image'); 
-if debugMatVis, ttt1 = sprintf('Handle: ''tb_findLocalMaxImg''\nCallback: ''findExtremum(''max'',''image'')'''); else,  ttt1 = ttt; end
-tb_findLocalMaxImg = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton', ...
-    'Callback', {@findExtremum,'max','image'}, 'Units', 'Pixel', 'Position', [213 45 50 15],  ...
-    'String', 'Max-Img','BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tooltip',ttt1,'Tag',ttt);
-ttt = sprintf('Find minimum in current zoom range'); 
-if debugMatVis, ttt1 = sprintf('Handle: ''tb_findLocalMinZm''\nCallback: ''findExtremum(''min'',''zoom'')'''); else,  ttt1 = ttt; end
-tb_findLocalMinZm = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton', ...
-    'Callback', {@findExtremum,'min','zoom'}, 'Units', 'Pixel', 'Position', [266 60 50 15], ...
-    'String', 'Min-Zoom','BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tooltip',ttt1,'Tag',ttt);
-ttt = sprintf('Find maximum in current zoom range'); 
-if debugMatVis, ttt1 = sprintf('Handle: ''tb_findLocalMaxZm''\nCallback: ''findExtremum(''max'',''zoom'')'''); else,  ttt1 = ttt; end
-tb_findLocalMaxZm = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton',  ...
-    'Callback', {@findExtremum,'max','zoom'}, 'Units', 'Pixel','Position', [266 45 50 15], ...
-    'String', 'Max-Zoom','BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Find minimum in current image\nIn case of ''alphaMap'': leftClick: min of alphamap, rightClick: min of data.'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_findLocalMinImg''\nCallback: ''findExtremum(''min'',''image'')'''); else,  ttt1 = ttt; end
+bt_findLocalMinImg = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton', ...
+    'Callback', {@findExtremum,'min','image',1}, 'Units', 'Pixel', ...
+    'Position', [205 60 30 15], 'String', 'Img','FontSize',7,...
+    'BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Find maximum in current image\nIn case of ''alphaMap'': leftClick: max of alphamap, rightClick: max of data.'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_findLocalMaxImg''\nCallback: ''findExtremum(''max'',''image'')'''); else,  ttt1 = ttt; end
+bt_findLocalMaxImg = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton', ...
+    'Callback', {@findExtremum,'max','image',1}, 'Units', 'Pixel', ...
+    'Position', [205 45 30 15],  'String', 'Img','FontSize',7,...
+    'BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Find minimum in image zoom range\nIn case of ''alphaMap'': leftClick: min of alphamap, rightClick: min of data.'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_findLocalMinZm''\nCallback: ''findExtremum(''min'',''zoom'')'''); else,  ttt1 = ttt; end
+bt_findLocalMinZm = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton', ...
+    'Callback', {@findExtremum,'min','zoom',1}, 'Units', 'Pixel', ...
+    'Position', [235 60 30 15], 'String', 'Zoom','FontSize',7,...
+    'BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Find maximum in image zoom range\nIn case of ''alphaMap'': leftClick: max of alphamap, rightClick: max of data.'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_findLocalMaxZm''\nCallback: ''findExtremum(''max'',''zoom'')'''); else,  ttt1 = ttt; end
+bt_findLocalMaxZm = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton',  ...
+    'Callback', {@findExtremum,'max','zoom',1}, 'Units', 'Pixel', ...
+    'Position', [235 45 30 15], 'String', 'Zoom','FontSize',7,...
+    'BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Find minimum in global zoom range\nIn case of ''alphaMap'': leftClick: min of alphamap, rightClick: min of data.'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_findGlobalMinZm''\nCallback: ''findExtremum(''min'',''globalZoom'')'''); else,  ttt1 = ttt; end
+bt_findGlobalMinZm = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton', ...
+    'Callback', {@findExtremum,'min','globalZoom',0}, 'Units', 'Pixel', ...
+    'Position', [265 60 48 15], 'String', 'glob.Zoom','FontSize',7,...
+    'BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Find maximum in global zoom range\nIn case of ''alphaMap'': leftClick: max of alphamap, rightClick: max of data.'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_findGlobalMaxZm''\nCallback: ''findExtremum(''max'',''globalZoom'')'''); else,  ttt1 = ttt; end
+bt_findGlobalMaxZm = uicontrol('Parent',panel_positionControls, 'Style', 'pushbutton',  ...
+    'Callback', {@findExtremum,'max','globalZoom',1}, 'Units', 'Pixel', ...
+    'Position', [265 45 48 15], 'String', 'glob.Zoom','FontSize',7,...
+    'BackgroundColor', get(gui, 'Color'), 'Value', customConfig.plotZoom,'Tooltip',ttt1,'Tag',ttt);
 
 %Toggle button for applying zoom plots
 ttt = sprintf('Set x-limits of plots.\nLeft click: Toggle auto / fixed.\nRight click: Set fixed limits.');
@@ -3580,17 +3602,18 @@ end
     end
 
 % Set position from small position buttons to the right
-    function jumpPos(hO,ev,in)  %#ok
+    function jumpPos(hO,ev,in,sw)  %#ok
         if debugMatVis, debugMatVisFcn(1); end
         switch ischar(in(1))
             case 1
                 switch in
-                    case 'min'
-                        currPos = minPos;
-                    case 'max'
-                        currPos = maxPos;
+                    case 'min', extrPos = minValInd(1+(withAlpha & sw));
+                    case 'max', extrPos = maxValInd(1+(withAlpha & sw));
                 end
-            case 0
+                extrPosSub = cell(1,numel(dim));
+                [extrPosSub{:}] = ind2sub(dim,extrPos);
+                currPos = cell2mat(extrPosSub);
+          case 0
                 currPos = savedPos(:,in)';
                 if get(bt_savedZoom, 'Value')
                     zoomVal = savedZoom(:,:,in);
@@ -3602,33 +3625,49 @@ end
         updateSelection(1:numel(dim));
         if debugMatVis, debugMatVisFcn(2); end
     end
-    function findExtremum(hO,ev,mnmx, zmim)
+    function findExtremum(hO,ev,mnmx, zmim, sw)
+        if debugMatVis, debugMatVisFcn(1); end
         % Find and go to local maximum or minimum (either within currently displayed
         % image or currently selected zoom region inside current image,
         % depending on user input)
-        if withAlpha
+        if withAlpha && sw
             selectedRegion = currAlphaMap{1};
         else
             selectedRegion = currIm{1};
         end
         switch zmim
-            case 'zoom'
-                selectedRegion = selectedRegion(zoomValXY(2):zoomValXY(2)+zoomValXY(4)-1,zoomValXY(1):zoomValXY(1)+zoomValXY(3)-1);
-                regionOffset = zoomValXY([2 1])-1;
-            case 'image'
-                regionOffset = [0 0];
+          case 'zoom'
+            selectedRegion = selectedRegion(zoomValXY(2):zoomValXY(2)+zoomValXY(4)-1,zoomValXY(1):zoomValXY(1)+zoomValXY(3)-1);
+            regionOffset = zoomValXY([2 1])-1;
+          case 'globalZoom'
+            for nn=1:nDim
+              imIndex{nn}       = zoomVal(nn,1):sum(zoomVal(nn,:))-1;
+            end
+            if withAlpha && sw  selectedRegion = alphaMap{1}(imIndex{:});
+            else                selectedRegion = data{1}(imIndex{:});
+            end
+          case 'image'
+            regionOffset = [0 0];
         end
         selectedSize = size(selectedRegion);
         switch mnmx
-            case 'min'
-                [extrVal, extrPos] = min(selectedRegion(:));
-            case 'max'
-                [extrVal, extrPos] = max(selectedRegion(:));
+          case 'min'
+            [~, extrPos] = min(selectedRegion(:));
+          case 'max'
+            [~, extrPos] = max(selectedRegion(:));
         end
-        [extrPosX, extrPosY] = ind2sub(selectedSize,extrPos);
-        currPos(xySel(1)) =  extrPosX + regionOffset(1);
-        currPos(xySel(2)) =  extrPosY + regionOffset(2);
+        extrPosSub = cell(1,numel(selectedSize));
+        [extrPosSub{:}] = ind2sub(selectedSize,extrPos);
+        if strcmp(zmim,'globalZoom')
+          for nn=1:nDim
+            currPos(nn) = zoomVal(nn,1) + extrPosSub{nn} - 1;
+          end
+        else
+          currPos(xySel(1)) =  extrPosSub{1} + regionOffset(1);
+          currPos(xySel(2)) =  extrPosSub{2} + regionOffset(2);
+        end
         updateSelection(1:nDim);
+        if debugMatVis, debugMatVisFcn(2); end
     end
     function setJumpPos(hO, ev, num)  %#ok
         if debugMatVis, debugMatVisFcn(1); end
@@ -4508,11 +4547,20 @@ end
         %right-clicks' in main GUI
         if strcmp(get(gui,'SelectionType'),'alt')
             p1 = round(get(gui,'CurrentPoint'));
-            btPosAspectRatio = get(tbAspRatio,  'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0];
-            btPosPlotsXLim   = get(tb_plotsXLim, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
-            btPosPlotsYLim   = get(tb_plotsYLim, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
-            btPosMean        = get(bt_mean,      'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
-            btPos_100pct     = get(bt_100pct,   'Position') + get(panel_imageControls, 'Position') .* [1 1 0 0];
+            btPosAspectRatio      = get(tbAspRatio,         'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0];
+            btPosPlotsXLim        = get(tb_plotsXLim,       'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
+            btPosPlotsYLim        = get(tb_plotsYLim,       'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
+            btPosMean             = get(bt_mean,            'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
+            btPos_100pct          = get(bt_100pct,          'Position') + get(panel_imageControls, 'Position') .* [1 1 0 0];
+            
+            btPos_jumpMin         = get(bt_jumpMin,         'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
+            btPos_jumpMax         = get(bt_jumpMax,         'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
+            btPos_findLocalMinImg = get(bt_findLocalMinImg, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
+            btPos_findLocalMaxImg = get(bt_findLocalMaxImg, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
+            btPos_findLocalMinZm  = get(bt_findLocalMinZm,  'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
+            btPos_findLocalMaxZm  = get(bt_findLocalMaxZm,  'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
+            btPos_findGlobalMinZm = get(bt_findGlobalMinZm, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
+            btPos_findGlobalMaxZm = get(bt_findGlobalMaxZm, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
             % Right click on play buttons: play backwards
             revPlay = NaN;
             for ii = 1:nDim
@@ -4621,6 +4669,14 @@ end
                 tempWinEtxt = uicontrol(tempWin, 'Style', 'Edit', 'Position', [50 10 40 15], ...
                     'String',[num2str(currWinScale)],'Callback',@setWinScale,...
                     'HorizontalAlignment', 'center');
+            elseif pointInArea(p1, btPos_jumpMin),         jumpPos([],[],'min',0)
+            elseif pointInArea(p1, btPos_jumpMax),         jumpPos([],[],'max',0)
+            elseif pointInArea(p1, btPos_findLocalMinImg), findExtremum([],[],'min','image',0);
+            elseif pointInArea(p1, btPos_findLocalMaxImg), findExtremum([],[],'max','image',0);
+            elseif pointInArea(p1, btPos_findLocalMinZm),  findExtremum([],[],'min','zoom',0);
+            elseif pointInArea(p1, btPos_findLocalMaxZm),  findExtremum([],[],'max','zoom',0);
+            elseif pointInArea(p1, btPos_findGlobalMinZm), findExtremum([],[],'min','globalZoom',0);
+            elseif pointInArea(p1, btPos_findGlobalMaxZm), findExtremum([],[],'max','globalZoom',0);
             else
                 %Right click on main gui: Bring all visible windows to front
                 if get(tb_tifPar, 'Value')
@@ -5437,7 +5493,7 @@ end
                             cAInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cAInd(:)-1);
                             currIm{ii}  = reshape(c(cAInd), sz1(1:2));
                           elseif get(tb_switchRGB, 'Value')
-                            [~,cInd] = max(sum(c,4), [], 3); %squeeze() % used to be nanmax
+                            [~,cInd] = max(sum(c,4,'omitnan'), [], 3); %squeeze() % used to be nanmax
                             cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
                             c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
                             currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
@@ -5449,7 +5505,7 @@ end
                             warning(sprintf('MIN PROJECTION not understood in combination with alphaMap\nmin values of datamatrix is shown instead'))
                           end
                           if get(tb_switchRGB, 'Value')
-                            [~,cInd] = min(sum(c,4), [], 3); %squeeze() % used to be nanmax
+                            [~,cInd] = min(sum(c,4,'omitnan'), [], 3); %squeeze() % used to be nanmax
                             cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
                             c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
                             currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
@@ -12815,13 +12871,8 @@ end
 end
 
 %% To do:
-% - histogram for int values
 % - RGB mode: requires gamma
 % - two side sliders for zoom and other issues
-% - alphaMap: Open subset in new matVis does not export ‚alphaMap‘
-% - alphaMap: ROIdata are not updated while 'playing'
-% - alphaMap: Plot window could show (weighted mean) of ratio data AND (scaled?) alpha data
-% - Find max in zoom region?
 % - Extend more functions for several data sets (global hist, ...)
 % - Apply filter to alpha map? Checkbox or toggle button?
 % - 2D histogram feature:
