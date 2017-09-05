@@ -4253,34 +4253,10 @@ end
           p = round(p([2 1]));
           p(1) = max([min([p(1),size(currIm{1},1)]),1]);            %max([min([p(1),dim(xySel(2))]),1]);
           p(2) = max([min([p(2),size(currIm{1},2)]),1]);
-          %Display position / value of current point while inside Image
-          %window
-          % update imageWin / zoomWin Name
-          if customDimScale
-            if withDimUnits
-              myDU1 = sprintf(' %s',dimUnits{xySel(1)});
-              myDU2 = sprintf(' %s',dimUnits{xySel(2)});
-            else
-              myDU1 = []; myDU2 = [];
-            end
-            myPosStr = sprintf(' /  Position: (%f%s, %f%s)',...
-              num2str(round(pLoc(2)/pxWidth(xySel(1)))*pxWidth(xySel(1))),myDU1,...
-              num2str(round(pLoc(1)/pxWidth(xySel(2)))*pxWidth(xySel(2))),myDU2);
-          else
-            myPosStr = [];
-          end
-          myPixPos = sprintf(' /  Pixelpos.: (%d, %d)', p(1), p(2));
+          % Display position / value of current point while inside 
+          % imageWin / zoomWin Name
+          updateWinName(p,[any(myGcf == imageWin) any(myGcf == zoomWin)])
           if any(myGcf == imageWin)
-            for ii = 1:nMat
-              if withAlpha
-                set(imageWin(ii), 'Name', sprintf('Image (%s) - Value: %s, alphaValue: %s%s%s',...
-                  varName{ii},sprintf(' %f',currImVal{ii}(p(1),p(2),:)),...
-                  sprintf(' %f',currAlphaMap{ii}(p(1),p(2),:)),myPosStr,myPixPos))
-              else
-                set(imageWin(ii), 'Name', sprintf('Image (%s) - Value: %s%s%s',varName{ii},...
-                  sprintf(' %f',currImVal{ii}(p(1),p(2),:)),myPosStr,myPixPos))
-              end
-            end
             %Change cursor while inside / outside zoom region in
             %image window if not in roi selection mode
             if ~any(cell2mat(get(tb_newRoi, 'Value')))
@@ -4329,20 +4305,6 @@ end
               set(myGcf, 'WindowButtonDownFcn', @buttonDownCallback);
             end
           end
-          %Display position / value of current point while inside Zoom
-          %window
-          if any(myGcf == zoomWin)
-            for ii = 1:nMat
-              if withAlpha
-                set(zoomWin(ii), 'Name', sprintf('Zoom (%s) - Value: %s, alphaValue: %s%s%s',...
-                  varName{ii},sprintf(' %f',currImVal{ii}(p(1),p(2),:)),...
-                  sprintf(' %f',currAlphaMap{ii}(p(1),p(2),:)),myPosStr,myPixPos))
-              else
-                set(zoomWin(ii), 'Name', sprintf('Zoom (%s) - Value: %s%s%s',varName{ii},...
-                  sprintf(' %f',currImVal{ii}(p(1),p(2),:)),myPosStr,myPixPos))
-              end
-            end
-          end
         end
         % Code for dragging position line with left click when mouse is close
         % to current position.
@@ -4381,6 +4343,50 @@ end
             px = ((px-1)'.*diff(dimScale(varargin{1},:),1,2)./(dim(varargin{1})-1)')'+dimScale(varargin{1},1)';
         end
         if debugMatVis > 1, debugMatVisFcn(2); end
+    end
+    function updateWinName(p,sw)
+      % updates Image and Zoom window name according to sw
+      if debugMatVis > 1, debugMatVisFcn(1); end
+      % update imageWin / zoomWin Name
+      if customDimScale
+        pLoc = scaledLocation(p);
+        if withDimUnits
+          myDU1 = sprintf(' %s',dimUnits{xySel(1)});
+          myDU2 = sprintf(' %s',dimUnits{xySel(2)});
+        else
+          myDU1 = []; myDU2 = [];
+        end
+        myPosStr = sprintf(' /  Position: (%f%s, %f%s)',...
+          round(pLoc(2)/pxWidth(xySel(1)))*pxWidth(xySel(1)),myDU1,...
+          round(pLoc(1)/pxWidth(xySel(2)))*pxWidth(xySel(2)),myDU2);
+      else
+        myPosStr = [];
+      end
+      myPixPos = sprintf(' /  Pixelpos.: (%d, %d)', p(1), p(2));
+      for ii = 1:nMat
+        if withAlpha
+          if sw(1)
+            set(imageWin(ii), 'Name', sprintf('Image (%s) - Value: %s, alphaValue: %s%s%s',...
+              varName{ii},sprintf(' %f',currImVal{ii}(p(1),p(2),:)),...
+              sprintf(' %f',currAlphaMap{ii}(p(1),p(2),:)),myPosStr,myPixPos))
+          end
+          if sw(2)
+            set(zoomWin(ii), 'Name', sprintf('Zoom (%s) - Value: %s, alphaValue: %s%s%s',...
+              varName{ii},sprintf(' %f',currImVal{ii}(p(1),p(2),:)),...
+              sprintf(' %f',currAlphaMap{ii}(p(1),p(2),:)),myPosStr,myPixPos))
+          end
+        else
+          if sw(1)
+            set(imageWin(ii), 'Name', sprintf('Image (%s) - Value: %s%s%s',varName{ii},...
+              sprintf(' %f',currImVal{ii}(p(1),p(2),:)),myPosStr,myPixPos))
+          end
+          if sw(2)
+            set(zoomWin(ii), 'Name', sprintf('Zoom (%s) - Value: %s%s%s',varName{ii},...
+              sprintf(' %f',currImVal{ii}(p(1),p(2),:)),myPosStr,myPixPos))
+          end
+        end
+      end
+      if debugMatVis > 1, debugMatVisFcn(2); end
     end
     function toggleTooltipDisplay(varargin)
       if debugMatVis, debugMatVisFcn(1); end
@@ -4975,12 +4981,8 @@ end
                     currPos(xySel(ii)) = min([dim(xySel(ii)),max([1  ,pt(ii)])]);
                 end
             end
-            for ii = 1:nMat
-                set(imageWin(ii), 'Name', ['Image (',varName{ii},') - Pos: (', num2str(currPos(xySel)),')  Val: ',...
-                    num2str(currImVal{ii}(currPos(xySel(1)),currPos(xySel(2)),:))]);
-                set(zoomWin(ii), 'Name', ['Zoom (',varName{ii},') - Pos: (', num2str(currPos(xySel)),') Val: ',...
-                    num2str(currImVal{ii}(currPos(xySel(1)),currPos(xySel(2)),:)), '  Zoom: (', num2str(zoomValXY), ')']);
-            end
+            % update imageWin / zoomWin Name
+            updateWinName(currPos(xySel(1:2)),[1 1])
             if get(bt_mean, 'UserData') == 4 && any(currWin == imageWin)
                 zoomValXY = [currPos(xySel(2))-round(zoomValXY(3)/2) currPos(xySel(1))-round(zoomValXY(4)/2) zoomValXY(3) zoomValXY(4)];
                 updateZoom;
@@ -5129,22 +5131,8 @@ end
                     currPos(xySel(ii)) = min([dim(xySel(ii)),max([1  ,p(3-ii)])]);
                 end
             end
-            for ii = 1:nMat
-              if withAlpha
-                set(imageWin(ii), 'Name', ['Image (',varName{ii},') - Pos: (', num2str(currPos(xySel)),...
-                  ')  Val: ', num2str(currImVal{ii}(currPos(xySel(1)),currPos(xySel(2)),:)),...
-                  ',  alphaVal: ', num2str(currAlphaMap{ii}(currPos(xySel(1)),currPos(xySel(2)),:))]);
-                set(zoomWin(ii), 'Name', ['Zoom (',varName{ii},') - Pos: (', num2str(currPos(xySel)),...
-                  ') Val: ',num2str(currImVal{ii}(currPos(xySel(1)),currPos(xySel(2)),:)),...
-                  ', alphaVal: ',num2str(currAlphaMap{ii}(currPos(xySel(1)),currPos(xySel(2)),:)),...
-                  ', Zoom: (', num2str(zoomValXY), ')']);
-              else
-                set(imageWin(ii), 'Name', ['Image (',varName{ii},') - Pos: (', num2str(currPos(xySel)),')  Val: ',...
-                  num2str(currImVal{ii}(currPos(xySel(1)),currPos(xySel(2)),:))]);
-                set(zoomWin(ii), 'Name', ['Zoom (',varName{ii},') - Pos: (', num2str(currPos(xySel)),') Val: ',...
-                  num2str(currImVal{ii}(currPos(xySel(1)),currPos(xySel(2)),:)), '  Zoom: (', num2str(zoomValXY), ')']);
-              end
-            end
+            % update imageWin / zoomWin Name
+            updateWinName(currPos(xySel(1:2)),[1 1])
             if get(bt_mean, 'UserData') == 4 && any(currWin == imageWin)
                 zoomValXY = [currPos(xySel(2))-round(zoomValXY(3)/2) currPos(xySel(1))-round(zoomValXY(4)/2) zoomValXY(3) zoomValXY(4)];
                 updateZoom;
