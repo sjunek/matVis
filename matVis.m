@@ -8367,7 +8367,7 @@ end
         updateObjects;
         % Jump to ROI selection position
         if ~isempty(roiWin)
-            set(jump2ROIPos_cb, 'Value') = config.jump2ROIPos;
+            set(jump2ROIPos_cb, 'Value',config.jump2ROIPos);
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
@@ -10493,10 +10493,10 @@ end
         %Update Roi lines and numbers in image/zoom windows
         set(roiLine.roi, 'XData', roiList(numberRoi(1)).corners(1  ,:),...
             'YData', roiList(numberRoi(1)).corners(2,:));
-        set(roiLine.im, 'LineWidth',1,'Color','w');              %'Color', 'b');
-        set(roiLine.zoom, 'LineWidth',1,'Color','w');            %'Color', 'b');
-        set(roiLine.im(:,numberRoi), 'LineWidth',3);   %'Color','r');
-        set(roiLine.zoom(:,numberRoi), 'LineWidth',3); %'Color','r');
+        set(roiLine.im, 'LineWidth',.5,'Color','w');              %'Color', 'b');
+        set(roiLine.zoom, 'LineWidth',.5,'Color','w');            %'Color', 'b');
+        set(roiLine.im(:,numberRoi), 'LineWidth',1);   %'Color','r');
+        set(roiLine.zoom(:,numberRoi), 'LineWidth',1); %'Color','r');
         set(roiText.im, 'FontWeight', 'normal','Color','w');     %'Color', 'b');
         set(roiText.zoom, 'FontWeight', 'normal','Color','w');   %'Color', 'b');
         set(roiText.im(:,numberRoi), 'FontWeight', 'bold'); %'Color','r');
