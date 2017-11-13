@@ -210,7 +210,7 @@ if nargin == 0 || ischar(varargin{1})
     isCustomTif = 0;
     for i = 1:size(f,2)
         [pn, fn, ext] = fileparts(f{i}); %#ok
-        display(['Loading file ', f{i}]);
+        disp(['Loading file ', f{i}]);
         if strcmp(ext, '.tif') || strcmp(ext, '.tiff')
             %Try to read as custom tif
             w = imfinfo([p f{i}]);
@@ -221,7 +221,7 @@ if nargin == 0 || ischar(varargin{1})
                     filePath = p;
                 end
                 %                 if ~isequal(par{i}.dim, par{1}.dim)
-                %                     display('Error: Data sets need to have identical dimensions!');
+                %                     disp('Error: Data sets need to have identical dimensions!');
                 %                     return;
                 %                 end
                 try
@@ -229,8 +229,8 @@ if nargin == 0 || ischar(varargin{1})
                 catch    %#ok
                     assignin('base', ['tifPar_',num2str(i)], par{i});
                 end
-                display('File description: ');
-                display(par{i}.description);
+                disp('File description: ');
+                disp(par{i}.description);
                 defaultColormap{i} = []; %#ok
                 % Data scaling and names, assume it's the same for all files
                 if i==1
@@ -423,8 +423,7 @@ if nargin == 0 || ischar(varargin{1})
                 [data{i},defaultColormap{i}] = imread([p,f{i}]);  %#ok
             end
             if ~isequal(size(data{1}), size(data{i}))
-                display('Error: Data sets need to have identical dimensions!');
-                return;
+                error('Data sets need to have identical dimensions!');
             end
         end
         %Check Input Dimensions
@@ -585,7 +584,7 @@ if debugMatVis, debugMatVisFcn(1); end
 dim = size(data{1});                     %Dimensions of data set
 nDim = length(dim);                      %Number of dimensions
 if length(data{1})==numel(data{1})
-    disp('Error: matVis not suitable for (1D) vectors. Ever heard of the function ''plot''?');
+    warning('matVis not suitable for (1D) vectors. Ever heard of the function ''plot''?');
     figure; plot(data{1});
     return
 elseif  any(dim == 1)
@@ -621,12 +620,6 @@ for i=1:nMat
     if minVal(i) == maxVal(i)
         minVal(i) = maxVal(i)-1; % to avoid error messages
         warning('All numbers in the data set ''%s'' equal %f.',varName{i},minVal(i))
-% varName{i} should never be empty (removed 26.02.2017, please delete after some time :-))
-%         if isempty(varName{i})
-%             display(['Warning: All numbers in the data set #' num2str(i) ' equal ' num2str(minVal(i)) '.']);
-%         else
-%             display(['Warning: All numbers in the data set ''' varName{i} ''' equal ' num2str(minVal(i)) '.']);
-%         end
     end
     cmMinMax(i,:) = [minVal(i) maxVal(i)]'; %Colormap Limits
 end
@@ -638,12 +631,6 @@ if withAlpha
         if minVal(nMat+i) == maxVal(nMat+i)
             minVal(nMat+i) = maxVal(nMat+i)-1; % to avoid error messages
             warning('All numbers in alpha map to data set ''%s'' equal %f.',varName{i},minVal(nMat+i))
-% varName{i} should never be empty (removed 26.02.2017, please delete after some time :-))
-%             if isempty(varName{i})
-%                 display(['Warning: All numbers in alpha map #' num2str(i) ' equal ' num2str(maxVal(nMat+i)) '.']);
-%             else
-%                 display(['Warning: All numbers in alpha map to data set ''' varName{i} ''' equal ' num2str(maxVal(nMat+i)) '.']);
-%             end
         end
     end
     if all(maxVal(nMat+1:end)<=1) && all(minVal(nMat+1:end)>=0) % If all alpha values are between 0 and 1, use [0,1] as alpha limits
@@ -4823,10 +4810,13 @@ end
         currWin = myGcf;
         % Leave if window is empty (can happen for plotWin in ROI mode)
         if isempty(get(currWin, 'Children'))
-            if debugMatVis
-                display([repmat(' ',[1 debugIndent*fctLevel]) num2str(fctCount.(ST)) ': End   buttonDownCallback']);
-                fctLevel = fctLevel-1;
-            end
+          % does this ever happen???
+          stopHere
+          % following code looks very old style
+            %if debugMatVis
+            %    disp([repmat(' ',[1 debugIndent*fctLevel]) num2str(fctCount.(ST)) ': End   buttonDownCallback']);
+            %    fctLevel = fctLevel-1;
+            %end
             %return
         else
           % "Normal" button clicks
@@ -7925,10 +7915,6 @@ end
         else
             set(tifParFig, 'Visible', 'off');
         end
-        if debugMatVis
-            display([repmat(' ',[1 debugIndent*fctLevel]) num2str(fctCount.(ST)) ': End   showTifPar']);
-            fctLevel = fctLevel-1;
-        end
         function saveCTif(varargin)
             par{1}.description = get(txtDescr, 'String');
             writeCustomTif(data{1}, par{1},  [filePath varName{1}]);
@@ -7990,7 +7976,6 @@ end
             set(tbHist, 'Value', 1);
             updateHist;
         end
-        calculatingGlobalHist = 0;
         if debugMatVis, debugMatVisFcn(2); end
     end
     function updateSldLim(varargin)
@@ -8093,6 +8078,7 @@ end
             set(histWin, 'Visible','off');
         end
         set(tbHist, 'Enable','on','Tooltipstring','Show / hide histogram','String','','CData',histIcon);
+        calculatingGlobalHist = 0;
         updateHistObjects;
         % Sort data for percentile function, called only once
         %         if isempty(dataPerc)
@@ -9296,7 +9282,8 @@ end
                     save([p,f],'matVisProfileExport');
                 end
                 clear matVisProfileExport profileListExp
-                display('Profile export complete!');
+                warning(sprintf('ATTANTION!!!\nPlease be aware that independent from selection all profiles will be exported...'))
+                disp('Profile export complete!');
             end
             if debugMatVis, debugMatVisFcn(2); end
         end
@@ -10977,7 +10964,7 @@ end
                 save([p,f],'matVisRoiExport');
             end
             clear matVisRoiExport roiListExp
-            display('Roi export complete!');
+            disp('Roi export complete!');
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
@@ -11689,7 +11676,7 @@ end
         newOutputStrct = out;
         if debugMatVis, debugMatVisFcn(2); end
     end
-    %% Movie recording functions
+%% Movie recording functions
     function vidGenerator(varargin)
       if debugMatVis, debugMatVisFcn(1); end
       if ~get(tbRecord, 'Value')
@@ -12899,6 +12886,8 @@ end
 
 
 %% Known bugs:
+% - histogram update of "zoom region" and "Current Image" wrong when applying gamma to data
+% - histogram not updated at all when 'sldLimMin'/'sldLimMax' was changed
 % - Handling of figure icons not 'clean' (e.g. one of them might appear as
 %   icon of Matlab figure container)
 % - Produces complete Matlab crash when data with alpha maps are loaded and
