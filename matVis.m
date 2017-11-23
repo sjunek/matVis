@@ -5877,7 +5877,7 @@ end
         brightness(isnan(brightness))=0;
         % Apply contrast adjustments by linearly scaling the brightness
         % values according to the slider settings
-        brightness = single(scaleMinMax(brightness)); %, 0,1, relMin, relMax %Scale to interval [0,1] so that the relativ min/max values can be used
+        brightness = single(scaleMinMax( brightness, 0,1, 0, max(brightness(:)) )); % Scale to interval [0,1] so that the relativ min/max values can be used
         brightness = single((brightness - relMin) / (relMax - relMin)); % Scale to relative min/max values
         brightness(brightness < 0) = 0;  % cut off values below black point
         brightness(brightness > 1) = 1;  % cut off values above white point
