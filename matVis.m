@@ -3724,7 +3724,7 @@ end
         if rgbCount
             rgbCount = nDim - 2;
         end
-        if get(tb_switchRGB, 'Value')
+        if ~withAlpha && get(tb_switchRGB, 'Value')
             switchRGB;
         end
         if projMethod
@@ -5463,7 +5463,7 @@ end
                 end
                 % Find number of dimension of xySel(1), xySel(2) and projDim with
                 % respect to extracted 3D data volume
-                if get(tb_switchRGB, 'Value') == 0
+                if withAlpha || get(tb_switchRGB, 'Value') == 0
                   xx  = find(xySel(1) == sort([xySel projDim]));
                   yy  = find(xySel(2) == sort([xySel projDim]));
                   p   = find(projDim == sort([xySel projDim]));
@@ -5475,7 +5475,7 @@ end
                 end
                 for ii = 1:nMat
                     % Sort dimension to [xySel(1) xySel(2) projDim]
-                    if get(tb_switchRGB, 'Value') == 0
+                    if withAlpha || get(tb_switchRGB, 'Value') == 0
                       c = squeeze(permute(squeeze(data{ii}(imIndex{:})),[xx yy p]));
                       if withAlpha
                         cA = squeeze(permute(squeeze(alphaMap{ii}(imIndex{:})),[xx yy p]));
@@ -5502,8 +5502,7 @@ end
                         case 2      %minimum projection
                           if withAlpha
                             warning(sprintf('MIN PROJECTION not understood in combination with alphaMap\nmin values of datamatrix is shown instead'))
-                          end
-                          if get(tb_switchRGB, 'Value')
+                          elseif get(tb_switchRGB, 'Value')
                             [~,cInd] = min(sum(c,4,'omitnan'), [], 3); %squeeze() % used to be nanmax
                             cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
                             c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
@@ -6399,7 +6398,7 @@ end
                             end
                             % Plot along any other direction
                         elseif get(bt_mean, 'UserData')==5 && rgbDim ~= plotDim(ii)  %RGB plot - not possible if plot dimension and RGB dimension are identical
-                            if get(tb_switchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMean, 'Value'))% Stretch RGB mode
+                            if ~withAlpha && get(tb_switchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMean, 'Value'))% Stretch RGB mode
                                 for ll = 1:dim(rgbDim)
                                     plotIndex{rgbDim} = ll;
                                     plotValues{jj,ii,ll} = data{jj}(plotIndex{:});
@@ -9361,7 +9360,7 @@ end
             end
             imIndexProfExp{xySel(1)} = ':';
             imIndexProfExp{xySel(2)} = ':';
-            if get(tb_switchRGB, 'Value')
+            if ~withAlpha && get(tb_switchRGB, 'Value')
                 if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value'))
                     imIndexProfExp{rgbDim} = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;
                 else
@@ -9395,7 +9394,7 @@ end
                 end
                 for ii = 1:1 % nMat
                     c = squeeze(data{ii}(imIndexProfExp{:}));
-                    if get(tb_switchRGB, 'Value')
+                    if ~withAlpha && get(tb_switchRGB, 'Value')
                         [s,ind] = sort([xySel,rgbDim]);
                         currImProfExp{ii} = ipermute(c, ind);
                     else
@@ -10232,14 +10231,14 @@ end
             plotIndex{xySel(1)} = roiList(numberRoi).index.x;                       %Fill xySel dimension indices with roi indices
             plotIndex{xySel(2)} = roiList(numberRoi).index.y;
             plotIndex{projDim} = ones(size(roiList(numberRoi).index.x,1),1);        %Fill plot-dimension with ones (for first point)
-            if get(tb_switchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value'))
+            if ~withAlpha && get(tb_switchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value'))
               plotIndex{rgbDim} = ones(size(roiList(numberRoi).index.x,1),1);        %Fill plot-dimension with ones (for first point)
             end
             plotIndex = sub2ind(dim, plotIndex{:});                         %Determine linear index of roi pixels for first point
             plotIndex = repmat(plotIndex, [1 dim(projDim)]);                %Replicate linear index
             deltaIndex = prod(dim(1:projDim-1));                             %Difference value of indices along plotted dimension
             plotIndex = plotIndex + repmat(deltaIndex * (0:dim(projDim)-1),[size(roiList(numberRoi).index.x,1) 1]);   %Extend to all other points by adding deltaInd for each step
-            if get(tb_switchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value'))
+            if ~withAlpha && get(tb_switchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value'))
               plotIndex = repmat(plotIndex(:), [1 dim(rgbDim)]);                %Replicate linear index
               deltaIndex = prod(dim(1:rgbDim-1));                             %Difference value of indices along plotted dimension
               plotIndex = plotIndex + repmat(deltaIndex * (0:dim(rgbDim)-1),[size(roiList(numberRoi).index.x,1)*dim(projDim) 1]);   %Extend to all other points by adding deltaInd for each step
