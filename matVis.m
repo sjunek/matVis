@@ -1180,8 +1180,8 @@ icon_image_24x24(:,:,2) = [153,179,209,234,250,255,255,255,255,255,250,234,213,1
 icon_image_24x24(:,:,3) = [255,255,255,255,252,241,235,235,236,251,255,255,255,255,255,255,255,255,255,255,246,224,201,184;255,255,255,240,215,206,192,191,191,202,221,239,253,255,255,255,255,255,255,255,243,215,208,200;255,255,235,194,172,162,149,149,139,146,159,181,205,225,251,255,255,255,255,255,202,193,237,225;255,192,153,149,114,94,97,89,68,63,77,100,126,157,171,182,189,202,218,202,193,193,193,234;247,163,129,100,88,67,58,32,16,8,12,27,44,62,82,120,152,173,211,205,193,202,214,246;217,147,117,115,83,51,22,2,0,0,0,0,0,5,18,58,95,123,186,223,193,222,255,255;200,132,117,109,78,39,6,0,0,0,0,0,0,0,0,0,23,61,135,176,191,234,255,255;191,131,121,108,75,39,0,0,0,0,0,0,0,0,0,0,0,11,70,113,164,243,255,255;182,142,139,108,72,39,7,0,0,0,0,0,0,0,0,0,0,0,5,59,123,188,243,255;192,145,156,126,74,51,24,0,0,0,0,0,0,0,0,0,0,0,0,18,86,155,244,255;254,225,179,146,113,89,56,20,0,0,0,0,0,0,0,0,0,0,0,0,61,153,226,255;252,229,195,162,147,122,99,65,36,8,0,0,0,0,0,0,0,0,0,0,27,122,204,252;255,238,225,197,181,150,130,107,81,61,33,3,0,0,0,0,0,0,0,0,8,83,174,236;255,245,234,228,217,193,172,146,119,101,79,34,4,0,0,0,0,0,0,0,0,71,156,213;255,251,234,234,241,238,216,185,158,141,123,80,31,0,0,0,0,0,0,0,0,59,146,204;255,255,237,234,241,255,255,212,184,170,154,120,67,15,0,0,0,0,0,0,0,54,131,190;255,255,243,234,236,255,251,232,217,206,179,147,96,46,1,0,0,0,0,0,3,64,140,191;255,255,248,234,234,251,245,234,235,244,211,178,125,83,39,0,0,0,0,0,29,96,159,202;254,255,254,234,234,245,241,234,243,255,236,204,157,117,85,35,9,3,4,17,56,120,176,221;236,254,255,241,234,243,237,234,247,255,253,235,180,145,123,92,61,52,54,73,103,146,193,243;201,222,250,245,234,237,234,234,254,255,255,253,210,179,164,136,121,108,117,130,157,177,218,255;177,195,220,248,234,234,234,241,255,255,255,255,233,217,208,192,173,154,157,176,194,217,243,255;155,175,196,219,232,234,234,247,255,255,255,255,234,234,241,237,223,214,208,213,231,245,254,255;149,157,177,196,227,254,255,255,255,255,255,255,255,255,255,255,254,254,254,255,255,255,255,255];
 icon_image_24x24 = double(icon_image_24x24)/255;
 icon_image_14x14 = icon_image_24x24(6:19,6:19,:);
-icon_AlphaImI_24 = exp(-((((0:1/23:1)-.5).^2 + ((0:1/23:1)'-.5).^2)/.2)); % gauss function
-icon_AlphaImI_14 = exp(-((((0:1/13:1)-.5).^2 + ((0:1/13:1)'-.5).^2)/.2)); % gauss function
+icon_AlphaImI_24 = repmat(exp(-(( repmat(((0:1/23:1)-.5).^2, [24 1]) + repmat( ((0:1/23:1)'-.5).^2, [1 24]) )/.2)), [1 1 3]); % gauss function
+icon_AlphaImI_14 = repmat(exp(-(( repmat(((0:1/13:1)-.5).^2, [14 1]) + repmat( ((0:1/13:1)'-.5).^2, [1 14]) )/.2)), [1 1 3]); % gauss function
 
 
 icon_zoom = [255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255;255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255;255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,254,254,255,255;255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,254,254,254,255,255;255,255,254,254,255,254,254,254,255,194,172,156,143,140,144,167,221,255,255,254,254,254,254,254,255,255,254,254,254,254,254,254;255,255,254,254,254,254,254,254,180,136,124,113,104,100,101,110,130,197,254,254,254,254,254,254,255,255,254,254,254,254,254,255;255,254,254,254,254,255,254,153,145,161,188,205,212,196,173,127,103,106,159,255,255,255,254,254,255,255,255,254,254,255,255,255;255,254,254,254,255,255,177,139,172,248,255,255,254,251,227,177,131,96,107,211,255,254,254,254,255,255,255,254,254,255,255,255;255,254,254,254,255,179,141,166,254,255,255,244,231,222,215,221,205,111,96,121,221,254,254,254,255,255,254,254,254,255,255,255;255,254,254,255,255,156,135,198,255,255,255,234,223,215,206,198,182,137,101,95,168,254,254,255,255,255,254,254,254,255,255,255;255,254,254,255,255,137,127,231,255,245,230,222,214,205,197,183,166,158,104,88,145,254,254,255,255,255,254,254,254,255,255,255;255,254,254,255,255,126,121,240,252,232,222,214,205,197,190,181,168,162,100,87,136,254,254,255,255,255,254,254,254,254,255,255;254,254,254,255,255,119,113,231,241,224,215,208,198,192,186,194,202,168,98,86,135,254,254,255,255,255,255,254,254,254,255,255;255,255,255,255,255,119,109,200,223,214,203,198,190,190,214,237,224,160,96,88,137,255,255,255,255,255,255,255,255,255,255,255;255,255,255,255,255,134,109,150,192,209,190,183,188,206,239,245,197,107,89,92,156,255,255,255,255,255,255,255,255,255,255,255;228,205,205,205,248,163,111,109,163,215,148,119,140,201,218,181,112,41,43,117,199,255,252,255,255,255,255,255,255,255,255,255;245,205,205,205,235,254,142,100,107,129,102,109,126,168,161,113,42,37,37,72,159,255,255,255,255,255,255,255,255,255,255,255;255,208,205,205,222,255,221,119,98,77,62,69,68,105,107,94,64,37,50,84,99,181,244,255,255,255,255,255,255,255,255,255;255,225,205,205,208,255,255,211,144,72,41,38,47,87,88,92,103,94,88,87,87,97,204,255,255,255,255,255,255,255,255,255;255,238,205,205,205,242,255,255,214,107,74,61,81,105,111,136,115,70,43,74,87,87,99,179,238,218,205,208,218,235,255,255;255,255,208,205,205,228,255,255,244,205,205,205,248,255,254,248,180,119,66,83,88,87,87,74,153,205,205,205,205,228,255,255;255,255,225,205,205,215,255,255,228,198,195,199,236,236,235,232,178,177,115,99,94,88,84,37,48,182,231,238,228,242,255,255;255,255,238,205,205,205,252,255,215,205,202,222,241,241,239,237,187,202,173,155,119,94,74,37,37,49,171,255,255,255,255,255;255,255,252,205,205,205,235,252,205,205,205,248,255,255,254,254,204,197,202,226,171,117,93,41,37,37,50,181,248,255,255,255;255,255,255,222,205,205,228,238,205,205,215,255,255,255,255,255,205,205,204,230,232,167,112,74,41,37,37,55,205,235,255,255;255,255,255,235,205,205,215,228,205,205,231,255,255,255,255,255,205,205,205,242,255,228,169,120,88,64,40,55,205,208,251,255;255,255,255,252,205,205,205,215,205,205,248,255,255,255,255,255,205,205,205,242,255,255,241,171,113,98,103,108,191,205,235,255;255,255,255,255,218,205,205,205,205,215,255,255,255,255,255,255,205,205,205,242,255,255,244,181,154,137,153,164,186,205,246,255;255,255,255,255,231,205,205,205,205,231,255,255,255,255,255,255,205,205,205,242,255,255,230,187,150,122,148,178,184,227,255,255;255,255,255,255,248,205,205,205,205,248,255,255,255,255,255,255,205,205,205,242,255,255,248,228,218,205,208,218,235,255,255,255;255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255;255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255];
@@ -3724,7 +3724,7 @@ end
         if rgbCount
             rgbCount = nDim - 2;
         end
-        if ~withAlpha && get(tb_switchRGB, 'Value')
+        if rgbCount
             switchRGB;
         end
         if projMethod
@@ -5201,7 +5201,7 @@ end
               updateRoiSelection(get(roiListbox, 'Value')); % updateRoiProperties(0);
             end
         end
-        if any(get(bg_colormap, 'SelectedObject') == [cmImage cmZoom cmThresh]) && ~get(tb_switchRGB, 'Value')
+        if any(get(bg_colormap, 'SelectedObject') == [cmImage cmZoom cmThresh]) && ~rgbCount
             updateColormap;
         end
         if movdata.rec
@@ -5299,7 +5299,7 @@ end
         end
         updateImages;
         drawPlots;
-        if any(get(bg_colormap, 'SelectedObject') == [cmImage cmZoom cmThresh]) && ~get(tb_switchRGB, 'Value')
+        if any(get(bg_colormap, 'SelectedObject') == [cmImage cmZoom cmThresh]) && ~rgbCount
             updateColormap;
         end
         if debugMatVis, debugMatVisFcn(2); end
@@ -5424,7 +5424,7 @@ end
                     currAlphaMap{ii} = cA;
                 end
             end
-        elseif get(tb_switchRGB, 'Value')
+        elseif rgbCount
             if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value'))
                 imIndex{rgbDim} = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;  
             else
@@ -5442,7 +5442,7 @@ end
         if projMethod == 0
                 for ii = 1:nMat
                     c = squeeze(data{ii}(imIndex{:}));
-                    if ~withAlpha && get(tb_switchRGB, 'Value')
+                    if rgbCount
                       [s,ind] = sort([xySel,rgbDim]);
                       currIm{ii} = ipermute(c, ind);
                     else
@@ -5463,27 +5463,27 @@ end
                 end
                 % Find number of dimension of xySel(1), xySel(2) and projDim with
                 % respect to extracted 3D data volume
-                if withAlpha || get(tb_switchRGB, 'Value') == 0
-                  xx  = find(xySel(1) == sort([xySel projDim]));
-                  yy  = find(xySel(2) == sort([xySel projDim]));
-                  p   = find(projDim == sort([xySel projDim]));
-                else
+                if rgbCount
                   xx  = find(xySel(1) == sort([xySel projDim rgbDim]));
                   yy  = find(xySel(2) == sort([xySel projDim rgbDim]));
                   p   = find(projDim  == sort([xySel projDim rgbDim]));
                   rgb = find(rgbDim   == sort([xySel projDim rgbDim]));
+                else
+                  xx  = find(xySel(1) == sort([xySel projDim]));
+                  yy  = find(xySel(2) == sort([xySel projDim]));
+                  p   = find(projDim == sort([xySel projDim]));
                 end
                 for ii = 1:nMat
                     % Sort dimension to [xySel(1) xySel(2) projDim]
-                    if withAlpha || get(tb_switchRGB, 'Value') == 0
+                    if rgbCount
+                      c = squeeze(permute(squeeze(data{ii}(imIndex{:})),[xx yy p rgb]));
+                      sz1 = size(c);
+                    else
                       c = squeeze(permute(squeeze(data{ii}(imIndex{:})),[xx yy p]));
                       if withAlpha
                         cA = squeeze(permute(squeeze(alphaMap{ii}(imIndex{:})),[xx yy p]));
                         sz1 = size(cA);
                       end
-                    else
-                      c = squeeze(permute(squeeze(data{ii}(imIndex{:})),[xx yy p rgb]));
-                      sz1 = size(c);
                     end
                     switch projMethod
                         case 1      %maximum projection
@@ -5491,7 +5491,7 @@ end
                             [currAlphaMap{ii},cAInd] = max(cA, [], 3); %squeeze() % used to be nanmax
                             cAInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cAInd(:)-1);
                             currIm{ii}  = reshape(c(cAInd), sz1(1:2));
-                          elseif get(tb_switchRGB, 'Value')
+                          elseif rgbCount
                             [~,cInd] = max(sum(c,4,'omitnan'), [], 3); %squeeze() % used to be nanmax
                             cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
                             c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
@@ -5502,7 +5502,7 @@ end
                         case 2      %minimum projection
                           if withAlpha
                             warning(sprintf('MIN PROJECTION not understood in combination with alphaMap\nmin values of datamatrix is shown instead'))
-                          elseif get(tb_switchRGB, 'Value')
+                          elseif rgbCount
                             [~,cInd] = min(sum(c,4,'omitnan'), [], 3); %squeeze() % used to be nanmax
                             cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
                             c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
@@ -5524,7 +5524,7 @@ end
                             % standard error of mean:  SEM = sum( (x - <x>)^2.*w, 3) ./ sum(w, 3) ./ sz(3)
                             %currIm{ii}       = sqrt( sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'))./sqrt(sum(~isnan(c),3));
                             currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')  ./sum(cA,3, 'omitnan');           % mean Intensity
-                          elseif get(tb_switchRGB, 'Value')
+                          elseif rgbCount
                             [~,cInd] = std(sum(c,4), [], 3, 'omitnan'); %squeeze() % used to be nanmax
                             cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
                             c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
@@ -5537,7 +5537,7 @@ end
                             currIm{ii}       = sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')...
                               ./sum(cA.*~isnan(c),3, 'omitnan');  % standard error of currIm{ii} -> SEM ././sqrt(sum(~isnan(A_rr),3))
                             currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')  ./sum(cA,3, 'omitnan');          % mean Intensity
-                          elseif get(tb_switchRGB, 'Value')
+                          elseif rgbCount
                             [~,cInd] = var(sum(c,4), [], 3, 'omitnan'); 
                             cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
                             c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
@@ -5585,7 +5585,7 @@ end
                 busy(0);
             end
         %Non-RGB mode
-        if withAlpha || get(tb_switchRGB, 'Value') == 0
+        if ~rgbCount %withAlpha || get(tb_switchRGB, 'Value') == 0
             currImVal = currIm; % Remember "original" values
             if withAlpha
                 currAlphaMapVal = currAlphaMap;
@@ -6398,7 +6398,7 @@ end
                             end
                             % Plot along any other direction
                         elseif get(bt_mean, 'UserData')==5 && rgbDim ~= plotDim(ii)  %RGB plot - not possible if plot dimension and RGB dimension are identical
-                            if ~withAlpha && get(tb_switchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMean, 'Value'))% Stretch RGB mode
+                            if rgbCount && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMean, 'Value'))% Stretch RGB mode
                                 for ll = 1:dim(rgbDim)
                                     plotIndex{rgbDim} = ll;
                                     plotValues{jj,ii,ll} = data{jj}(plotIndex{:});
@@ -7557,7 +7557,7 @@ end
             %             updateColormap;
             updateObjects; % Adjust length of position lines in zoom window to new zoom setting
         end
-        if (~withAlpha && get(tb_switchRGB, 'Value')) && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value')) && get(tb_lockPlots2Zoom(rgbDim), 'Value')
+        if rgbCount && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value')) && get(tb_lockPlots2Zoom(rgbDim), 'Value')
             updateImages;
         end
         if get(tb_plotsXLim, 'Value') && get(tbWin(3),'Value')
@@ -8183,7 +8183,7 @@ end
         %Gamma
         currConfig.gamma  = currGamma;
         %RGB Mode
-        currConfig.RGB = get(tb_switchRGB, 'Value');
+        currConfig.RGB = logical(rgbCount);
         currConfig.rgbCount = rgbCount;
         %Colormap Mode (Global, Local or Manual)
         currConfig.colormapMode = get(get(bg_colormap, 'SelectedObject'), 'String');   %Default: 'Global'
@@ -8508,6 +8508,10 @@ end
           inputArg{end+1} = 'matNames';
           inputArg{end+1} = varName;%{allNames};
         %end
+        if colorBarLabelString
+          inputArg{end+1} = 'colorBarLabel';
+          inputArg{end+1} = {colorBarLabelString};
+        end
         %{         
         for iii = 1:numberOptionalArgs
           switch  optionalArgIdentifier{iii}
@@ -9360,7 +9364,7 @@ end
             end
             imIndexProfExp{xySel(1)} = ':';
             imIndexProfExp{xySel(2)} = ':';
-            if ~withAlpha && get(tb_switchRGB, 'Value')
+            if rgbCount
                 if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value'))
                     imIndexProfExp{rgbDim} = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;
                 else
@@ -9394,7 +9398,7 @@ end
                 end
                 for ii = 1:1 % nMat
                     c = squeeze(data{ii}(imIndexProfExp{:}));
-                    if ~withAlpha && get(tb_switchRGB, 'Value')
+                    if rgbCount
                         [s,ind] = sort([xySel,rgbDim]);
                         currImProfExp{ii} = ipermute(c, ind);
                     else
@@ -10231,14 +10235,14 @@ end
             plotIndex{xySel(1)} = roiList(numberRoi).index.x;                       %Fill xySel dimension indices with roi indices
             plotIndex{xySel(2)} = roiList(numberRoi).index.y;
             plotIndex{projDim} = ones(size(roiList(numberRoi).index.x,1),1);        %Fill plot-dimension with ones (for first point)
-            if ~withAlpha && get(tb_switchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value'))
+            if rgbCount && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value'))
               plotIndex{rgbDim} = ones(size(roiList(numberRoi).index.x,1),1);        %Fill plot-dimension with ones (for first point)
             end
             plotIndex = sub2ind(dim, plotIndex{:});                         %Determine linear index of roi pixels for first point
             plotIndex = repmat(plotIndex, [1 dim(projDim)]);                %Replicate linear index
             deltaIndex = prod(dim(1:projDim-1));                             %Difference value of indices along plotted dimension
             plotIndex = plotIndex + repmat(deltaIndex * (0:dim(projDim)-1),[size(roiList(numberRoi).index.x,1) 1]);   %Extend to all other points by adding deltaInd for each step
-            if ~withAlpha && get(tb_switchRGB, 'Value') && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value'))
+            if rgbCount && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value'))
               plotIndex = repmat(plotIndex(:), [1 dim(rgbDim)]);                %Replicate linear index
               deltaIndex = prod(dim(1:rgbDim-1));                             %Difference value of indices along plotted dimension
               plotIndex = plotIndex + repmat(deltaIndex * (0:dim(rgbDim)-1),[size(roiList(numberRoi).index.x,1)*dim(projDim) 1]);   %Extend to all other points by adding deltaInd for each step
