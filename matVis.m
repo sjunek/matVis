@@ -6589,9 +6589,13 @@ end
                       yyaxis(subPlotHandles(jj,ii),'right')
                       ylabel('AlphaValue (:)')
                       yyaxis(subPlotHandles(jj,ii),'left')
-                      ylabel('Value (-)')
+                      if colorBarLabelString; ylabel(colorBarLabelString)
+                      else, ylabel('Value (-)')
+                      end
                     else
-                      ylabel('Value')
+                      if colorBarLabelString; ylabel(colorBarLabelString)
+                      else, ylabel('Value (-)')
+                      end
                     end
                 end
                 set(plotWin(jj), 'HandleVisibility', 'off');
