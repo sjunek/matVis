@@ -853,14 +853,14 @@ jump2ROIPos_cb = 1;                      %Handle to checkbox indidacting whether
 etxt_newRoiName = [];
 txt_RoiPropWinTxt = [];                  %Handle Textfield in Figure for ROI update of ROI settings
 
-profilePoints = [];
-profileInwork = 0;
-profileComplete = 0;
+%profilePoints = [];
+%profileInwork = 0;
+%profileComplete = 0;
 currProfile = [];                            %Current profile
-profileMin = [];                             %Min of current profile
-profileMax = [];                             %Max of current profile
-profileMean = [];                            %Mean of current profile
-profileSize = [];                            %Number of pixels of profile
+%profileMin = [];                             %Min of current profile
+%profileMax = [];                             %Max of current profile
+%profileMean = [];                            %Mean of current profile
+%profileSize = [];                            %Number of pixels of profile
 profileStruct = struct;                      %Structure used for creating and updating profiles ("finisehed" profiles are then collected in profileList)
 profileList = [];                            %List of profiles
 profileLine = [];                            %Handle to lines indicating profiles
@@ -879,7 +879,8 @@ bt_deleteProfile = [];
 bt_profileExport = [];
 bt_exportProfileData = [];
 tb_profileDirection = [];
-isMatVis2DHist = 0;                        % Flag to indicate whether current matVis is called to display 2D hist
+funProfileGui = [];                     % Handle for subfunction
+isMatVis2DHist = 0;                     % Flag to indicate whether current matVis is called to display 2D hist
 calledFrom2DHist = 0;                   % Flag indicating whether matVis update was called as 2D hist (to avoid recrusive callbacks between main matVis and 3D Hist matVis)
 matVis2DHist = [];                      % Handle to matVis that will/might be called as 2D hist-matVis
 with2DHist = 0;                         % Flag to indicate whether current matVis has associated 2D hist matVis open
@@ -6182,7 +6183,9 @@ end
 %             updateRoiProperties(0);
 %           end
         end
-
+        if get(tbProfile,'Value')
+          funProfileGui.imgTraceUpdate();
+        end
         if debugMatVis, debugMatVisFcn(2); end
     end
 
@@ -7252,11 +7255,18 @@ end
         set(edt_alphaMax, 'String',num2str(cmMinMax(nMat+currContrastSel,2),'%6.2f'));
         for ii=1:nMat
             if cmMinMax(nMat+ii,1)==cmMinMax(nMat+ii,2)
-                set([imAx(ii) zoomAx(ii)], 'ALim', [-eps 0]+cmMinMax(nMat+ii,:));
+              set([imAx(ii) zoomAx(ii)], 'ALim', [-eps 0]+cmMinMax(nMat+ii,:));
+              if get(tbProfile,'Value')
+                set(profileStruct.gui.traceim.ax, 'ALim', [-eps 0]+cmMinMax(nMat+ii,:));
+              end
             else
-                set([imAx(ii) zoomAx(ii)], 'ALim', cmMinMax(nMat+ii,:));
+              set([imAx(ii) zoomAx(ii)], 'ALim', cmMinMax(nMat+ii,:));
+              if get(tbProfile,'Value')
+                set(profileStruct.gui.traceim.ax, 'ALim', cmMinMax(nMat+ii,:));
+              end
             end
         end
+
         % Update alpha contrast setting in 2D hist
         % if alpha contrast values are changed in main matVis
         if with2DHist
@@ -8593,6 +8603,7 @@ end
 %   later calls or from WindowCloseRequestFcn
     function profileGui(varargin)
         if debugMatVis, debugMatVisFcn(1); end
+        funProfileGui.imgTraceUpdate = @imgTraceUpdate;
         %% Make profile Gui and all related objects invisible
         if nargin == 3 || ~get(tbProfile,'Value')
             set(profileWin, 'Visible','off');
@@ -8623,7 +8634,7 @@ end
         end
         set(cb_plots(xySel),  'Value', 0 ,'Enable', 'off'); %necessary when call from WindowCloseRequestFcn
         plotSel(xySel) = 0;
-        drawPlots;
+        %   drawPlots;
         %   drawProfiles;
         profileStruct.trace.inwork = 0;
         %Create profile GuiWindow (only during first call)
@@ -9060,6 +9071,9 @@ end
                   profileStruct.trace.imgA(:,:,nt) = interp2(double(currAlphaMap{1}(:,:,nt)),profileStruct.trace.mat(:,:,1),profileStruct.trace.mat(:,:,2));
                 end
               end
+              [pY, pX] = size(profileStruct.trace.img);
+              imgX = ((1:pX)-(pX+1)/2)*diff(dimScale(xySel(1),:),1,2)/dim(xySel(1)); % scaledLocation((1:pX)-(pX+1)/2,xySel(1));
+              imgY = ((1:pY)-(pY+1)/2)*diff(dimScale(xySel(1),:),1,2)/dim(xySel(1)); % scaledLocation((1:pY)-(pY+1)/2,xySel(1));
               % calc profile
               if withAlpha
                 [profileStruct.trace.profile, profileStruct.trace.profileA] = imgTraceProfile(profileStruct.trace.img,profileStruct.trace.imgA);
@@ -9071,7 +9085,7 @@ end
               %profileStruct.show.profile= profileStruct.show.profile(~isnan(profileStruct.show.profile))'; % added by Stephan check where the NaN values come from
               if regexp(profileStruct.show.scale,'norm')
                 for np=1:size(profileStruct.trace.profile,2)
-                  profileStruct.show.profile(:,np)=profileStruct.trace.profile(:,np)/max(profileStruct.trace.profile(:,np));
+                  profileStruct.show.profile(:,np) = profileStruct.trace.profile(:,np)/max(profileStruct.trace.profile(:,np));
                 end
               end
               profilesz = size(profileStruct.trace.img);
@@ -9103,19 +9117,19 @@ end
                 set(profileStruct.trace.plot3,'XData',tp_B(:,1),'YData',tp_B(:,2));
                 set(profileStruct.trace.plot1,'XData',tp_C(:,1),'YData',tp_C(:,2));
                 if profileStruct.show.bw
-                  set(profileStruct.trace.profh{1},'YData',profileStruct.show.profile(:,1));
+                  set(profileStruct.trace.profh{1},'XData',imgX,'YData',profileStruct.show.profile(:,1));
                   if withAlpha && ~verLessThan('matlab','9.0')
-                    set(profileStruct.trace.profAh{1},'YData',profileStruct.show.profileA(:,1));
+                    set(profileStruct.trace.profAh{1},'XData',imgX,'YData',profileStruct.show.profileA(:,1));
                   end
                 else
                   for nt=1:profileStruct.show.chsz % not used, = 1;
-                    set(profileStruct.trace.profh{nt},'YData',profileStruct.show.profile(:,nt),'Color',profileStruct.show.colors(nt,:)*.8);
+                    set(profileStruct.trace.profh{nt},'XData',imgX,'YData',profileStruct.show.profile(:,nt),'Color',profileStruct.show.colors(nt,:)*.8);
                   end
                 end
                 if withAlpha
-                  set(profileStruct.trace.imgh,'CData',profileStruct.trace.img,'AlphaData',profileStruct.trace.imgA)
+                  set(profileStruct.trace.imgh,'XData',imgX,'CData',profileStruct.trace.img,'AlphaData',profileStruct.trace.imgA)
                 else
-                  set(profileStruct.trace.imgh,'CData',profileStruct.trace.img);%profileStruct.trace.RGB)
+                  set(profileStruct.trace.imgh,'XData',imgX,'CData',profileStruct.trace.img);%profileStruct.trace.RGB)
                 end
               else
                 if profileStruct.trace.inwork  % create/update profile line only if a new line is currently selected (not when function is called from updateProfileSelection)
@@ -9127,38 +9141,53 @@ end
                 if profileStruct.show.bw % always == 1
                   if withAlpha && ~verLessThan('matlab','9.0')
                     yyaxis(profileStruct.gui.profile.ax,'right')
-                    profileStruct.trace.profAh{1} = plot(profileStruct.show.profileA,':','Parent',profileStruct.gui.profile.ax,...
+                    profileStruct.trace.profAh{1} = plot(imgX,profileStruct.show.profileA,':','Parent',profileStruct.gui.profile.ax,...
                                                       'Color','k','tag',sprintf('traceplot_%.0f',profileStruct.instance));
                     ylabel(profileStruct.gui.profile.ax,'AlphaValue (:)')                 
                     yyaxis(profileStruct.gui.profile.ax,'left')
                   end
-                  profileStruct.trace.profh{1} = plot(profileStruct.show.profile,'Parent',profileStruct.gui.profile.ax,...
+                  profileStruct.trace.profh{1} = plot(imgX,profileStruct.show.profile,'Parent',profileStruct.gui.profile.ax,...
                                                     'Color','k','tag',sprintf('traceplot_%.0f',profileStruct.instance));
-                  ylabel(profileStruct.gui.profile.ax,'Value (-)')
+                  if colorBarLabelString; ylabel(profileStruct.gui.profile.ax,colorBarLabelString)
+                  else, ylabel(profileStruct.gui.profile.ax,'Value (-)')
+                  end
+                  if customDimScale
+                    xlabel(profileStruct.gui.traceim.ax,sprintf('Profile Length [%s]',dimUnits{xySel(1)}))
+                    ylabel(profileStruct.gui.traceim.ax,sprintf('Width [%s]',dimUnits{xySel(1)}))
+                  else
+                    xlabel(profileStruct.gui.traceim.ax,sprintf('Profile Length [pixel]'))
+                    ylabel(profileStruct.gui.traceim.ax,sprintf('Width [pixel]'))
+                  end
                 else
                   for nt=1:profileStruct.show.chsz % not used, = 1;
-                    profileStruct.trace.profh{nt} = plot(profileStruct.show.profile(:,nt),'Parent',profileStruct.gui.profile.ax,...
+                    profileStruct.trace.profh{nt} = plot(imgX,profileStruct.show.profile(:,nt),'Parent',profileStruct.gui.profile.ax,...
                       'Color',profileStruct.show.colors(nt,:)*.8,'tag',sprintf('traceplot_%.0f',profileStruct.instance));
                   end
                 end
-                profileStruct.trace.imgh = imagesc(profileStruct.trace.img,'Parent',profileStruct.gui.traceim.ax,'tag',sprintf('traceplot_%.0f',profileStruct.instance));
+                
+                profileStruct.trace.imgh = imagesc(imgX, imgY, profileStruct.trace.img,'Parent',profileStruct.gui.traceim.ax,'tag',sprintf('traceplot_%.0f',profileStruct.instance));
                 if withAlpha
-                  set(profileStruct.trace.imgh,'AlphaData',profileStruct.trace.imgA);
+                  set(profileStruct.trace.imgh,'AlphaData',profileStruct.trace.imgA,'AlphaDataMapping','scaled');
                   set(profileStruct.gui.traceim.ax,'Color','k');
                 end
+                if customDimScale
+                  xlabel(profileStruct.gui.traceim.ax,sprintf('Profile Length [%s]',dimUnits{xySel(1)}))
+                  ylabel(profileStruct.gui.traceim.ax,sprintf('Width [%s]',dimUnits{xySel(1)}))
+                else
+                  xlabel(profileStruct.gui.traceim.ax,sprintf('Profile Length [pixel]'))
+                  ylabel(profileStruct.gui.traceim.ax,sprintf('Width [pixel]'))
+                end
               end
-              set(profileStruct.gui.traceim.ax,'box','on', 'CLim', cmMinMax(1,:),...
-                'XLim',[.5 size(tracepoints,1)-.5],'YLim',[.5 profileStruct.show.width+.5]);
+              set(profileStruct.gui.traceim.ax,'box','on', 'CLim', cmMinMax(1,:));%,'XLim',[imgX(1) imgX(end)],'YLim',[imgY(1) imgY(end)]
               if profileStruct.show.width<6
-                set(profileStruct.gui.traceim.ax,'YTick',1:profileStruct.show.width,...
-                  'YTickLabel',(profileStruct.show.width-1)/2:-1:-1*(profileStruct.show.width-1)/2)
+                set(profileStruct.gui.traceim.ax,'YTick',imgY ,'YTickLabel',sprintf('%.2g\n',imgY))%
               else
-                set(profileStruct.gui.traceim.ax,'YTick',[0 .5 1]*(profileStruct.show.width-1)+1,...
-                  'YTickLabel',[(profileStruct.show.width-1)/2 0 -(profileStruct.show.width-1)/2])
+                set(profileStruct.gui.traceim.ax,'YTick',[imgY(1) 0 imgY(end)],'YTickLabel',sprintf('%.2g\n',[imgY(1) 0 imgY(end)]))
               end
               set(profileStruct.gui.profile.ax,'box','on',...
-                'XTickLabel',[],'Color',profileStruct.gui.bgcolor,...
-                'XLim',[.5 size(tracepoints,1)-.5]);
+                'Color',profileStruct.gui.bgcolor,...'XTickLabel',[],
+                'XLim',[imgX(1) imgX(end)]);
+              set(profileStruct.gui.traceim.ax,'XLim',[imgX(1) imgX(end)])
               maxProfile = max(profileStruct.show.profile(:));  % Used to be nanmax
               minProfile = min(profileStruct.show.profile(:));   % Used to be nanmin
               if isfinite(maxProfile) && isfinite(minProfile) && maxProfile>minProfile
@@ -9533,7 +9562,9 @@ end
                   end
                   profileStruct.trace.profh{1} = plot(profileStruct.show.profile,'Parent',profileStruct.gui.profile.ax,...
                                                     'Color','k','tag',sprintf('traceplot_%.0f',profileStruct.instance));
-                  ylabel(profileStruct.gui.profile.ax,'Value (-)')
+                  if colorBarLabelString; ylabel(profileStruct.gui.profile.ax,colorBarLabelString)
+                  else, ylabel(profileStruct.gui.profile.ax,'Value (-)')
+                  end
                 else
                   for nt=1:profileStruct.show.chsz % not used, = 1;
                     profileStruct.trace.profh{nt} = plot(profileStruct.show.profile(:,nt),'Parent',profileStruct.gui.profile.ax,...
