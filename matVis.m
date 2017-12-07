@@ -162,9 +162,9 @@ function varargout = matVis(varargin)
 % Copyright Stephan Junek <stephan.junek@brain.mpg.de>
 %           Andre Zeug    <zeug.andre@mh-hannover.de>
 %
-versionNumber = 1.2;  % Current version number of matVis
+versionNumber = 1.2103;  % Current version number of matVis
 %% Check Matlab version and installed toolboxes
-v = version;
+% v = version;
 % v = num2str(v(1:3));
 % if v < 7
 %     errordlg('matVis is not supported for MATLAB versions prior v7 (R14). Sorry!','matVis not supported');
@@ -619,7 +619,9 @@ end
 dim = size(data{1});                     %Dimensions of data set
 nDim = length(dim);                      %Number of dimensions
 if customDimScale
-    pxWidth(pxWidth==0) = 1;  % Avoid error messages
+  pxWidth(pxWidth==0) = 1;  % Avoid error messages
+else
+  pxWidth = ones(1,nDim);
 end
 if ~withDimUnits
     dimUnits = cell(1,nDim);
@@ -4316,19 +4318,19 @@ end
     function px = pixelLocation(px,varargin)
         if debugMatVis > 1, debugMatVisFcn(1); end
         if nargin == 1 % Default xy case
-            px = ((px-dimScale(xySel([2 1]),1)')'./(diff(dimScale(xySel([2 1]),:),1,2)).*(dim(xySel([2 1]))'-1))'+1;
+            px = (px-dimScale(xySel([2 1]),1)')./pxWidth(xySel([2 1]))+1;
         else  % Different dimension specified as second argument
-            px = ((px-dimScale(varargin{1},1)')'./(diff(dimScale(varargin{1},:),1,2)).*(dim(varargin{1})'-1))'+1;
+            px = (px-dimScale(varargin{1},1)')./pxWidth(varargin{1})+1;
         end
         if debugMatVis > 1, debugMatVisFcn(2); end
     end
     function px = scaledLocation(px,varargin)
         if debugMatVis > 1, debugMatVisFcn(1); end
         if nargin == 1 % Default xy case
-            px = ((px-repmat([1 1],[size(px,1) 1])).*repmat(diff(dimScale(xySel([2 1]),:),1,2)'./(dim(xySel([2 1]))-[1 1]),[size(px,1) 1]))+repmat(dimScale(xySel([2 1]),1)',[size(px,1) 1]);
+            px = ((px-repmat([1 1],[size(px,1) 1])).*repmat(pxWidth(xySel([2 1])) ,[size(px,1) 1]))+repmat(dimScale(xySel([2 1]),1)',[size(px,1) 1]);
             % works only from R2016b: px = ((px-[1 1])'.*diff(dimScale(xySel([2 1]),:),1,2)./(dim(xySel([2 1]))-[1 1])')'+dimScale(xySel([2 1]),1)';
         else  % Different dimension specified as second argument
-            px = ((px-1)'.*diff(dimScale(varargin{1},:),1,2)./(dim(varargin{1})-1)')'+dimScale(varargin{1},1)';
+            px = ((px-1).*pxWidth(varargin{1}))+dimScale(varargin{1},1)';
         end
         if debugMatVis > 1, debugMatVisFcn(2); end
     end
@@ -9072,8 +9074,8 @@ end
                 end
               end
               [pY, pX] = size(profileStruct.trace.img);
-              imgX = ((1:pX)-(pX+1)/2)*diff(dimScale(xySel(1),:),1,2)/dim(xySel(1)); % scaledLocation((1:pX)-(pX+1)/2,xySel(1));
-              imgY = ((1:pY)-(pY+1)/2)*diff(dimScale(xySel(1),:),1,2)/dim(xySel(1)); % scaledLocation((1:pY)-(pY+1)/2,xySel(1));
+              imgX = ((1:pX)-(pX+1)/2)*pxWidth(xySel(1)); % diff(dimScale(xySel(1),:),1,2)/dim(xySel(1)) % scaledLocation((1:pX)-(pX+1)/2,xySel(1));
+              imgY = ((1:pY)-(pY+1)/2)*pxWidth(xySel(1)); % diff(dimScale(xySel(1),:),1,2)/dim(xySel(1)) % scaledLocation((1:pY)-(pY+1)/2,xySel(1));
               % calc profile
               if withAlpha
                 [profileStruct.trace.profile, profileStruct.trace.profileA] = imgTraceProfile(profileStruct.trace.img,profileStruct.trace.imgA);
