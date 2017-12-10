@@ -4235,12 +4235,15 @@ end
         if any(myGcf == imageWin) || any(myGcf == zoomWin)
           %Get current position of cursor
           p = get(myGca, 'CurrentPoint');
-          p = p(1 ,1:2);
+          p = p(1 ,1:2); % coordinate for DIM xySel([2 1])
+          if debugMatVis
+            fprintf('Mouse CurrentPoint (Dim%d, Dim%d) = [%s,\t%s]\n',xySel([1 2]),num2Str(p(1),4),num2Str(p(2),4) )
+          end
           if customDimScale
             pLoc = p;
             p = pixelLocation(p);
           end
-          p = round(p([2 1]));
+          p = round(p([2 1])); % coordinate for DIM xySel([2 1])
           p(1) = max([min([p(1),size(currIm{1},1)]),1]);            %max([min([p(1),dim(xySel(2))]),1]);
           p(2) = max([min([p(2),size(currIm{1},2)]),1]);
           % Display position / value of current point while inside 
@@ -4316,19 +4319,22 @@ end
         if debugMatVis > 1, debugMatVisFcn(2); end
     end
     function px = pixelLocation(px,varargin)
+      % convert mouse location: customDimScale -> pixel (x,y)
         if debugMatVis > 1, debugMatVisFcn(1); end
         if nargin == 1 % Default xy case
-            px = (px-dimScale(xySel([2 1]),1)')./pxWidth(xySel([2 1]))+1;
+          % coordinate for DIM xySel([2 1])
+          px = (px-dimScale(xySel([2 1]),1)')./pxWidth(xySel([2 1]))+1;
         else  % Different dimension specified as second argument
-            px = (px-dimScale(varargin{1},1)')./pxWidth(varargin{1})+1;
+          px = (px-dimScale(varargin{1},1)')./pxWidth(varargin{1})+1;
         end
         if debugMatVis > 1, debugMatVisFcn(2); end
     end
     function px = scaledLocation(px,varargin)
+      % convert mouse location: pixel -> customDimScale (Dim1,Dim2)
         if debugMatVis > 1, debugMatVisFcn(1); end
         if nargin == 1 % Default xy case
-            px = ((px-repmat([1 1],[size(px,1) 1])).*repmat(pxWidth(xySel([2 1])) ,[size(px,1) 1]))+repmat(dimScale(xySel([2 1]),1)',[size(px,1) 1]);
-            % works only from R2016b: px = ((px-[1 1])'.*diff(dimScale(xySel([2 1]),:),1,2)./(dim(xySel([2 1]))-[1 1])')'+dimScale(xySel([2 1]),1)';
+            px = ((px-repmat([1 1],[size(px,1) 1])).*repmat(pxWidth(xySel([1 2])) ,[size(px,1) 1]))+repmat(dimScale(xySel([1 2]),1)',[size(px,1) 1]);
+            % works only from R2016b: px = ((px-[1 1]).*pxWidth(xySel([1 2]))+dimScale(xySel([1 2]),1)';
         else  % Different dimension specified as second argument
             px = ((px-1).*pxWidth(varargin{1}))+dimScale(varargin{1},1)';
         end
@@ -4340,15 +4346,21 @@ end
       % update imageWin / zoomWin Name
       if customDimScale
         pLoc = scaledLocation(p);
+        if debugMatVis
+          fprintf('p(1) = %d -> pLoc(1) = %.2f (pxWidth(%d): %.3f)\t\tp(2) = %d -> pLoc(2) = %.2f (pxWidth(%d): %.3f)\n',...
+            p(1),pLoc(1),xySel(1),pxWidth(xySel(1)),p(2),pLoc(2),xySel(2),pxWidth(xySel(2)))
+        end
         if withDimUnits
           myDU1 = sprintf(' %s',dimUnits{xySel(1)});
           myDU2 = sprintf(' %s',dimUnits{xySel(2)});
         else
           myDU1 = []; myDU2 = [];
         end
-        myPosStr = sprintf(' /  Position: (%f%s, %f%s)',...
-          round(pLoc(2)/pxWidth(xySel(1)))*pxWidth(xySel(1)),myDU1,...
-          round(pLoc(1)/pxWidth(xySel(2)))*pxWidth(xySel(2)),myDU2);
+        myPos = [round(pLoc(1)/pxWidth(xySel(1)))*pxWidth(xySel(1)),...
+                 round(pLoc(2)/pxWidth(xySel(2)))*pxWidth(xySel(2))];
+        myPosStr = sprintf(' /  Position: (%s%s, %s%s)',...
+                 num2Str(myPos(1),4),myDU1,...
+                 num2Str(myPos(2),4),myDU2);
       else
         myPosStr = [];
       end
@@ -4357,26 +4369,40 @@ end
         if withAlpha
           if sw(1)
             set(imageWin(ii), 'Name', sprintf('Image (%s) - Value: %s, alphaValue: %s%s%s',...
-              varName{ii},sprintf(' %f',currImVal{ii}(p(1),p(2),:)),...
-              sprintf(' %f',currAlphaMap{ii}(p(1),p(2),:)),myPosStr,myPixPos))
+              varName{ii},num2Str(currImVal{ii}(p(1),p(2),:),4),...
+              num2Str(currAlphaMap{ii}(p(1),p(2),:),4),myPosStr,myPixPos))
           end
           if sw(2)
             set(zoomWin(ii), 'Name', sprintf('Zoom (%s) - Value: %s, alphaValue: %s%s%s',...
-              varName{ii},sprintf(' %f',currImVal{ii}(p(1),p(2),:)),...
-              sprintf(' %f',currAlphaMap{ii}(p(1),p(2),:)),myPosStr,myPixPos))
+              varName{ii},...
+              num2Str(currImVal{ii}(p(1),p(2),:),4),...
+              num2Str(currAlphaMap{ii}(p(1),p(2),:),4),myPosStr,myPixPos))
           end
         else
           if sw(1)
             set(imageWin(ii), 'Name', sprintf('Image (%s) - Value: %s%s%s',varName{ii},...
-              sprintf(' %f',currImVal{ii}(p(1),p(2),:)),myPosStr,myPixPos))
+              num2Str(currImVal{ii}(p(1),p(2),:),4),myPosStr,myPixPos))
           end
           if sw(2)
             set(zoomWin(ii), 'Name', sprintf('Zoom (%s) - Value: %s%s%s',varName{ii},...
-              sprintf(' %f',currImVal{ii}(p(1),p(2),:)),myPosStr,myPixPos))
+              num2Str(currImVal{ii}(p(1),p(2),:),4),myPosStr,myPixPos))
           end
         end
       end
       if debugMatVis > 1, debugMatVisFcn(2); end
+    end
+    function myStr = num2Str(myNum,nd)
+      if isinteger(myNum)
+        myStr = sprintf('%d', myNum);
+      elseif isfloat(myNum)
+        % converts floating point number to a string of nd digits 
+        nD = max(0, nd-ceil(log10(abs(myNum))));
+        if nD <10
+          myStr = sprintf('%.*f', nD, myNum);
+        else
+          myStr = sprintf('%.*g', nd, myNum);
+        end
+      end
     end
     function toggleTooltipDisplay(varargin)
       if debugMatVis, debugMatVisFcn(1); end
@@ -6263,16 +6289,16 @@ end
             meanPlotVal = 2*mod(get(bt_mean, 'UserData'),5)+1;
             if customDimScale
                 set(zoomReg, 'Position',zoomPxXY-[pxWidth(xySel([2 1])) 0 0]/2);
-                currLoc = scaledLocation(currPos(xySel([2 1])));
-                set(lineHorIm, 'XData',currLoc(1)*[1 1],'YData', get(imAx(1), 'YLim'));
-                set(lineVertIm, 'XData', get(imAx(1), 'XLim'), 'YData', currLoc(2)*[1 1]);
-                set(lineHorZoom, 'XData',currLoc(1)*[1 1], 'YData',  get(zoomAx(1), 'YLim'));
-                set(lineVertZoom, 'XData', get(zoomAx(1), 'XLim'), 'YData', currLoc(2)*[1 1]);
+                currLoc = scaledLocation(currPos(xySel([1 2])));
+                set(lineHorIm, 'XData',currLoc(2)*[1 1],'YData', get(imAx(1), 'YLim'));
+                set(lineVertIm, 'XData', get(imAx(1), 'XLim'), 'YData', currLoc(1)*[1 1]);
+                set(lineHorZoom, 'XData',currLoc(2)*[1 1], 'YData',  get(zoomAx(1), 'YLim'));
+                set(lineVertZoom, 'XData', get(zoomAx(1), 'XLim'), 'YData', currLoc(1)*[1 1]);
                 if meanPlotVal < 7
-                    set([rectPlotArea_Zoom rectPlotArea_Im], 'Position',[currLoc(1)-meanPlotVal*pxWidth(xySel(2))/2 currLoc(2)-meanPlotVal*pxWidth(xySel(1))/2 meanPlotVal*pxWidth(xySel(2)) meanPlotVal*pxWidth(xySel(1))]);
+                    set([rectPlotArea_Zoom rectPlotArea_Im], 'Position',[currLoc(2)-meanPlotVal*pxWidth(xySel(2))/2 currLoc(1)-meanPlotVal*pxWidth(xySel(1))/2 meanPlotVal*pxWidth(xySel(2)) meanPlotVal*pxWidth(xySel(1))]);
                 elseif meanPlotVal == 7
                     for ii = 1:3
-                        set([rectPlotArea_Zoom(:,ii) rectPlotArea_Im(:,ii)], 'Position',[currLoc(1)-(2*ii-1)*pxWidth(xySel(2))/2 currLoc(2)-(2*ii-1)*pxWidth(xySel(1))/2 (2*ii-1)*pxWidth(xySel(2)) (2*ii-1)*pxWidth(xySel(1))]);
+                        set([rectPlotArea_Zoom(:,ii) rectPlotArea_Im(:,ii)], 'Position',[currLoc(2)-(2*ii-1)*pxWidth(xySel(2))/2 currLoc(1)-(2*ii-1)*pxWidth(xySel(1))/2 (2*ii-1)*pxWidth(xySel(2)) (2*ii-1)*pxWidth(xySel(1))]);
                     end
                 else
                     set([rectPlotArea_Zoom rectPlotArea_Im],'Position',zoomValXY-[.5 .5 0 0]);
@@ -7234,7 +7260,7 @@ end
         end
         % Update contrast setting in 2D hist
         % if contrast values are changed in main matVis
-        if with2DHist 
+        if with2DHist && ~calledFrom2DHist
             [mv zv(1,1)] = min(abs(x_2DHist-cmMinMax(1,1)));
             [mv zv(1,2)] = min(abs(x_2DHist-cmMinMax(1,2)));
             zv(1,2) =  min([numel(x_2DHist),zv(1,2)])-zv(1,1)+1;
@@ -7271,7 +7297,7 @@ end
 
         % Update alpha contrast setting in 2D hist
         % if alpha contrast values are changed in main matVis
-        if with2DHist
+        if with2DHist && ~calledFrom2DHist
             zv(1,1) = find(x_2DHist>=cmMinMax(1,1),1) ;
             zv(1,2) =  min([numel(x_2DHist),find(x_2DHist>=cmMinMax(1,2),1)])-find(x_2DHist>=cmMinMax(1,1),1)+1;
             zv(2,1) = find(y_2DHist>=cmMinMax(nMat+1,1),1) ;
@@ -7516,8 +7542,8 @@ end
         zoomVal(xySel(1),:) = zoomValXY([2,4]);
         %Set zoom axes
         if customDimScale
-            zoomPxXY([1 2]) = scaledLocation(zoomValXY([1 2]));
-            zoomPxXY([3 4]) = zoomValXY([3 4]) .* diff(dimScale(xySel([2 1]),:),1,2)' ./ (dim(xySel([2 1]))-1);
+            zoomPxXY([2 1]) = scaledLocation(zoomValXY([2 1]));
+            zoomPxXY([4 3]) = scaledLocation(zoomValXY([4 3]));
             axis(zoomAx, [zoomPxXY(1)-pxWidth(xySel(2))/2, zoomPxXY(1)+zoomPxXY(3)-pxWidth(xySel(2))/2, zoomPxXY(2)-pxWidth(xySel(1))/2, zoomPxXY(2)+zoomPxXY(4)-pxWidth(xySel(1))/2]);
         else
             axis(zoomAx, [zoomValXY(1)-0.5, zoomValXY(1)+zoomValXY(3)-.5, zoomValXY(2)-0.5, zoomValXY(2)+zoomValXY(4)-.5]);
@@ -7588,7 +7614,11 @@ end
         if isMatVis2DHist && ~calledFrom2DHist
             calledFrom2DHist = 1;
             if customDimScale
-                sendFrom2DHist('cmMinMax', [zoomPxXY(2) (zoomPxXY(2)+zoomPxXY(4)-pxWidth(1));
+              % here order of arguments is important! 'calledFrom2DHist'
+              % delivers info to base matVis.
+                sendFrom2DHist(...
+                  'calledFrom2DHist', calledFrom2DHist,...
+                  'cmMinMax', [zoomPxXY(2) (zoomPxXY(2)+zoomPxXY(4)-pxWidth(1));
                     zoomPxXY(1) (zoomPxXY(1)+zoomPxXY(3)-pxWidth(2))]);
             else
                 sendFrom2DHist('cmMinMax', [(zoomValXY(1)-1)/256*(xVal2DHIst(2)-xVal2DHIst(1))+xVal2DHIst(1) ...
@@ -7596,6 +7626,7 @@ end
                     (zoomValXY(2)-1)/256*(yVal2DHIst(2)-yVal2DHIst(1))+yVal2DHIst(1) ...
                     (zoomValXY(2)+zoomValXY(4)-1)/256*(yVal2DHIst(2)-yVal2DHIst(1))+yVal2DHIst(1)]);
             end
+            calledFrom2DHist = 0;
         else
             calledFrom2DHist = 0;
         end
@@ -8114,8 +8145,8 @@ end
             % Create 2d hist from data and alpha map
             % 2D Histogram implementation from André Zeug
             dd = [currImVal{1}(:),currAlphaMapVal{1}(:),currAlphaMapVal{1}(:)];
-            x_2DHist = linspace(minVal(1), maxVal(1),100);
-            y_2DHist = linspace(minVal(nMat+1), maxVal(nMat+1),100);
+            x_2DHist = linspace(minVal(1), maxVal(1),201);
+            y_2DHist = linspace(minVal(nMat+1), maxVal(nMat+1),201);
             data2DHist = hist2wf(dd,x_2DHist,y_2DHist);
             if ~with2DHist || ~ishandle(matVis2DHist.figHandles.gui) % 2D hist does not exist yet
                 outStrct = exportOutputStrct;
@@ -8125,12 +8156,13 @@ end
                 %                 matVis2DHist =
                 %                 matVis(data2DHist,'dimScale',[get(sldMax,'Min') get(sldMax,'Max');minVal(2) maxVal(2)],'dimNames',{'Data values';'Alpha values'},'matNames',{[varName{1} ': 2D Hist']},'startPar',{'aspRatio';0;'windowPositions';wp;'objVisibility';1;'windowVisibility';[1 0 0];'calledAs2DHist';{outStrct.fctHandles.loadNewSettings;double([min(dd(:,1)) max(dd(:,1))]);double([min(dd(:,2)) max(dd(:,2))])}});
                 zv(1,1) = find(x_2DHist>=cmMinMax(1,1),1) ;
-                zv(1,2) = find(x_2DHist>=cmMinMax(1,2),1)-find(x_2DHist>=cmMinMax(1,1),1)+1;
+                zv(1,2) = find(x_2DHist>=cmMinMax(1,2),1)-find(x_2DHist>=cmMinMax(1,1),1);
                 zv(2,1) = find(y_2DHist>=cmMinMax(nMat+1,1),1) ;
-                zv(2,2) = find(y_2DHist>=cmMinMax(nMat+1,2),1)-find(y_2DHist>=cmMinMax(nMat+1,1),1)+1;
+                zv(2,2) = find(y_2DHist>=cmMinMax(nMat+1,2),1)-find(y_2DHist>=cmMinMax(nMat+1,1),1);
                 matVis2DHist = matVis(data2DHist,'dimScale',[minVal(1) maxVal(1);minVal(2) maxVal(2)],...
+                                                 'dimUnit',{'au.','au.'},...
                                                  'dimNames',{'Data values';'Alpha values'},...
-                                                 'matNames',{[varName{1} ': 2D Hist']},...
+                                                 'matNames',{[varName{1} ': 2D Hist']},'debug',debugMatVis,...
                                                  'startPar',{'zoomVal';zv;'aspRatio';0;'windowPositions';wp;'objVisibility';1;'windowVisibility';[1 0 0];'calledAs2DHist';{outStrct.fctHandles.loadNewSettings;double([min(dd(:,1)) max(dd(:,1))]);double([min(dd(:,2)) max(dd(:,2))])}});
                 with2DHist = 1;
             else
@@ -11683,6 +11715,8 @@ end
                     zoomValXY([2,4]) = zoomVal(xySel(1),:);
                     updateZoom;
                     calledFrom2DHist = 0;
+              case 'calledFrom2DHist'
+                calledFrom2DHist = val;
             end
         end
         if debugMatVis, debugMatVisFcn(2); end
@@ -12762,36 +12796,6 @@ end
         set(hh.handle, 'PaperPositionMode', hh.old_PPM_mode);
         set(hh.handle, 'InvertHardcopy', hh.old_IH_mode);
         if debugMatVis, debugMatVisFcn(2); end
-    end
-    function y = nansum(x,dim)
-        if debugMatVis>1, debugMatVisFcn(1); end
-        x(isnan(x)) = 0;
-        if nargin == 1
-            y = sum(x); 
-        else
-            y = sum(x,dim);
-        end
-        if debugMatVis>1, debugMatVisFcn(2); end
-    end
-    function m = nanmean(x,dim)
-        if debugMatVis>1, debugMatVisFcn(1); end
-        % Find NaNs and set them to zero
-        nans = isnan(x);
-        x(nans) = 0;
-        if nargin == 1 % let sum deal with figuring out which dimension to use
-            % Count up non-NaNs.
-            n = sum(~nans);
-            n(n==0) = NaN; % prevent divideByZero warnings
-            % Sum up non-NaNs, and divide by the number of non-NaNs.
-            m = sum(x) ./ n;
-        else
-            % Count up non-NaNs.
-            n = sum(~nans,dim);
-            n(n==0) = NaN; % prevent divideByZero warnings
-            % Sum up non-NaNs, and divide by the number of non-NaNs.
-            m = sum(x,dim) ./ n;
-        end
-        if debugMatVis>1, debugMatVisFcn(2); end
     end
 %% Close all windows
     function closeGui(varargin)
