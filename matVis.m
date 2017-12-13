@@ -653,12 +653,13 @@ if withAlpha
             warning('All numbers in alpha map to data set ''%s'' equal %f.',varName{i},minVal(nMat+i))
         end
     end
-    if all(maxVal(nMat+1:end)<=1) && all(minVal(nMat+1:end)>=0) % If all alpha values are between 0 and 1, use [0,1] as alpha limits
-        cmMinMax(nMat+1:2*nMat,1) = 0; %Colormap Limits
-        cmMinMax(nMat+1:2*nMat,2) = 1; %Colormap Limits
-    else
-        cmMinMax(nMat+i,:) = [minVal(nMat+1:2*nMat); maxVal(nMat+1:2*nMat)]'; %Colormap Limits
-    end
+    cmMinMax(nMat+i,:) = [minVal(nMat+1:2*nMat); maxVal(nMat+1:2*nMat)]'; %Colormap Limits
+%     if all(maxVal(nMat+1:end)<=1) && all(minVal(nMat+1:end)>=0) % If all alpha values are between 0 and 1, use [0,1] as alpha limits
+%         cmMinMax(nMat+1:2*nMat,1) = 0; %Colormap Limits
+%         cmMinMax(nMat+1:2*nMat,2) = 1; %Colormap Limits
+%     else
+%         cmMinMax(nMat+i,:) = [minVal(nMat+1:2*nMat); maxVal(nMat+1:2*nMat)]'; %Colormap Limits
+%     end
 end
 
 clear d;
@@ -4392,11 +4393,11 @@ end
       if debugMatVis > 1, debugMatVisFcn(2); end
     end
     function myStr = num2Str(myNum,nd)
-      if isinteger(myNum)
+      if isinteger(myNum) || islogical(myNum)
         myStr = sprintf('%d', myNum);
       elseif isfloat(myNum)
         % converts floating point number to a string of nd digits 
-        nD = max(0, nd-ceil(log10(abs(myNum))));
+        nD = max(0, nd-1-floor(log10(abs(myNum))));
         if nD <10
           myStr = sprintf('%.*f', nD, myNum);
         else
