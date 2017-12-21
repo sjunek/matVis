@@ -4934,30 +4934,31 @@ end
                   a = listdlg('PromptString','Copy/save/export figure content:',...
                               'SelectionMode','single',...
                               'ListString',{'Clipboard: Vector graphics';'Clipboard: Bitmap';'Save to file';'Export to workspace'});
-%                 a = questdlg('Copy as vector graphics (enhanced meta-file) or 8-bit bitmap (bmp) or save as image file?','Copy figure content to clipboard or save to file','Vector graphics','Bitmap','Save','Vector graphics');
-
-                switch a
-                    case 1
-                        print(myGcf, '-dmeta');  %#ok
-                    case 2
-                        print(myGcf, '-dbitmap');    %#ok
-                    case 3
-                        [fNameFig,pNameFig] = uiputfile({'*.jpg';'*.png';'*.tif';'*.pdf'},'Select file location, name and file type!');
-                        saveas(myGcf, [pNameFig  fNameFig]);
-                    case 4
-                        dataSetIdx = mod(find(myGcf == [zoomWin imageWin plotWin]),numel(data))+1;
-                        if isempty(varName{dataSetIdx})
-                            wsExportName = 'matVisDataExport';
-                        else
-                            wsExportName = [varName{dataSetIdx} '_export'];
-                        end
-                        if any(myGcf == zoomWin)
-                            assignin('base','test',myGcf);
-                            assignin('base',wsExportName, currIm{dataSetIdx}(zoomVal(xySel(1),1):sum(zoomVal(xySel(1),:))-1,zoomVal(xySel(2),1):sum(zoomVal(xySel(2),:))-1,:));
-                        else
-                            assignin('base',wsExportName, currIm{dataSetIdx});
-                        end
-                end
+                            %                 a = questdlg('Copy as vector graphics (enhanced meta-file) or 8-bit bitmap (bmp) or save as image file?','Copy figure content to clipboard or save to file','Vector graphics','Bitmap','Save','Vector graphics');
+                  if ~isempty(a)
+                    switch a
+                      case 1
+                          print(myGcf, '-dmeta');  %#ok
+                      case 2
+                          print(myGcf, '-dbitmap');    %#ok
+                      case 3
+                          [fNameFig,pNameFig] = uiputfile({'*.jpg';'*.png';'*.tif';'*.pdf'},'Select file location, name and file type!');
+                          saveas(myGcf, [pNameFig  fNameFig]);
+                      case 4
+                          dataSetIdx = mod(find(myGcf == [zoomWin imageWin plotWin]),numel(data))+1;
+                          if isempty(varName{dataSetIdx})
+                              wsExportName = 'matVisDataExport';
+                          else
+                              wsExportName = [varName{dataSetIdx} '_export'];
+                          end
+                          if any(myGcf == zoomWin)
+                              assignin('base','test',myGcf);
+                              assignin('base',wsExportName, currIm{dataSetIdx}(zoomVal(xySel(1),1):sum(zoomVal(xySel(1),:))-1,zoomVal(xySel(2),1):sum(zoomVal(xySel(2),:))-1,:));
+                          else
+                              assignin('base',wsExportName, currIm{dataSetIdx});
+                          end
+                    end
+                  end
               end
           end
         end
