@@ -8430,6 +8430,7 @@ end
 %Data export to workspace
     function exportData(varargin)
       if debugMatVis, debugMatVisFcn(1); end
+      if ~isempty(exportWin); delete(exportWin); end
       exportWin = figure('Units', 'Pixel', 'Position', [300 300 200 25*nDim+150], 'Name', 'Export Data',...
         'MenuBar', 'none', 'Resize', 'off', 'NumberTitle', 'off', 'HandleVisibility', 'off', 'CloseRequestFcn',@closeExportWin);
       uicontrol(exportWin, 'Style', 'Text', 'Position', [30 25*nDim+105 140 40], ...
