@@ -8566,6 +8566,10 @@ end
           inputArg{end+1} = 'colorBarLabel';
           inputArg{end+1} = {colorBarLabelString};
         end
+        if debugMatVis
+          inputArg{end+1} = 'debug';
+          inputArg{end+1} = debugMatVis;
+        end
         %{         
         for iii = 1:numberOptionalArgs
           switch  optionalArgIdentifier{iii}
