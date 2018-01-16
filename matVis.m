@@ -5652,7 +5652,8 @@ end
                 for ii=1:nMat
                     cb = findobj(imageWin(ii), 'Tag','Colorbar');
                     ytl = applyGamma([cmMinMax(ii,1) get(cb,'YTick') cmMinMax(ii,2)],cmMinMax(ii,:),currGamma(ii),-1);
-                    set(cb, 'YTickLabel', ytl(2:end-1));
+                    ytlC = {}; for nn=1:length(ytl)-2;ytlC{nn}=num2Str(ytl(nn+1),3);end
+                    set(cb, 'YTickLabel', ytlC);
                 end
             end
         else
@@ -5774,7 +5775,8 @@ end
                     if get(tbColorbar, 'Value') == 1
                         cb = findobj(imageWin(ii), 'Tag','Colorbar');
                         ytl = applyGamma([cmMinMax(ii,1) get(cb,'YTick') cmMinMax(ii,2)],cmMinMax(ii,:),currGamma(ii),-1);
-                        set(cb, 'YTickLabel', ytl(2:end-1));
+                        ytlC = {}; for nn=1:length(ytl)-2; ytlC{nn}=num2Str(ytl(nn+1),3);end
+                        set(cb, 'YTickLabel', ytlC);
                     end
                     % Apply contrast adjustment
                     min_currStack_rel = (single(cmMinMax(ii,1))-minVal(ii)) / (maxVal(ii) - minVal(ii)); % contrast minimum scaled to interval [0,1]
@@ -11032,6 +11034,7 @@ end
             q = questdlg('Export Rois to workspace or save as .mat file?','ROI Export', 'To File', 'To Workspace', 'Cancel', 'To File');
             if strcmp(q,'To Workspace')
                 assignin('base', 'matVisRoiExport', roiListExp(roiSel));
+                fprintf('ROIs exported to workspace!\n');
             elseif strcmp(q, 'To File')
                 [f,p] = uiputfile('.mat','Choose folder and filename to save rois!');
                 if f == 0
@@ -11040,9 +11043,11 @@ end
                 end
                 matVisRoiExport =  roiListExp(roiSel); %#ok
                 save([p,f],'matVisRoiExport');
+                fprintf('ROIs exported to file!\n');
+            else
+              fprintf('Roi export CANCELed!\n')
             end
             clear matVisRoiExport roiListExp
-            disp('Roi export complete!');
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
