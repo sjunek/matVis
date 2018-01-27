@@ -4813,6 +4813,19 @@ end
                 set(figHandles(ii), 'Position', [newPos(1) newPos(2)-(newPos(4)+winWidthTop+8)*(ii-1) newPos(3:4)]);
             end
         end
+        % update colorbar YTickLabel
+        if myGcf== imageWin && get(tbColorbar, 'Value') == 1
+          for ii=1:nMat
+            cb = findobj(imageWin(ii), 'Tag','Colorbar');
+            if currGamma(ii) == 1
+              set(cb, 'YTickLabel', get(cb,'YTick'));
+            else
+              ytl = applyGamma([cmMinMax(ii,1) get(cb,'YTick') cmMinMax(ii,2)],cmMinMax(ii,:),currGamma(ii),-1);
+              ytlC = {}; for nn=1:length(ytl)-2;ytlC{nn}=num2Str(ytl(nn+1),3);end
+              set(cb, 'YTickLabel', ytlC);
+            end
+          end
+        end
         if debugMatVis > 1, debugMatVisFcn(2); end
     end
 % Callback function for toggle button for (un)linking figure position
@@ -5652,9 +5665,13 @@ end
             if get(tbColorbar, 'Value') == 1
                 for ii=1:nMat
                     cb = findobj(imageWin(ii), 'Tag','Colorbar');
-                    ytl = applyGamma([cmMinMax(ii,1) get(cb,'YTick') cmMinMax(ii,2)],cmMinMax(ii,:),currGamma(ii),-1);
-                    ytlC = {}; for nn=1:length(ytl)-2;ytlC{nn}=num2Str(ytl(nn+1),3);end
-                    set(cb, 'YTickLabel', ytlC);
+                    if currGamma(ii) == 1
+                      set(cb, 'YTickLabel', get(cb,'YTick'));
+                    else
+                      ytl = applyGamma([cmMinMax(ii,1) get(cb,'YTick') cmMinMax(ii,2)],cmMinMax(ii,:),currGamma(ii),-1);
+                      ytlC = {}; for nn=1:length(ytl)-2;ytlC{nn}=num2Str(ytl(nn+1),3);end
+                      set(cb, 'YTickLabel', ytlC);
+                    end
                 end
             end
         else
