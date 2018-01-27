@@ -4237,7 +4237,7 @@ end
           %Get current position of cursor
           p = get(myGca, 'CurrentPoint');
           p = p(1 ,1:2); % coordinate for DIM xySel([2 1])
-          if debugMatVis
+          if debugMatVis >1
             fprintf('Mouse CurrentPoint (Dim%d, Dim%d) = [%s,\t%s]\n',xySel([1 2]),num2Str(p(1),4),num2Str(p(2),4) )
           end
           if customDimScale
@@ -4349,7 +4349,7 @@ end
       % update imageWin / zoomWin Name
       if customDimScale
         pLoc = scaledLocation(p);
-        if debugMatVis
+        if debugMatVis > 1
           fprintf('p(1) = %d -> pLoc(1) = %.2f (pxWidth(%d): %.3f)\t\tp(2) = %d -> pLoc(2) = %.2f (pxWidth(%d): %.3f)\n',...
             p(1),pLoc(1),xySel(1),pxWidth(xySel(1)),p(2),pLoc(2),xySel(2),pxWidth(xySel(2)))
         end
@@ -7549,7 +7549,7 @@ end
         %Set zoom axes
         if customDimScale
             zoomPxXY([2 1]) = scaledLocation(zoomValXY([2 1]));
-            zoomPxXY([4 3]) = scaledLocation(zoomValXY([4 3]));
+            zoomPxXY([4 3]) = scaledLocation(zoomValXY([4 3])+zoomValXY([2 1]))-zoomPxXY([2 1]);
             axis(zoomAx, [zoomPxXY(1)-pxWidth(xySel(2))/2, zoomPxXY(1)+zoomPxXY(3)-pxWidth(xySel(2))/2, zoomPxXY(2)-pxWidth(xySel(1))/2, zoomPxXY(2)+zoomPxXY(4)-pxWidth(xySel(1))/2]);
         else
             axis(zoomAx, [zoomValXY(1)-0.5, zoomValXY(1)+zoomValXY(3)-.5, zoomValXY(2)-0.5, zoomValXY(2)+zoomValXY(4)-.5]);
@@ -7557,7 +7557,7 @@ end
         %Set zoom region in image axes
         if get(tbWin(1), 'Value') == 1
             if customDimScale
-                set(zoomReg, 'Position',zoomPxXY-[pxWidth(xySel([2 1])) 0 0]/2);
+                set(zoomReg, 'Position',zoomPxXY+[-pxWidth(xySel([2 1])) pxWidth(xySel([2 1]))]/2);
             else
                 set(zoomReg, 'Position',zoomValXY-[.5 .5 0 0]);
             end
