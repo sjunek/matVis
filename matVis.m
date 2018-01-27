@@ -5240,6 +5240,7 @@ end
         if movdata.rec
             vidWriter('append');
         end
+        updateWinName(currPos(xySel(1:2)),[1 1])
         if debugMatVis, debugMatVisFcn(2); end
     end
 
