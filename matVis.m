@@ -162,7 +162,7 @@ function varargout = matVis(varargin)
 % Copyright Stephan Junek <stephan.junek@brain.mpg.de>
 %           Andre Zeug    <zeug.andre@mh-hannover.de>
 %
-versionNumber = 1.2103;  % Current version number of matVis
+versionNumber = 1.2114;  % Current version number of matVis
 %% Check Matlab version and installed toolboxes
 % v = version;
 % v = num2str(v(1:3));
@@ -5501,7 +5501,7 @@ end
                     end
                 end
                 %Projection of data if selected
-            else
+        else
                 busy(1);
                 if get(bt_zoomProj, 'Value')
                   imIndex{projDim} = zoomVal(projDim,1):sum(zoomVal(projDim,:))-1;
@@ -5533,20 +5533,30 @@ end
                       end
                     end
                     switch projMethod
-                        case 1      %maximum projection
-                          if withAlpha
-                            [currAlphaMap{ii},cAInd] = max(cA, [], 3); %squeeze() % used to be nanmax
-                            cAInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cAInd(:)-1);
-                            currIm{ii}  = reshape(c(cAInd), sz1(1:2));
-                          elseif rgbCount
-                            [~,cInd] = max(sum(c,4,'omitnan'), [], 3); %squeeze() % used to be nanmax
-                            cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
-                            c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
-                            currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
+                      case 1      %maximum projection
+                        if withAlpha
+                          [currAlphaMap{ii},cAInd] = max(cA, [], 3); %squeeze() % used to be nanmax
+                          cAInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cAInd(:)-1);
+                          currIm{ii}  = reshape(c(cAInd), sz1(1:2));
+                        elseif rgbCount
+                          if length(sz1)==4
+                            if any(get(bg_colormap, 'SelectedObject') ==  [cmStretchRGBMean cmStretchRGBMax])
+                              % RGBmode: max of sum intensity in RGB dim is calculated
+                              [~,cInd] = max(sum(c,4,'omitnan'), [], 3); %squeeze() % used to be nanmax
+                              cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
+                              c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
+                              currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
+                            else
+                              currIm{ii} = squeeze(max(c, [], 3)); % used to be nanmax
+                            end
                           else
-                            currIm{ii} = max(c, [], 3); % used to be nanmax
+                            currIm{ii} = c;
                           end
-                        case 2      %minimum projection
+                        else
+                          currIm{ii} = max(c, [], 3); % used to be nanmax
+                        end
+                        
+                      case 2      %minimum projection
                           if withAlpha
                             warning(sprintf('MIN PROJECTION not understood in combination with alphaMap\nmin values of datamatrix is shown instead'))
                           elseif rgbCount
@@ -5709,7 +5719,7 @@ end
                 cmMinMax(ii,:) = double(cmMinMax(currContrastSel  ,:))/double(maxVal(1))*double(maxVal(ii));
                 cmMinMax(isnan(cmMinMax)) = 0;
             end
-            if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value'))
+            if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value')) %if any(get(bg_colormap, 'SelectedObject') ==  [cmStretchRGBMean cmStretchRGBMax])
                 %"Normal" RGB mode (Global, Channel or Image)
                 for ii = 1:nMat
                     sz = size(currIm{ii});
@@ -5797,9 +5807,10 @@ end
                         set(cb, 'YTickLabel', ytlC);
                     end
                     % Apply contrast adjustment
-                    min_currStack_rel = (single(cmMinMax(ii,1))-minVal(ii)) / (maxVal(ii) - minVal(ii)); % contrast minimum scaled to interval [0,1]
-                    max_currStack_rel = (single(cmMinMax(ii,2))-minVal(ii)) / (maxVal(ii) - minVal(ii)); % contrast maximum scaled to interval [0,1]
-                    currIm{ii} = rgbContrastAdjust(single(currIm{ii}),min_currStack_rel, max_currStack_rel);
+                    currIm{ii} = scaleMinMax(single(currIm{ii}),0,1,cmMinMax(ii,1),cmMinMax(ii,2),1);
+                    %min_currStack_rel = (single(cmMinMax(ii,1))-minVal(ii)) / (maxVal(ii) - minVal(ii)); % contrast minimum scaled to interval [0,1]
+                    %max_currStack_rel = (single(cmMinMax(ii,2))-minVal(ii)) / (maxVal(ii) - minVal(ii)); % contrast maximum scaled to interval [0,1]
+                    %currIm{ii} = rgbContrastAdjust(single(currIm{ii}),min_currStack_rel, max_currStack_rel);
                 end
                 if get(tb_invert, 'Value')
                     currIm{ii} = 1 - currIm{ii};
