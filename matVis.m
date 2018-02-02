@@ -4885,8 +4885,13 @@ end
               p1 = get(myGca,'CurrentPoint');
               p1 = p1(1,1:2);
               set(myGcf, 'WindowButtonMotionFcn',''); % Remove callback during zoom region selection (if the new zoom region enters the old one, an error would be thrown otherwise when in the image window)
-              rbbox;
+              rbbox
               set(myGcf, 'WindowButtonMotionFcn',@mouseMotion);
+              % In more recent Matlab version (since 2016?) the mouse
+              % position is not updated immediately after the rbbox, so we
+              % introduce a small pause to read out the correct new
+              % position.
+              pause(0.001)
               p2 = get(myGca,'CurrentPoint');
               p2 = p2(1,1:2);
               if customDimScale
