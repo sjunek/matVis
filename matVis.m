@@ -513,7 +513,19 @@ else
     allNames = '';
     for i = 1:nMat
         if isa(varargin{i}, 'dip_image')
-            data{i} = double(abs(varargin{i}));  %#ok
+          switch datatype(varargin{i})
+            case 'bin',      data{i} = logical(varargin{i});     %#ok
+            case 'uint8',    data{i} = uint8(varargin{i});       %#ok
+            case 'uint16',   data{i} = uint16(varargin{i});      %#ok
+            case 'uint32',   data{i} = uint32(varargin{i});      %#ok
+            case 'sint8',    data{i} = int8(varargin{i});        %#ok
+            case 'sint16',   data{i} = int16(varargin{i});       %#ok
+            case 'sint32',   data{i} = int32(varargin{i});       %#ok
+            case 'sfloat',   data{i} = single(varargin{i});      %#ok
+            case 'dfloat',   data{i} = double(varargin{i});      %#ok
+            case 'scomplex', data{i} = single(abs(varargin{i})); %#ok
+            case 'dcomplex', data{i} = double(abs(varargin{i})); %#ok
+          end
         else
             data{i} = varargin{i};  %#ok
         end
