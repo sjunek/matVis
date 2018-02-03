@@ -162,7 +162,7 @@ function varargout = matVis(varargin)
 % Copyright Stephan Junek <stephan.junek@brain.mpg.de>
 %           Andre Zeug    <zeug.andre@mh-hannover.de>
 %
-versionNumber = 1.2114;  % Current version number of matVis
+versionNumber = 1.2115;  % Current version number of matVis
 %% Check Matlab version and installed toolboxes
 % v = version;
 % v = num2str(v(1:3));
@@ -7778,13 +7778,13 @@ end
             %fill axes
         elseif get(tbAspRatio, 'Value') == 1
             axis(zoomAx, 'equal', 'ij');
-            set(zoomAx, 'XColor',get(zoomWin,'Color'), 'YColor',get(zoomWin,'Color'),'XTick',[],'YTick',[],'Box','off','Layer','Top');
+            set(zoomAx, 'XColor',get(zoomWin(1),'Color'), 'YColor',get(zoomWin(1),'Color'),'XTick',[],'YTick',[],'Box','off','Layer','Top');
             axis(imAx, 'equal', 'tight',  'ij');
             set([imAx zoomAx], 'DataAspectRatio', [aspRatio 1]);
             set(tbAspRatio, 'String', [num2str(aspRatio(1)),':',num2str(aspRatio(2))]);
         else
             axis(zoomAx,  'normal',  'ij');
-            set(zoomAx, 'XColor',get(zoomWin,'Color'), 'YColor',get(zoomWin,'Color'),'XTick',[],'YTick',[],'Box','off','Layer','Top');
+            set(zoomAx, 'XColor',get(zoomWin(1),'Color'), 'YColor',get(zoomWin(1),'Color'),'XTick',[],'YTick',[],'Box','off','Layer','Top');
             axis(imAx,  'normal', 'tight', 'ij');
             set(tbAspRatio, 'String', 'fill');
         end
