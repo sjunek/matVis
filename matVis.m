@@ -10528,7 +10528,7 @@ end
         gp = get(gui,'Position');
         if isempty(tempRoiPropWin)
           tempRoiPropWin = figure('Position', [gp(1), max(50,gp(2)-444-25*nROIDim), 320, 25*nROIDim + 50],...
-            'MenuBar', 'none','NumberTitle', 'off', 'Name', 'ROI Properties!');%
+            'MenuBar', 'none','NumberTitle', 'off', 'Name', 'ROI Properties!', 'CloseRequestFcn', {@updateRoiSettings,0});%
           
           uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 25*nROIDim+26 55 18],...
             'String','ROI name:');
