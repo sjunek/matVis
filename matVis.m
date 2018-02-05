@@ -10692,7 +10692,7 @@ end
     function listboxCallback(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         numberRoi = get(roiListbox, 'Value');
-        if numel(numberRoi) == 1 && get(jump2ROIPos_cb,'Value')
+        if numel(numberRoi) == 1 && get(jump2ROIPos_cb,'Value') && isfield(roiList, 'settings')
           ROIPos = roiList(numberRoi).settings.position;
           matchDims = min([length(currPos) length(ROIPos)]);
           matchDims = find([ROIPos(1:matchDims)>dim(1:matchDims) 1],1,'first')-1; % checks if saved ROIpos is larger than data dimension and reduces MATCHDIMS, in case
