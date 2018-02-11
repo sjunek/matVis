@@ -4051,6 +4051,7 @@ end
             set([sldMax_RGB sldMin_RGB valSldMax_RGB valSldMin_RGB rgbSldIm], 'Visible','off');
             set([sldMin sldMax], 'Callback',@updateColormap);
             set([sld etxt bt_playAll bt_playZoom], 'Enable','on');
+            updateProjectionMethods({'none';'max';'min';'mean';'std';'var'; 'tile'})
             drawGuiHist(1);
             drawPlots;
             updateImages;
@@ -4074,6 +4075,7 @@ end
             set([sldMin sldMax], 'Enable', 'on','Callback',@updateImages);
             set(popLut, 'Enable', 'off');
             set(tbColorbar, 'Enable', 'off', 'Value', 0);
+            updateProjectionMethods({'none';'max';'max(ch)';'min';'mean';'std';'var'; 'tile'})
             if rgbCount == get(projDimPop,'Value')
               projMethod =0;
               set(projMethodPop,'Enable', 'off');
@@ -5510,165 +5512,163 @@ end
         end
         % No projection selected
         if projMethod == 0
-                for ii = 1:nMat
-                    c = squeeze(data{ii}(imIndex{:}));
-                    if rgbCount
-                      [s,ind] = sort([xySel,rgbDim]);
-                      currIm{ii} = ipermute(c, ind);
-                    else
-                      if xySel(1) > xySel(2)
-                        currIm{ii} = permute(c,[2 1 3]);
-                      else
-                        currIm{ii} = c;
-                      end
-                    end
-                end
-                %Projection of data if selected
-        else
-                busy(1);
-                if get(bt_zoomProj, 'Value')
-                  imIndex{projDim} = zoomVal(projDim,1):sum(zoomVal(projDim,:))-1;
-                else
-                  imIndex{projDim} = ':';
-                end
-                % Find number of dimension of xySel(1), xySel(2) and projDim with
-                % respect to extracted 3D data volume
-                if rgbCount
-                  xx  = find(xySel(1) == sort([xySel projDim rgbDim]));
-                  yy  = find(xySel(2) == sort([xySel projDim rgbDim]));
-                  p   = find(projDim  == sort([xySel projDim rgbDim]));
-                  rgb = find(rgbDim   == sort([xySel projDim rgbDim]));
-                else
-                  xx  = find(xySel(1) == sort([xySel projDim]));
-                  yy  = find(xySel(2) == sort([xySel projDim]));
-                  p   = find(projDim == sort([xySel projDim]));
-                end
-                for ii = 1:nMat
-                    % Sort dimension to [xySel(1) xySel(2) projDim]
-                    if rgbCount
-                      c = squeeze(permute(squeeze(data{ii}(imIndex{:})),[xx yy p rgb]));
-                      sz1 = size(c);
-                    else
-                      c = squeeze(permute(squeeze(data{ii}(imIndex{:})),[xx yy p]));
-                      if withAlpha
-                        cA = squeeze(permute(squeeze(alphaMap{ii}(imIndex{:})),[xx yy p]));
-                        sz1 = size(cA);
-                      end
-                    end
-                    switch projMethodStr{projMethod+1}
-                      case 'max'      %maximum projection
-                        if withAlpha
-                          [currIm{ii},cInd] = max(c, [], 3); %squeeze() % used to be nanmax
-                          cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
-                          currAlphaMap{ii}  = reshape(cA(cInd), sz1(1:2));
-                        elseif rgbCount
-                          if length(sz1)==4
-                            if any(get(bg_colormap, 'SelectedObject') ==  [cmStretchRGBMean cmStretchRGBMax])
-                              % RGBmode: max of sum intensity in RGB dim is calculated
-                              [~,cInd] = max(sum(c,4,'omitnan'), [], 3); %squeeze() % used to be nanmax
-                              cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
-                              c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
-                              currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
-                            else
-                              currIm{ii} = squeeze(max(c, [], 3)); % used to be nanmax
-                            end
-                          else
-                            currIm{ii} = c;
-                          end
-                        else
-                          currIm{ii} = max(c, [], 3); % used to be nanmax
-                        end
-                      case sprintf('max(%s)',char(945))      %Alpha maximum projection
-                        [currAlphaMap{ii},cAInd] = max(cA, [], 3); %squeeze() % used to be nanmax
-                        cAInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cAInd(:)-1);
-                        currIm{ii}  = reshape(c(cAInd), sz1(1:2));
-                      case 'min'      %minimum projection
-                        if withAlpha
-                          [currIm{ii},cInd] = min(c, [], 3); %squeeze() % used to be nanmax
-                          cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
-                          currAlphaMap{ii}  = reshape(cA(cInd), sz1(1:2));
-                        elseif rgbCount
-                          [~,cInd] = min(sum(c,4,'omitnan'), [], 3); %squeeze() % used to be nanmax
-                          cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
-                          c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
-                          currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
-                        else
-                          currIm{ii} = min(c, [], 3);    % Used to be nanmin
-                        end
-                      case 'mean'      %mean projection
-                        if withAlpha
-                          currIm{ii}       = sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'); % weighted mean ratio
-                          currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')./sum(cA,           3, 'omitnan'); % mean Intensity
-                        else
-                          currIm{ii} = squeeze(mean(c,  3, 'omitnan')); % used to be nanmean
-                        end
-                      case 'std'      %standard deviation projection
-                        if withAlpha
-                          % standard error:  SE = sum( (x - <x>)^2.*w, 3) ./ sum(w, 3)
-                          currIm{ii}       = sqrt( sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'));  % standard error of currIm{ii} -> SEM ././sqrt(sum(~isnan(A_rr),3))
-                          % standard error of mean:  SEM = sum( (x - <x>)^2.*w, 3) ./ sum(w, 3) ./ sz(3)
-                          %currIm{ii}       = sqrt( sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'))./sqrt(sum(~isnan(c),3));
-                          currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')  ./sum(cA,3, 'omitnan');           % mean Intensity
-                        elseif rgbCount
-                          [~,cInd] = std(sum(c,4), [], 3, 'omitnan'); %squeeze() % used to be nanmax
-                          cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
-                          c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
-                          currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
-                        else
-                          currIm{ii} = std(double(c), [], 3, 'omitnan');
-                        end
-                      case 'var'      %variance projection
-                        if withAlpha
-                          currIm{ii}       = sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')...
-                            ./sum(cA.*~isnan(c),3, 'omitnan');  % standard error of currIm{ii} -> SEM ././sqrt(sum(~isnan(A_rr),3))
-                          currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')  ./sum(cA,3, 'omitnan');          % mean Intensity
-                        elseif rgbCount
-                          [~,cInd] = var(sum(c,4), [], 3, 'omitnan');
-                          cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
-                          c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
-                          currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
-                        else
-                          currIm{ii} = var(double(c), [], 3, 'omitnan');
-                        end
-                      case 'tile'    %Tile images ('montage')
-                        nCols = max(1,round(sqrt(dim(xySel(1))/dim(xySel(2))*size(c,3)/aspRatio(2) * aspRatio(1))));
-                        nRows = ceil(size(c,3) / nCols);
-                        if nRows > 1 && nCols > 1
-                          nBlack = nRows*nCols - size(c,3);
-                        else
-                          nBlack = 0;
-                          if nRows == 1
-                            nCols = size(c,3);
-                          else
-                            nRows = size(c,3);
-                          end
-                        end
-                        if nBlack > 0
-                          szc3 = size(c,3);
-                          c(:,:,szc3+1:nRows*nCols) = minVal(1);
-                          if withAlpha
-                            cA(:,:,szc3+1:nRows*nCols) = 0;
-                          end
-                        end
-                        if islogical(c)
-                          currIm{ii} = false(dim(xySel(1))*nRows, dim(xySel(2))*nCols);
-                        else
-                          currIm{ii} = ones(dim(xySel(1))*nRows, dim(xySel(2))*nCols, class(c));
-                        end
-                        if withAlpha
-                          currAlphaMap{ii} = zeros(dim(xySel(1))*nRows, dim(xySel(2))*nCols, class(c));
-                        end
-                        for r=1:nRows
-                          currIm{ii}((r-1)*dim(xySel(1))+1:r*dim(xySel(1)),:) = c(:,(r-1)*nCols*dim(xySel(2))+1:r*nCols*dim(xySel(2)));
-                          if withAlpha
-                            currAlphaMap{ii}((r-1)*dim(xySel(1))+1:r*dim(xySel(1)),:) = cA(:,(r-1)*nCols*dim(xySel(2))+1:r*nCols*dim(xySel(2)));
-                          end
-                        end
-                    end
-                    clear c cA sz1 szc3;
-                end
-                busy(0);
+          for ii = 1:nMat
+            c = squeeze(data{ii}(imIndex{:}));
+            if rgbCount
+              [s,ind] = sort([xySel,rgbDim]);
+              currIm{ii} = ipermute(c, ind);
+            else
+              if xySel(1) > xySel(2)
+                currIm{ii} = permute(c,[2 1 3]);
+              else
+                currIm{ii} = c;
+              end
             end
+          end
+          %Projection of data if selected
+        else
+          busy(1);
+          if get(bt_zoomProj, 'Value')
+            imIndex{projDim} = zoomVal(projDim,1):sum(zoomVal(projDim,:))-1;
+          else
+            imIndex{projDim} = ':';
+          end
+          % Find number of dimension of xySel(1), xySel(2) and projDim with
+          % respect to extracted 3D data volume
+          if rgbCount
+            xx  = find(xySel(1) == sort([xySel projDim rgbDim]));
+            yy  = find(xySel(2) == sort([xySel projDim rgbDim]));
+            p   = find(projDim  == sort([xySel projDim rgbDim]));
+            rgb = find(rgbDim   == sort([xySel projDim rgbDim]));
+          else
+            xx  = find(xySel(1) == sort([xySel projDim]));
+            yy  = find(xySel(2) == sort([xySel projDim]));
+            p   = find(projDim == sort([xySel projDim]));
+          end
+          for ii = 1:nMat
+            % Sort dimension to [xySel(1) xySel(2) projDim]
+            if rgbCount
+              c = squeeze(permute(squeeze(data{ii}(imIndex{:})),[xx yy p rgb]));
+              sz1 = size(c);
+            else
+              c = squeeze(permute(squeeze(data{ii}(imIndex{:})),[xx yy p]));
+              if withAlpha
+                cA = squeeze(permute(squeeze(alphaMap{ii}(imIndex{:})),[xx yy p]));
+                sz1 = size(cA);
+              end
+            end
+            switch projMethodStr{projMethod+1}
+              case 'max'      %maximum projection
+                if withAlpha
+                  [currIm{ii},cInd] = max(c, [], 3); %squeeze() % used to be nanmax
+                  cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
+                  currAlphaMap{ii}  = reshape(cA(cInd), sz1(1:2));
+                elseif rgbCount
+                  if length(sz1)==4
+                    % RGBmode: max of sum intensity in RGB dim is calculated
+                    [~,cInd] = max(sum(c,4,'omitnan'), [], 3); %squeeze() % used to be nanmax
+                    cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
+                    c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
+                    currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
+                  else
+                    currIm{ii} = c;
+                  end
+                else
+                  currIm{ii} = max(c, [], 3); % used to be nanmax
+                end
+              case 'max(ch)'      %RGB mode maximum projection Channel
+                currIm{ii} = squeeze(max(c, [], 3)); % used to be nanmax
+              case sprintf('max(%s)',char(945))      %Alpha maximum projection
+                [currAlphaMap{ii},cAInd] = max(cA, [], 3); %squeeze() % used to be nanmax
+                cAInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cAInd(:)-1);
+                currIm{ii}  = reshape(c(cAInd), sz1(1:2));
+              case 'min'      %minimum projection
+                if withAlpha
+                  [currIm{ii},cInd] = min(c, [], 3); %squeeze() % used to be nanmax
+                  cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
+                  currAlphaMap{ii}  = reshape(cA(cInd), sz1(1:2));
+                elseif rgbCount
+                  [~,cInd] = min(sum(c,4,'omitnan'), [], 3); %squeeze() % used to be nanmax
+                  cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
+                  c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
+                  currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
+                else
+                  currIm{ii} = min(c, [], 3);    % Used to be nanmin
+                end
+              case 'mean'      %mean projection
+                if withAlpha
+                  currIm{ii}       = sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'); % weighted mean ratio
+                  currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')./sum(cA,           3, 'omitnan'); % mean Intensity
+                else
+                  currIm{ii} = squeeze(mean(c,  3, 'omitnan')); % used to be nanmean
+                end
+              case 'std'      %standard deviation projection
+                if withAlpha
+                  % standard error:  SE = sum( (x - <x>)^2.*w, 3) ./ sum(w, 3)
+                  currIm{ii}       = sqrt( sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'));  % standard error of currIm{ii} -> SEM ././sqrt(sum(~isnan(A_rr),3))
+                  % standard error of mean:  SEM = sum( (x - <x>)^2.*w, 3) ./ sum(w, 3) ./ sz(3)
+                  %currIm{ii}       = sqrt( sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'))./sqrt(sum(~isnan(c),3));
+                  currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')  ./sum(cA,3, 'omitnan');           % mean Intensity
+                elseif rgbCount
+                  [~,cInd] = std(sum(c,4), [], 3, 'omitnan'); %squeeze() % used to be nanmax
+                  cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
+                  c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
+                  currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
+                else
+                  currIm{ii} = std(double(c), [], 3, 'omitnan');
+                end
+              case 'var'      %variance projection
+                if withAlpha
+                  currIm{ii}       = sum( (c - repmat(sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'),[1 1 sz1(3)]) ).^2 .* cA,3, 'omitnan')...
+                    ./sum(cA.*~isnan(c),3, 'omitnan');  % standard error of currIm{ii} -> SEM ././sqrt(sum(~isnan(A_rr),3))
+                  currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')  ./sum(cA,3, 'omitnan');          % mean Intensity
+                elseif rgbCount
+                  [~,cInd] = var(sum(c,4), [], 3, 'omitnan');
+                  cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
+                  c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
+                  currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
+                else
+                  currIm{ii} = var(double(c), [], 3, 'omitnan');
+                end
+              case 'tile'    %Tile images ('montage')
+                nCols = max(1,round(sqrt(dim(xySel(1))/dim(xySel(2))*size(c,3)/aspRatio(2) * aspRatio(1))));
+                nRows = ceil(size(c,3) / nCols);
+                if nRows > 1 && nCols > 1
+                  nBlack = nRows*nCols - size(c,3);
+                else
+                  nBlack = 0;
+                  if nRows == 1
+                    nCols = size(c,3);
+                  else
+                    nRows = size(c,3);
+                  end
+                end
+                if nBlack > 0
+                  szc3 = size(c,3);
+                  c(:,:,szc3+1:nRows*nCols) = minVal(1);
+                  if withAlpha
+                    cA(:,:,szc3+1:nRows*nCols) = 0;
+                  end
+                end
+                if islogical(c)
+                  currIm{ii} = false(dim(xySel(1))*nRows, dim(xySel(2))*nCols);
+                else
+                  currIm{ii} = ones(dim(xySel(1))*nRows, dim(xySel(2))*nCols, class(c));
+                end
+                if withAlpha
+                  currAlphaMap{ii} = zeros(dim(xySel(1))*nRows, dim(xySel(2))*nCols, class(c));
+                end
+                for r=1:nRows
+                  currIm{ii}((r-1)*dim(xySel(1))+1:r*dim(xySel(1)),:) = c(:,(r-1)*nCols*dim(xySel(2))+1:r*nCols*dim(xySel(2)));
+                  if withAlpha
+                    currAlphaMap{ii}((r-1)*dim(xySel(1))+1:r*dim(xySel(1)),:) = cA(:,(r-1)*nCols*dim(xySel(2))+1:r*nCols*dim(xySel(2)));
+                  end
+                end
+            end
+            clear c cA sz1 szc3;
+          end
+          busy(0);
+        end
         %Non-RGB mode
         if ~rgbCount %withAlpha || get(tb_switchRGB, 'Value') == 0
             currImVal = currIm; % Remember "original" values
@@ -6107,7 +6107,20 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
+    function updateProjectionMethods(str)
+        if debugMatVis, debugMatVisFcn(1); end
+        oldStr = projMethodStr;
+        projMethodStr = str;
+        oldProjM = strcmp(oldStr{get(projMethodPop, 'Value')}, projMethodStr);
+        if any(oldProjM)
+          projMethod = 1:length(projMethodStr);
+          projMethod = projMethod(oldProjM)-1;
+        else
+          projMethod = 0;
+        end
+        set(projMethodPop, 'String', projMethodStr, 'Value', projMethod+1);
+        if debugMatVis, debugMatVisFcn(2); end
+    end
 %Draw Image and Zoom window axes
     function drawImages(varargin)
         if debugMatVis, debugMatVisFcn(1); end
