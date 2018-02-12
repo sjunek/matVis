@@ -162,7 +162,7 @@ function varargout = matVis(varargin)
 % Copyright Stephan Junek <stephan.junek@brain.mpg.de>
 %           Andre Zeug    <zeug.andre@mh-hannover.de>
 %
-versionNumber = 1.2121;  % Current version number of matVis
+versionNumber = 1.2123;  % Current version number of matVis
 %% Check Matlab version and installed toolboxes
 % v = version;
 % v = num2str(v(1:3));
@@ -4415,17 +4415,26 @@ end
       if debugMatVis > 1, debugMatVisFcn(2); end
     end
     function myStr = num2Str(myNum,nd)
-      if isinteger(myNum) || islogical(myNum)
-        myStr = sprintf('%d', myNum);
-      elseif isfloat(myNum)
-        % converts floating point number to a string of nd digits 
-        nD = max(0, nd-1-floor(log10(abs(myNum))));
-        if nD <10
-          myStr = sprintf('%.*f', nD, myNum);
-        else
-          myStr = sprintf('%.*g', nd, myNum);
+      if debugMatVis > 1, debugMatVisFcn(1); end
+      myStr = [];
+      for nn=1:length(myNum)
+        myStr = sprintf('%s, %s', myStr, num2StrSingle(myNum(nn),nd));
+      end
+      myStr = myStr(3:end);
+      function myStr = num2StrSingle(myNum,nd)
+        if isinteger(myNum) || islogical(myNum)
+          myStr = sprintf('%d', myNum);
+        elseif isfloat(myNum)
+          % converts floating point number to a string of nd digits
+          nD = max(0, nd-1-floor(log10(abs(myNum))));
+          if nD <10
+            myStr = sprintf('%.*f', nD, myNum);
+          else
+            myStr = sprintf('%.*g', nd, myNum);
+          end
         end
       end
+      if debugMatVis > 1, debugMatVisFcn(2); end
     end
     function toggleTooltipDisplay(varargin)
       if debugMatVis, debugMatVisFcn(1); end
@@ -6031,6 +6040,7 @@ end
           if rgbCount && ~any(get(bg_colormap, 'SelectedObject') ==  [cmStretchRGBMean cmStretchRGBMax])
             % Channel RGB-mode requires switching of RGB
             pCol = flipdim(pCol,2);
+            pCol = [1 0 0;0 1 0;0 0 1];
           end
           if get(tb_flip, 'Value') % flip colormap
             pCol = flipdim(pCol,2);
