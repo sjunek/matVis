@@ -3230,7 +3230,7 @@ if debugMatVis, ttt1 = sprintf('Handle: ''popLut''\nCallback: ''updateColormap''
 popLut = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', @updateColormap, 'Units', 'Pixel', ...
     'Position', [7 14 80 15], 'String', {'Gray';'Gray (Range)';'4 x Gray';'Parula'; 'Jet'; 'HSV'; 'Hot'; 'Cool';...
     'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2'; 'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';...
-    'Blue-Gray-Yellow (0 centered)';'Blue-Gray-Red (0 centered)';'Magenta-Gray-Green (0 centered)'},...
+    'Blue-Gray-Yellow (0 centered)';'Blue-Gray-Red (0 centered)';'Green-Gray-Red (0 centered)';'Magenta-Gray-Green (0 centered)'},...
     'Value',customConfig.colormap,'FontSize',7,'Tooltip',ttt1,'Tag',ttt);
 
 if ~isempty(defaultColormap{1})
@@ -7152,7 +7152,10 @@ end
                 cmap = circshift(cmap,[0 2]);
             case {'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4'}
                 cmap = colorMap(255, str2double(lutStr{get(popLut, 'Value')}(8)));
-            case {'Blue-Gray-Red (0 centered)';'Blue-Gray-Yellow (0 centered)';'Magenta-Gray-Green (0 centered)'}
+            case {'Blue-Gray-Red (0 centered)';
+                'Green-Gray-Red (0 centered)';
+                'Blue-Gray-Yellow (0 centered)';
+                'Magenta-Gray-Green (0 centered)'}
                 mn = cmMinMax(currContrastSel,1); %minScale
                 mx = cmMinMax(currContrastSel,2); %maxScale
                 myGV = .85; % GrayValue
@@ -7186,10 +7189,14 @@ end
                     cmap(mnLength+1:end,3) = linspace(myGV,mxCorrL,mxLength);
                 end
                 if ~strcmp(lutStr{get(popLut, 'Value')},'Blue-Gray-Red (0 centered)')
+                  if strcmp(lutStr{get(popLut, 'Value')},'Green-Gray-Red (0 centered)')
+                    cmap = cmap(:,[1 3 2]);
+                  else
                     cmap(:,2)=cmap(:,1); %LUT for 'Blue-Gray-Yellow (0 centered)'
                     if ~strcmp(lutStr{get(popLut, 'Value')},'Blue-Gray-Yellow (0 centered)')
                         cmap(:,1)=cmap(:,3); %LUT for 'Magenta-Gray-Green (0 centered)'
                     end
+                  end
                 end
                 % set gamma value to 1
                 if any(currGamma(1) ~= 1)
@@ -7198,70 +7205,6 @@ end
                     updateImages;
                 end
 
-%             case 'Blue-Gray-Yellow (0 centered)'
-%                 mn = cmMinMax(currContrastSel,1);
-%                 mx = cmMinMax(currContrastSel,2);
-%                 if sign(mn)*sign(mx) == 1 % Use as "normal" colormap if all values are either positive or negative
-%                     cmap(:,1) = linspace(0,1,255);
-%                     cmap(:,2) = linspace(0,1,255);
-%                     cmap(:,3) = linspace(1,0,255);
-%                 else
-%                     % Set 0 to gray and negative values blue, positive values yellow.
-%                     % The color gradient is identical in  negative and
-%                     % positive directions, independent of the distance
-%                     % of mn and mx from zero.
-%                     mnLength = round(255*abs(mn)/(mx-mn));
-%                     mxLength = 255-mnLength;
-%                     cmap = 0.5 * ones(255,3);
-%                     if abs(mn) > mx
-%                         mnCorr = 0.5;
-%                         mxCorr = mx/abs(mn)/2;
-%                     elseif abs(mn) < mx
-%                         mnCorr = abs(mn)/mx/2;
-%                         mxCorr = 0.5;
-%                     else
-%                         mnCorr = 0.5;
-%                         mxCorr = 0.5;
-%                     end
-%                     cmap(1:mnLength,1) = linspace(0.5-mnCorr,.5,mnLength);
-%                     cmap(1:mnLength,2) = linspace(0.5-mnCorr,.5,mnLength);
-%                     cmap(1:mnLength,3) = linspace(0.5+mnCorr,.5,mnLength);
-%                     cmap(mnLength+1:end,1) = linspace(.5,0.5+mxCorr,mxLength);
-%                     cmap(mnLength+1:end,2) = linspace(.5,0.5+mxCorr,mxLength);
-%                     cmap(mnLength+1:end,3) = linspace(.5,0.5-mxCorr,mxLength);
-%                 end
-%             case 'Magenta-Gray-Green (0 centered)'
-%                 mn = cmMinMax(currContrastSel,1);
-%                 mx = cmMinMax(currContrastSel,2);
-%                 if sign(mn)*sign(mx) == 1 % Use as "normal" colormap if all values are either positive or negative
-%                     cmap(:,1) = linspace(1,0,255);
-%                     cmap(:,2) = linspace(0,1,255);
-%                     cmap(:,3) = linspace(1,0,255);
-%                 else
-%                     % Set 0 to gray and negative values blue, positive values yellow.
-%                     % The color gradient is identical in  negative and
-%                     % positive directions, independent of the distance
-%                     % of mn and mx from zero.
-%                     mnLength = round(255*abs(mn)/(mx-mn));
-%                     mxLength = 255-mnLength;
-%                     cmap = 0.5 * ones(255,3);
-%                     if abs(mn) > mx
-%                         mnCorr = 0.5;
-%                         mxCorr = mx/abs(mn)/2;
-%                     elseif abs(mn) < mx
-%                         mnCorr = abs(mn)/mx/2;
-%                         mxCorr = 0.5;
-%                     else
-%                         mnCorr = 0.5;
-%                         mxCorr = 0.5;
-%                     end
-%                     cmap(1:mnLength,1) = linspace(0.5+mnCorr,.5,mnLength);
-%                     cmap(1:mnLength,2) = linspace(0.5-mnCorr,.5,mnLength);
-%                     cmap(1:mnLength,3) = linspace(0.5+mnCorr,.5,mnLength);
-%                     cmap(mnLength+1:end,1) = linspace(.5,0.5-mxCorr,mxLength);
-%                     cmap(mnLength+1:end,2) = linspace(.5,0.5+mxCorr,mxLength);
-%                     cmap(mnLength+1:end,3) = linspace(.5,0.5-mxCorr,mxLength);
-%                 end
             otherwise
                 cmap = defaultColormap{1};
                 if get(bg_colormap, 'SelectedObject') == cmGlobal
@@ -7407,15 +7350,12 @@ end
     end
     function res = colorMap(map_size, fun_type, exp)
         if debugMatVis, debugMatVisFcn(1); end
-        % Function kindly provided by André Zeug (last modified 21.03.2006).
         % This function creates a colormap (n x 3 array of RGB triples between 0
         % and 1). It can be used analogously to 'gray', 'jet', 'hsv' etc. in
         % colormap( colorMap(map_size, fun_type, exp) ).
-        
         if nargin < 3
             exp=1;
         end
-        
         switch fun_type
             case 1
                 fun=@RGB_value1;
@@ -7428,7 +7368,6 @@ end
             case 5
                 fun=@RGB_value5;
         end
-        
         if map_size>1
             ms=ceil(map_size);
             for kk=1:ms
