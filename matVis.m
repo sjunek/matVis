@@ -4326,11 +4326,12 @@ end
             p = get(myGca, 'CurrentPoint');
             p = p(1  ,1);
             inPlot = plotDim(subPlotHandles(myGcf == plotWin,:) == myGca);
-            posDiff = diff(get(subPlotHandles(subPlotHandles(myGcf == plotWin,:)==myGca),'XLim')+1)*.01;
+            posDiff = get(subPlotHandles(subPlotHandles(myGcf == plotWin,:)==myGca),'XLim');
             if customDimScale
                 p       = pixelLocation(p(1), inPlot);
                 posDiff = pixelLocation(posDiff, inPlot);
             end
+            posDiff = diff(posDiff)*.01;
             if p >= currPos(inPlot)-posDiff && p <= currPos(inPlot)+posDiff
                 set(myGcf,'Pointer','custom','PointerShapeCData',arrow_lr,'PointerShapeHotSpot',[8 8]);
                 set(myGcf, 'WindowButtonDownFcn', @placePosLine);
