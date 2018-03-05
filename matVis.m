@@ -162,7 +162,7 @@ function varargout = matVis(varargin)
 % Copyright Stephan Junek <stephan.junek@brain.mpg.de>
 %           Andre Zeug    <zeug.andre@mh-hannover.de>
 %
-versionNumber = 1.2123;  % Current version number of matVis
+versionNumber = 1.2126;  % Current version number of matVis
 %% Check Matlab version and installed toolboxes
 % v = version;
 % v = num2str(v(1:3));
@@ -5210,9 +5210,9 @@ end
             end
         end
         updateSelection(dimNum);
-        if movdata.rec
-            vidWriter('append');
-        end
+%         if movdata.rec
+%             vidWriter('append');
+%         end
         if debugMatVis, debugMatVisFcn(2); end
     end
 
@@ -12708,12 +12708,12 @@ end
             case 'append'
                 % update frame parts from updated parts
                 for np = 1:length(movdata.set.parts)
-                    if movdata.set.parts{np}.status == true;
-                        if movdata.fastCaptureMode == true;
+                    if movdata.set.parts{np}.status == true
+                        if movdata.fastCaptureMode == true
                             movdata.set.parts{np}.CData = vidGeneratorMyHardcopy(movdata.set.parts{np},res);
                         else
                             movdata.set.parts{np}.CData = export_fig(movdata.set.parts{np}.handle,'-nocrop','-q100','-RGB');%,'-painters'
-                            if ndims(movdata.set.parts{np}.CData)==2;
+                            if ismatrix(movdata.set.parts{np}.CData)
                                 movdata.set.parts{np}.CData = repmat(movdata.set.parts{np}.CData,[1 1 3]);
                             end
                         end
