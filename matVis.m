@@ -4844,7 +4844,7 @@ end
             end
         end
         % update colorbar YTickLabel
-        if myGcf== imageWin && get(tbColorbar, 'Value') == 1
+        if any(myGcf==imageWin) && get(tbColorbar, 'Value')
           for ii=1:nMat
             cb = findobj(imageWin(ii), 'Tag','Colorbar');
             if currGamma(ii) == 1
