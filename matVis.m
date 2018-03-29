@@ -162,7 +162,7 @@ function varargout = matVis(varargin)
 % Copyright Stephan Junek <stephan.junek@brain.mpg.de>
 %           Andre Zeug    <zeug.andre@mh-hannover.de>
 %
-versionNumber = 1.2126;  % Current version number of matVis
+versionNumber = 1.2128;  % Current version number of matVis
 %% Check Matlab version and installed toolboxes
 % v = version;
 % v = num2str(v(1:3));
@@ -186,6 +186,7 @@ os = computer;       % Operating system
 macScaleFactor = [1.05 1.05]; % Scaling factor to adjust width and height of GUI and uicontrols for Mac OS-X
 %% Read Data ...
 % ... from Files
+optionalArgIdentifier = [];                 % variable declaration
 if nargin == 0 || ischar(varargin{1})
     debugMatVis = 0;
     if nargin && strcmp(varargin{1},'debug') && (islogical(varargin{2}) || isscalar(varargin{2}))
@@ -631,6 +632,13 @@ end
 %% Set initial values
 dim = size(data{1});                     %Dimensions of data set
 nDim = length(dim);                      %Number of dimensions
+% additional variable predefinition (consider reorganization)
+% predefinition is required since R2018a
+sldPos = zeros(4  ,nDim);                % slider positions (will be set in gui configuration)
+plotXLim = zeros(nDim, 2);               % XLims for PlotFigureAxes
+plotYLim = zeros(nDim, 2);               % YLims for PlotFigureAxes
+
+
 if customDimScale
   pxWidth(pxWidth==0) = 1;  % Avoid error messages
 else
