@@ -531,7 +531,7 @@ else
             data{i} = varargin{i};  %#ok
         end
         varName{i} = inputname(i);   %#ok %Name of input variable
-        if isempty(varName{i}); varName{i} = sprintf('mat(%d)',i); end %#ok 
+        if isempty(varName{i}); varName{i} = sprintf('mat_%d',i); end %#ok 
         allNames = [allNames, varName{i}, '; '];  %#ok
     end
     allNames(end-1:end) = [];
