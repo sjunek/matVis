@@ -4991,18 +4991,19 @@ end
               if strcmp(os(1:5),'PCWIN')
                   a = listdlg('PromptString','Copy/save/export figure content:',...
                               'SelectionMode','single',...
-                              'ListString',{'Clipboard: Vector graphics';'Clipboard: Bitmap';'Save to file';'Export to workspace'});
-                            %                 a = questdlg('Copy as vector graphics (enhanced meta-file) or 8-bit bitmap (bmp) or save as image file?','Copy figure content to clipboard or save to file','Vector graphics','Bitmap','Save','Vector graphics');
-                  if ~isempty(a)
-                    switch a
+                              'ListString',{'Save to file';'Export to workspace';'Clipboard: Vector graphics';'Clipboard: Bitmap'});
+                           
+              elseif strcmp(os(1:3), 'MAC')
+                  a = listdlg('PromptString','Copy/save/export figure content:',...
+                              'SelectionMode','single',...
+                              'ListString',{'Save to file';'Export to workspace'});
+              end
+              if ~isempty(a)
+                  switch a
                       case 1
-                          print(myGcf, '-dmeta');  %#ok
-                      case 2
-                          print(myGcf, '-dbitmap');    %#ok
-                      case 3
                           [fNameFig,pNameFig] = uiputfile({'*.jpg';'*.png';'*.tif';'*.pdf'},'Select file location, name and file type!');
                           saveas(myGcf, [pNameFig  fNameFig]);
-                      case 4
+                      case 2
                           dataSetIdx = mod(find(myGcf == [zoomWin imageWin plotWin]),numel(data))+1;
                           if isempty(varName{dataSetIdx})
                               wsExportName = 'matVisDataExport';
@@ -5015,11 +5016,15 @@ end
                           else
                               assignin('base',wsExportName, currIm{dataSetIdx});
                           end
-                    end
+                      case 3
+                          print(myGcf, '-dmeta');  %#ok
+                      case 4
+                          print(myGcf, '-dbitmap');    %#ok
                   end
               end
           end
         end
+    end
         if debugMatVis, debugMatVisFcn(2); end
     end
     function placePosLine(varargin)
