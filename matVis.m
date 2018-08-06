@@ -4991,12 +4991,12 @@ end
               if strcmp(os(1:5),'PCWIN')
                   a = listdlg('PromptString','Copy/save/export figure content:',...
                               'SelectionMode','single',...
-                              'ListString',{'Save to file';'Export to workspace';'Clipboard: Vector graphics';'Clipboard: Bitmap'});
+                              'ListString',{'Save to file';'Export to workspace';'Clipboard: Bitmap';'Clipboard: Vector graphics'});
                            
               elseif strcmp(os(1:3), 'MAC')
                   a = listdlg('PromptString','Copy/save/export figure content:',...
                               'SelectionMode','single',...
-                              'ListString',{'Save to file';'Export to workspace'});
+                              'ListString',{'Save to file';'Export to workspace';'Clipboard: Bitmap'});
               end
               if ~isempty(a)
                   switch a
@@ -5017,9 +5017,9 @@ end
                               assignin('base',wsExportName, currIm{dataSetIdx});
                           end
                       case 3
-                          print(myGcf, '-dmeta');  %#ok
+                          print(myGcf, '-dbitmap');  %#ok
                       case 4
-                          print(myGcf, '-dbitmap');    %#ok
+                          print(myGcf, '-dmeta');    %#ok
                   end
               end
           end
