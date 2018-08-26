@@ -3984,7 +3984,7 @@ end
         if debugMatVis, debugMatVisFcn(1); end
         if get(tbColorbar, 'Value') == 1
             for ii=1:nMat
-                cb_axes(ii) = colorbar('peer', imAx(ii));      %#ok
+                cb_axes(ii) = colorbar(imAx(ii));      %#ok
                 set(cb_axes(ii),'FontSize',10);
                 if ~isempty(colorBarLabelString)
                   ylabel(cb_axes(ii),colorBarLabelString,'FontSize',11);
@@ -4002,7 +4002,7 @@ end
             end
         else
             for ii=1:nMat
-                colorbar('peer', imAx(ii),'off');
+                colorbar(imAx(ii),'off');
             end
         end
         if debugMatVis, debugMatVisFcn(2); end
@@ -4105,7 +4105,7 @@ end
             %             set([sldGamma valSldGamma strGamma], 'Visible', 'off');
             set([valSldMin_RGB valSldMax_RGB sldMin_RGB sldMax_RGB], 'Visible', 'on');
             for ii=1:nMat
-                colorbar('peer', imAx(ii),'off');
+              colorbar(imAx(ii),'off');
             end
             set([cmStretchRGBMean cmStretchRGBMax], 'Visible', 'on');
             set(bg_colormap,'SelectionChangeFcn', @rgbDisplay,'UserData',get(bg_colormap,'Tag'),...
@@ -7293,9 +7293,6 @@ end
         end
         if get(tbColorbar, 'Value') == 1 && all(currGamma == 1)
             showColorbar;
-%             for ii = 1:nMat
-%                 colorbar('peer', imAx(ii));
-%             end
         end
         updateHistObjects;
         if rgbCount
