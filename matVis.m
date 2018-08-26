@@ -531,7 +531,7 @@ else
             data{i} = varargin{i};  %#ok
         end
         varName{i} = inputname(i);   %#ok %Name of input variable
-        if isempty(varName{i}); varName{i} = sprintf('mat_%d',i); end %#ok 
+        if isempty(varName{i}); varName{i} = sprintf('mat(%d)',i); end %#ok 
         allNames = [allNames, varName{i}, '; '];  %#ok
     end
     allNames(end-1:end) = [];
@@ -549,8 +549,15 @@ else
         val = varargin{optionalArgs(i)+1};
         switch  optionalArgIdentifier{i}
             case 'alphaMap'
+              alphaError = false;
                 if nMat == 1
                     alphaMap{1} = squeeze(val);
+                if ~all(size(data{1})==size(val))
+                  sza = size(data{1});szb = size(val);
+                  warning(sprintf('Dimension missmatch!\nSize data     = [%d%s]\nSize alphaMap = [%d%s]\n''alphaMap'' ignored!',...
+                    sza(1), sprintf(', %d', sza(2:end)),szb(1), sprintf(', %d', szb(2:end))))
+                  alphaError = true;
+                end
                 elseif isnumeric(val)
                     for j = 1:nMat
                         alphaMap{j} = squeeze(val);  %#ok
@@ -560,8 +567,10 @@ else
                         alphaMap{j} = squeeze(val{j});  %#ok
                     end
                 end
+              if ~alphaError
                 withAlpha = 1;
                 currAlphaMap = [];
+              end
             case 'matVisROIs'
               withMatVisROIs = true;
               matVisRoiExport = val;
@@ -602,6 +611,8 @@ else
             colorBarLabelString = val{1};
           case 'debug'
                 debugMatVis = val;
+          otherwise
+            warning(sprintf('Name-Value Pair Argument ''%s'' not understood!\nPlease check <a href="matlab:doc matVis">matVis documentation</a> for further information.',optionalArgIdentifier{i}))
         end
     end
     %Check Input Dimensions
