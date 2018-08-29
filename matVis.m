@@ -958,6 +958,10 @@ movdata.set.titlesize = 12; % presetting fot Movie Title FontSize in pt
 movdata.set.titlestatus = 1; % presetting fot Movie Title FontSize in pt
 movdata.rec = 0; % status of recordbutton
 movdata.fastCaptureMode = true; %false; % use 'hardcopy' instead of 'export_fig'
+
+percVal = [0 1];
+globalPercMinMax = [];
+calcGlobalPercMinMax = [false false]; % indicator if global percentile was already calculated
 %% Configuration of Windows
 %Custom configuration from config file
 %Window Properties
@@ -3063,11 +3067,34 @@ if nMat > 1 %|| withAlpha
     end
 end
 linkContrastSettings = customConfig.linkContrastSettings;
-%Values of slider limits
-ttt = sprintf('Set minimum and maximum of contrast sliders.\nThe range of the histogram and the display of the colormap in between the sliders will be updated accordingly.\nDataset min value %f\nDataset min value %f',minVal(1),maxVal(1));
+%Percentile value of min / max
+ttt = sprintf('Set minimum and maximum of Percentile for min / max values.');
 if debugMatVis, ttt1 = sprintf('Handle: ''none''\nCallback: ''none'''); else,  ttt1 = ttt; end
-uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'Position', [6 80 47 40], ...
-    'BackgroundColor', get(gui, 'Color'), 'String', {'Slider';'min / max'}, ...
+uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'Position', [7 134 50 10], ...
+    'BackgroundColor', get(gui, 'Color'), 'String', 'Percentile', ...
+    'HorizontalAlignment', 'center','FontSize',7,'Tooltip',ttt1,'Tag',ttt);
+uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'Position', [7 125 50 10], ...
+    'BackgroundColor', get(gui, 'Color'), 'String', 'min / max', ...
+    'HorizontalAlignment', 'center','FontSize',7,'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Set minimum of Percentile for min / max values.\nMin value %s',num2Str(percVal(1),8));
+if debugMatVis, ttt1 = sprintf('Handle: ''percMin''\nCallback: ''updatePerc(1)'''); else,  ttt1 = ttt; end
+percMin = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
+    'Position', [7 112 25 12], 'String', num2Str(percVal(1),4),...
+    'HorizontalAlignment', 'right','Callback', {@updatePerc,1},'Tooltip',ttt1,'Tag',ttt);
+ttt = sprintf('Set maximum of Percentile for min / max values.\nMax value %s',num2Str(percVal(2),8));
+if debugMatVis, ttt1 = sprintf('Handle: ''percMax''\nCallback: ''updatePerc(2)'''); else,  ttt1 = ttt; end
+percMax = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
+    'Position', [32 112 25 12], 'String', num2Str(percVal(2),4), ...
+    'HorizontalAlignment', 'right','Callback', {@updatePerc,2},'Tooltip',ttt1,'Tag',ttt);
+
+%Values of slider limits
+ttt = sprintf('Set minimum and maximum of contrast sliders.\nThe range of the histogram and the display of the colormap in between the sliders will be updated accordingly.\nDataset min value %f\nDataset max value %f',minVal(1),maxVal(1));
+if debugMatVis, ttt1 = sprintf('Handle: ''none''\nCallback: ''none'''); else,  ttt1 = ttt; end
+uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'Position', [6 100 47 10], ...
+    'BackgroundColor', get(gui, 'Color'), 'String', 'Slider', ...
+    'HorizontalAlignment', 'center','FontSize',7,'Tooltip',ttt1,'Tag',ttt);
+uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'Position', [6 92 47 10], ...
+    'BackgroundColor', get(gui, 'Color'), 'String', 'min / max', ...
     'HorizontalAlignment', 'center','FontSize',7,'Tooltip',ttt1,'Tag',ttt);
 ttt = sprintf('Set minimum of contrast sliders.\nDataset min value %f',minVal(1));
 if debugMatVis, ttt1 = sprintf('Handle: ''sldLimMin''\nCallback: ''updateSldLim'''); else,  ttt1 = ttt; end
@@ -5035,7 +5062,6 @@ end
               end
           end
         end
-    end
         if debugMatVis, debugMatVisFcn(2); end
     end
     function placePosLine(varargin)
@@ -6893,6 +6919,8 @@ end
             set(sldMax, 'Enable', 'off');
             set(valSldMin, 'Enable', 'off');
             set(valSldMax, 'Enable', 'off');
+            set(percMin, 'Enable', 'on');
+            set(percMax, 'Enable', 'on');
         elseif get(bg_colormap, 'SelectedObject') == cmThresh
             set(sldMin, 'Enable', 'off');
             set(sldMax, 'Enable', 'on');
@@ -6903,19 +6931,64 @@ end
             set(sldMax, 'Enable', 'on');
             set(valSldMin, 'Enable', 'on');
             set(valSldMax, 'Enable', 'on');
+            set(percMin, 'Enable', 'off');
+            set(percMax, 'Enable', 'off');
         end
         switch get(bg_colormap, 'SelectedObject')
             case cmGlobal       %Global Min / Max Values (each data set seperateley)
-                cmMinMax = cat(1  ,minVal, maxVal)';
+              if percVal(1)>0
+                if ~calcGlobalPercMinMax(1)
+                  set(percMin, 'Enable', 'off'); drawnow; % calculation might take long
+                  if withDipimage
+                    for ii = 1:nMat; cmMinMax(ii,1) = double(dip_percentile(data{ii}(:),[],100*percVal(1),[])); end
+                  else
+                    for ii = 1:nMat; cmMinMax(ii,1) = prctile(data{ii}(:),100*percVal(1)); end
+                  end
+                  globalPercMinMax(:,1) = cmMinMax(:,1);
+                  calcGlobalPercMinMax(1) = true;
+                  set(percMin, 'Enable', 'on'); drawnow; % calculation might take long
+                else
+                  cmMinMax(:,1) = globalPercMinMax(:,1);
+                end
+              else
+                cmMinMax(:,1) = minVal';
+              end
+              if percVal(2)<1
+                if ~calcGlobalPercMinMax(2)
+                  set(percMax, 'Enable', 'off'); drawnow; % calculation might take long
+                  if withDipimage
+                    for ii = 1:nMat; cmMinMax(ii,2) = double(dip_percentile(data{ii}(:),[],100*percVal(2),[])); end
+                  else
+                    for ii = 1:nMat; cmMinMax(ii,2) = prctile(data{ii}(:),100*percVal(2)); end
+                  end
+                  globalPercMinMax(:,2) = cmMinMax(:,2);
+                  calcGlobalPercMinMax(2) = true;
+                  set(percMax, 'Enable', 'on'); drawnow; % calculation might take long
+                else
+                  cmMinMax(:,2) = globalPercMinMax(:,2);
+                end
+              else
+                cmMinMax(:,2) = maxVal';
+              end
             case cmImage        %Scaled to Min / Max Values of currently displayed image(s)
-                for ii = 1:nMat
-                    cmMinMax(ii,:) = [min(currImVal{ii}(:)) max(currImVal{ii}(:))]';
+              for ii = 1:nMat
+                if percVal(1)>0; cmMinMax(ii,1) = prctile(currImVal{ii}(:),100*percVal(1));
+                else;            cmMinMax(ii,1) = min(currImVal{ii}(:));
                 end
+                if percVal(2)<1; cmMinMax(ii,2) = prctile(currImVal{ii}(:),100*percVal(2));
+                else;            cmMinMax(ii,2) = max(currImVal{ii}(:));
+                end
+              end
             case cmZoom
-                for ii = 1:nMat
-                    w = currImVal{ii}(zoomValXY(2):zoomValXY(2)+zoomValXY(4)-1,zoomValXY(1):zoomValXY(1)+zoomValXY(3)-1);
-                    cmMinMax(ii,:) = [min(w(:)) max(w(:))]';
+              for ii = 1:nMat
+                w = currImVal{ii}(zoomValXY(2):zoomValXY(2)+zoomValXY(4)-1,zoomValXY(1):zoomValXY(1)+zoomValXY(3)-1);
+                if percVal(1)>0; cmMinMax(ii,1) = prctile(w(:),100*percVal(1));
+                else;                  cmMinMax(ii,1) = min(w(:));
                 end
+                if percVal(2)<1; cmMinMax(ii,2) = prctile(w(:),100*percVal(2));
+                else;                  cmMinMax(ii,2) = max(w(:));
+                end
+              end
             case cmManual       %Values from Min / Max sliders
               cmMinMax(currContrastSel  ,:) = [get(sldMin, 'Value') get(sldMax, 'Value')];
                 if isinteger(data{currContrastSel})
@@ -8071,6 +8144,31 @@ end
             updateHist;
         end
         if debugMatVis, debugMatVisFcn(2); end
+    end
+    function updatePerc(varargin)
+      if debugMatVis, debugMatVisFcn(1); end
+      switch varargin{3}
+        case 1
+          myVal = str2double(get(percMin,'String'));
+          if myVal<0
+            percVal(1) = 0;
+          elseif myVal < percVal(2)
+            percVal(1) = myVal;
+          end
+          set(percMin, 'String', num2Str(percVal(1),4))
+          calcGlobalPercMinMax(1) = false;
+        case 2
+          myVal = str2double(get(percMax,'String'));
+          if myVal>1
+            percVal(2) = 1;
+          elseif myVal > percVal(1)
+            percVal(2) = myVal;
+          end
+          set(percMax, 'String', num2Str(percVal(2),4))
+          calcGlobalPercMinMax(2) = false;
+      end
+      updateColormap;
+      if debugMatVis, debugMatVisFcn(2); end
     end
     function updateSldLim(varargin)
         if debugMatVis, debugMatVisFcn(1); end
