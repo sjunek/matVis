@@ -550,23 +550,23 @@ else
         switch  optionalArgIdentifier{i}
             case 'alphaMap'
               alphaError = false;
-                if nMat == 1
-                    alphaMap{1} = squeeze(val);
+              if nMat == 1
+                alphaMap{1} = squeeze(val);
                 if ~all(size(data{1})==size(val))
                   sza = size(data{1});szb = size(val);
                   warning(sprintf('Dimension missmatch!\nSize data     = [%d%s]\nSize alphaMap = [%d%s]\n''alphaMap'' ignored!',...
                     sza(1), sprintf(', %d', sza(2:end)),szb(1), sprintf(', %d', szb(2:end))))
                   alphaError = true;
                 end
-                elseif isnumeric(val)
-                    for j = 1:nMat
-                        alphaMap{j} = squeeze(val);  %#ok
-                    end
-                else
-                    for j = 1:nMat
-                        alphaMap{j} = squeeze(val{j});  %#ok
-                    end
+              elseif isnumeric(val)
+                for j = 1:nMat
+                  alphaMap{j} = squeeze(val);  %#ok
                 end
+              else
+                for j = 1:nMat
+                  alphaMap{j} = squeeze(val{j});  %#ok
+                end
+              end
               if ~alphaError
                 withAlpha = 1;
                 currAlphaMap = [];
@@ -575,44 +575,44 @@ else
               withMatVisROIs = true;
               matVisRoiExport = val;
             case 'dimNames'
-                  if length(val) ~= ndims(varargin{1})
-                      error(sprintf('Dimension of matrix and number of ''dimNames'' have to be equal!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
-                  end
-                  dimNames = val;
+              if length(val) ~= ndims(varargin{1})
+                error(sprintf('Dimension of matrix and number of ''dimNames'' have to be equal!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
+              end
+              dimNames = val;
             case 'dimUnits'
-                if length(val) ~= ndims(varargin{1})
-                    error(sprintf('Dimension of ''dimUnits'' mut fit matrix dimension!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
-                end
-                dimUnits = val;
-                withDimUnits = 1;
+              if length(val) ~= ndims(varargin{1})
+                error(sprintf('Dimension of ''dimUnits'' mut fit matrix dimension!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
+              end
+              dimUnits = val;
+              withDimUnits = 1;
             case 'matNames'
-                if length(val) ~= length(data)
-                    error(sprintf('Dimension of ''matNames'' must fit number of provided data sets!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
-                end
-                varName = val;
-                allNames = '';
-                for j=1:length(varName)
-                    allNames = [allNames, varName{j}, '; '];  %#ok
-                end
-                allNames(end-1:end) = [];
+              if length(val) ~= length(data)
+                error(sprintf('Dimension of ''matNames'' must fit number of provided data sets!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
+              end
+              varName = val;
+              allNames = '';
+              for j=1:length(varName)
+                allNames = [allNames, varName{j}, '; '];  %#ok
+              end
+              allNames(end-1:end) = [];
             case 'startPar'
-                startPar = val;
+              startPar = val;
             case 'dimScale'
-                if ~all(size(val) == [ndims(varargin{1}) 2])
-                    error(sprintf('Dimension of ''dimScale'' mut fit matrix dimension!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
-                end
-                dimScale = val;
-                customDimScale = 1;
-                pxWidth = diff(dimScale,1,2)'./(size(data{1})-1);
-          case 'colorBarLabel' 
-            if isstring(val)
-              error(sprintf('''colorBarLabel'' mut be a string!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
-            end
-            colorBarLabelString = val{1};
-          case 'debug'
-                debugMatVis = val;
-          otherwise
-            warning(sprintf('Name-Value Pair Argument ''%s'' not understood!\nPlease check <a href="matlab:doc matVis">matVis documentation</a> for further information.',optionalArgIdentifier{i}))
+              if ~all(size(val) == [ndims(varargin{1}) 2])
+                error(sprintf('Dimension of ''dimScale'' mut fit matrix dimension!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
+              end
+              dimScale = val;
+              customDimScale = 1;
+              pxWidth = diff(dimScale,1,2)'./(size(data{1})-1);
+            case 'colorBarLabel'
+              if isstring(val)
+                error(sprintf('''colorBarLabel'' mut be a string!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
+              end
+              colorBarLabelString = val{1};
+            case 'debug'
+              debugMatVis = val;
+            otherwise
+              warning(sprintf('Name-Value Pair Argument ''%s'' not understood!\nPlease check <a href="matlab:doc matVis">matVis documentation</a> for further information.',optionalArgIdentifier{i}))
         end
     end
     %Check Input Dimensions
