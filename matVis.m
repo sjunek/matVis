@@ -3241,17 +3241,19 @@ if withAlpha
     set(strGamma, 'Position',[-2 8 1]);
     text('Units', 'Pixel', 'Parent',rgbAx,...
         'Position', [-60 8 1], 'String', '$\alpha_{\mathrm{min}}$','Interpreter','Latex','Tag', 'Minimum of alpha contrast');
-    ttt = sprintf('Set minimum of alpha contrast');
+    ttt = sprintf('Set minimum of alpha contrast\nalphaMax = %s\nRange = [%s  %s]',...
+      num2Str(cmMinMax(nMat+1,1),8),num2Str(minVal(nMat+1),8),num2Str(maxVal(nMat+1),8));
     if debugMatVis, ttt1 = sprintf('Handle: ''edt_alphaMin''\nCallback: ''updateAlphaContrast(''etxt'')'''); else,  ttt1 = ttt; end
     edt_alphaMin = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', 'Position', [7 42 31 12], ...
-        'String', num2str(cmMinMax(nMat+1,1),'%6.2f'), 'Callback', {@updateAlphaContrast,'etxt'},...
+        'String', num2Str(cmMinMax(nMat+1,1),4), 'Callback', {@updateAlphaContrast,'etxt',1},...
         'HorizontalAlignment', 'right','Tooltip',ttt1,'Tag',ttt);
     text('Units', 'Pixel', 'Parent',rgbAx,...
         'Position', [-30 8 1], 'String', '$\alpha_{\mathrm{max}}$','Interpreter','Latex','Tag', 'Maximum of alpha contrast');
-    ttt = sprintf('Set maximum of alpha contrast');
+    ttt = sprintf('Set maximum of alpha contrast\nalphaMax = %s\nRange = [%s  %s]',...
+      num2Str(cmMinMax(nMat+1,2),8),num2Str(minVal(nMat+1),8),num2Str(maxVal(nMat+1),8));
     if debugMatVis, ttt1 = sprintf('Handle: ''edt_alphaMax''\nCallback: ''updateAlphaContrast(''etxt'')'''); else,  ttt1 = ttt; end
     edt_alphaMax = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', 'Position', [37 42 31 12], ...
-        'String', num2str(cmMinMax(nMat+1,2),'%6.2f'), 'Callback', {@updateAlphaContrast,'etxt'},...
+        'String', num2Str(cmMinMax(nMat+1,2),4), 'Callback', {@updateAlphaContrast,'etxt',2},...
         'HorizontalAlignment', 'right','Tooltip',ttt1,'Tag',ttt);
     % Gamma for alpha data: Gamma Value Slider and etxt
     ttt = sprintf('Gamma value to provide non-linear colormaps.');
@@ -7397,14 +7399,22 @@ end
     function updateAlphaContrast(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         if nargin && strcmp(varargin{3},'etxt')
-            cmMinMax(nMat+currContrastSel,1) = str2double(get(edt_alphaMin, 'String'));
-            cmMinMax(nMat+currContrastSel,2) = str2double(get(edt_alphaMax, 'String'));
+          switch varargin{4}
+            case 1; cmMinMax(nMat+currContrastSel,1) = str2double(get(edt_alphaMin, 'String'));
+            case 2; cmMinMax(nMat+currContrastSel,2) = str2double(get(edt_alphaMax, 'String'));
+          end
         end
         if cmMinMax(nMat+currContrastSel,2) <= cmMinMax(nMat+currContrastSel,1)
             cmMinMax(nMat+currContrastSel,2) = cmMinMax(nMat+currContrastSel,1)+0.01;
         end
-        set(edt_alphaMin, 'String',num2str(cmMinMax(nMat+currContrastSel,1),'%6.2f'));
-        set(edt_alphaMax, 'String',num2str(cmMinMax(nMat+currContrastSel,2),'%6.2f'));
+        ttt = sprintf('Set minimum of alpha contrast\nalphaMax = %s\nRange = [%s  %s]',...
+          num2Str(cmMinMax(nMat+1,1),8),num2Str(minVal(nMat+1),8),num2Str(maxVal(nMat+1),8));
+        if debugMatVis, ttt1 = sprintf('Handle: ''edt_alphaMin''\nCallback: ''updateAlphaContrast(''etxt'')'''); else,  ttt1 = ttt; end
+        set(edt_alphaMin, 'String',num2Str(cmMinMax(nMat+currContrastSel,1),5),'Tooltip',ttt1,'Tag',ttt);
+        ttt = sprintf('Set maximum of alpha contrast\nalphaMax = %s\nRange = [%s  %s]',...
+          num2Str(cmMinMax(nMat+1,2),8),num2Str(minVal(nMat+1),8),num2Str(maxVal(nMat+1),8));
+        if debugMatVis, ttt1 = sprintf('Handle: ''edt_alphaMax''\nCallback: ''updateAlphaContrast(''etxt'')'''); else,  ttt1 = ttt; end
+        set(edt_alphaMax, 'String',num2Str(cmMinMax(nMat+currContrastSel,2),5),'Tooltip',ttt1,'Tag',ttt);
         for ii=1:nMat
             if cmMinMax(nMat+ii,1)==cmMinMax(nMat+ii,2)
               set([imAx(ii) zoomAx(ii)], 'ALim', [-eps 0]+cmMinMax(nMat+ii,:));
@@ -8155,7 +8165,9 @@ end
           elseif myVal < percVal(2)
             percVal(1) = myVal;
           end
-          set(percMin, 'String', num2Str(percVal(1),4))
+          ttt = sprintf('Set maximum of Percentile for min / max values.\nMin value %s',num2Str(percVal(1),8));
+          if debugMatVis, ttt1 = sprintf('Handle: ''percMin''\nCallback: ''updatePerc(1)'''); else,  ttt1 = ttt; end
+          set(percMin, 'String', num2Str(percVal(1),4),'Tooltip',ttt1,'Tag',ttt)
           calcGlobalPercMinMax(1) = false;
         case 2
           myVal = str2double(get(percMax,'String'));
@@ -8164,7 +8176,9 @@ end
           elseif myVal > percVal(1)
             percVal(2) = myVal;
           end
-          set(percMax, 'String', num2Str(percVal(2),4))
+          ttt = sprintf('Set maximum of Percentile for min / max values.\nMin value %s',num2Str(percVal(2),8));
+          if debugMatVis, ttt1 = sprintf('Handle: ''percMax''\nCallback: ''updatePerc(2)'''); else,  ttt1 = ttt; end
+          set(percMax, 'String', num2Str(percVal(2),4),'Tooltip',ttt1,'Tag',ttt)
           calcGlobalPercMinMax(2) = false;
       end
       updateColormap;
