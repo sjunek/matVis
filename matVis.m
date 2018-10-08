@@ -10306,7 +10306,7 @@ end
                     %fprintf('\n')
                     set(tempLine,'XData',[p(1  ,1),p(1  ,1)],'YData',[p(1  ,2),p(1  ,2)]);
                     roi(:,end+1) = p(1  ,1:2);
-                    set(roiSelLine,'XData',roi(1  ,:),'YData',roi(2,:));
+                    set(roiSelLine,'XData',[roi(1  ,:) roi(1  ,1)],'YData',[roi(2,:) roi(2,1)]);
                     if debugMatVis >1, debugMatVisFcn(2); end
                 end
                 function stopFreeDraw(varargin)
