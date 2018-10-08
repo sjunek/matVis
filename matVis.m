@@ -6535,8 +6535,8 @@ end
                             plotIndex{xySel(2)} = max(1  ,currPos(xySel(2))-w(kk,1)) : min(currPos(xySel(2))+w(kk,1),dim(xySel(2)));
                         end
                         plotIndex{plotDim(ii)} = ':';
-                        % Plot along x direction
-                        if plotDim(ii) == xySel(1)
+                        
+                        if plotDim(ii) == xySel(1) % Plot along x direction
                             if get(bt_mean, 'UserData')==5   %RGB plot
                                 if get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value') % Stretch RGB mode
                                     for ll = 1:dim(rgbDim)
@@ -6549,21 +6549,20 @@ end
                                     end
                                 end
                             else
+                              if withAlpha
+                                plotValues{jj,ii,kk} =  sum(currImVal{jj}(:,plotIndex{xySel(2)}).*currAlphaMapVal{jj}(:,plotIndex{xySel(2)}),2, 'omitnan')./...
+                                                        sum(currAlphaMapVal{jj}(:,plotIndex{xySel(2)}).*~isnan(currImVal{jj}(:,plotIndex{xySel(2)})),2, 'omitnan');
+                                plotValuesAlpha{jj,ii,kk} =  mean(currAlphaMapVal{jj}(:,plotIndex{xySel(2)}),    2, 'omitnan');
+                              else
                                 if withFilter && get(popFilter, 'Value')>1  % If filter is selected, neglect "averaging button" and display filtered and unfiltered data instead.
-                                    plotValues{jj,ii,1} = currImVal{jj}(:,currPos(xySel(2)));
-                                    plotValues{jj,ii,2} = currIm{jj}(:,currPos(xySel(2)));
+                                  plotValues{jj,ii,1} = currImVal{jj}(:,currPos(xySel(2)));
+                                  plotValues{jj,ii,2} = currIm{jj}(:,currPos(xySel(2)));
                                 else
-                                  if withAlpha
-                                    plotValues{jj,ii,kk} =  sum(currImVal{jj}(:,plotIndex{xySel(2)}).*currAlphaMapVal{jj}(:,plotIndex{xySel(2)}),2, 'omitnan')./...
-                                                            sum(currAlphaMapVal{jj}(:,plotIndex{xySel(2)}).*~isnan(currImVal{jj}(:,plotIndex{xySel(2)})),2, 'omitnan');
-                                    plotValuesAlpha{jj,ii,kk} =  mean(currAlphaMapVal{jj}(:,plotIndex{xySel(2)}),    2, 'omitnan');
-                                  else
-                                    plotValues{jj,ii,kk} = mean(currImVal{jj}(:,plotIndex{xySel(2)}),2, 'omitnan');
-                                  end
+                                  plotValues{jj,ii,kk} = mean(currImVal{jj}(:,plotIndex{xySel(2)}),2, 'omitnan');
                                 end
+                              end
                             end
-                            % Plot along y direction
-                        elseif plotDim(ii) == xySel(2)
+                        elseif plotDim(ii) == xySel(2) % Plot along y direction
                             if get(bt_mean, 'UserData')==5   %RGB plot
                                 if get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value')  % Stretch RGB mode
                                     for ll = 1:dim(rgbDim)
@@ -6576,18 +6575,18 @@ end
                                     end
                                 end
                             else
+                              if withAlpha
+                                plotValues{jj,ii,kk} =  sum(currImVal{jj}(plotIndex{xySel(1)},:).*currAlphaMapVal{jj}(plotIndex{xySel(1)},:),1, 'omitnan')./...
+                                                        sum(currAlphaMapVal{jj}(plotIndex{xySel(1)},:).*~isnan(currImVal{jj}(plotIndex{xySel(1)},:)),1, 'omitnan');
+                                plotValuesAlpha{jj,ii,kk} =  mean(currAlphaMapVal{jj}(plotIndex{xySel(1)},:),    1, 'omitnan');
+                              else
                                 if withFilter && get(popFilter, 'Value')>1  % If filter is selected, neglect "averaging button" and display filtered and unfiltered data instead.
-                                    plotValues{jj,ii,1} = currImVal{jj}(currPos(xySel(1)),:);
-                                    plotValues{jj,ii,2} = currIm{jj}(currPos(xySel(1)),:);
+                                  plotValues{jj,ii,1} = currImVal{jj}(currPos(xySel(1)),:);
+                                  plotValues{jj,ii,2} = currIm{jj}(currPos(xySel(1)),:);
                                 else
-                                  if withAlpha
-                                    plotValues{jj,ii,kk} =  sum(currImVal{jj}(plotIndex{xySel(1)},:).*currAlphaMapVal{jj}(plotIndex{xySel(1)},:),1, 'omitnan')./...
-                                                            sum(currAlphaMapVal{jj}(plotIndex{xySel(1)},:).*~isnan(currImVal{jj}(plotIndex{xySel(1)},:)),1, 'omitnan');
-                                    plotValuesAlpha{jj,ii,kk} =  mean(currAlphaMapVal{jj}(plotIndex{xySel(1)},:),    1, 'omitnan');
-                                  else
-                                    plotValues{jj,ii,kk} = mean(currImVal{jj}(plotIndex{xySel(1)},:),1, 'omitnan');
-                                  end
+                                  plotValues{jj,ii,kk} = mean(currImVal{jj}(plotIndex{xySel(1)},:),1, 'omitnan');
                                 end
+                              end
                             end
                             % Plot along any other direction
                         elseif get(bt_mean, 'UserData')==5 && rgbDim ~= plotDim(ii)  %RGB plot - not possible if plot dimension and RGB dimension are identical
