@@ -170,7 +170,9 @@ versionNumber = 1.2128;  % Current version number of matVis
 %     errordlg('matVis is not supported for MATLAB versions prior v7 (R14). Sorry!','matVis not supported');
 %     return;
 % end
-oldMATLAB = verLessThan('MATLAB','8.4'); % to differenciate for HG2 
+matlabVer = ver('MATLAB');
+matlabVer = str2double(matlabVer(1).Version);
+% oldMATLAB = verLessThan('MATLAB','8.4'); % to differenciate for HG2 
 mlVer = ver;
 withDipimage = any(strfind([mlVer.Name],'DIPimage'));
 withImageProcessingTB = any(strfind([mlVer.Name],'Image Processing Toolbox'));
@@ -732,7 +734,7 @@ savedPos = [];                           %Matrix for saved positions using small
 savedZoom = [];                          %Matrix for saved zoom using small buttons to the right
 
 % peallocation of handles
-if oldMATLAB
+if matlabVer < 8.4 % to differenciate for HG2 
   currIm = [];                             %data of Current Image (compare currImVal)
   imHandle = [];                           %Handle of Figure in Image Window
   zoomHandle = [];                         %Handle of Figure in Zoom Window
@@ -781,7 +783,7 @@ else
   tempWin = matlab.ui.Figure.empty;                            %Temp. window used for user input (aspect ratio, axes limits)
   % tempWin = []; is used later in matVis
   exportWin = matlab.ui.Figure.empty;                          %Temp. window used for data export
-  subPlotHandles = matlab.graphics.chart.primitive.Line.empty;              %Handles to subplot axes in Plots Window
+  subPlotHandles = matlab.graphics.axis.Axes.empty;                         %Handles to subplot axes in Plots Window
   subPlotPlots = matlab.graphics.chart.primitive.Line.empty;                %Handles to data displayed in Plots Window
   subPlotPlotsAlpha = matlab.graphics.chart.primitive.Line.empty;           %Handles to data displayed in Plots Window
   posLine = matlab.graphics.chart.primitive.Line.empty;                     %Lines in plots indicating current value of diplayed dimension
@@ -2602,7 +2604,7 @@ for i = 1:nDim
         'Tooltip',ttt1,'Tag',ttt);  %#ok
     sldPos(:,i) = get(sld(i),'Position')+get(panel_positionControls,'Position').*[1 1 0 0];
     if usejava('awt')  % java enabled -> use it to update while dragging
-      if oldMATLAB
+      if matlabVer < 8.4 % to differenciate for HG2 
         hListeners(i) = handle.listener(sld(i), 'ActionEvent', @sliderCallback);  %#ok
       else
         hListeners(i) = addlistener(sld(i), 'ContinuousValueChange', @sliderCallback);  %#ok
@@ -2634,7 +2636,7 @@ for i = 1:nDim
         'SliderStep', [1/(dim(i)-1) 10/(dim(i)-1)],'Value',dim(i),'Userdata', i,...
         'Callback',{@updateZoom,i,'sld'},'Tooltip',ttt1,'Tag',ttt);  %#ok
     if usejava('awt')  % java enabled -> use it to update while dragging
-      if oldMATLAB
+      if matlabVer < 8.4 % to differenciate for HG2 
         hListenersD(i) = handle.listener(sld_down(i), 'ActionEvent', @updateZoomL);  %#ok
         hListenersU(i) = handle.listener(sld_up(i), 'ActionEvent', @updateZoomL);  %#ok
       else
@@ -4056,6 +4058,11 @@ end
                 set(imageWin(ii), 'Position', get(imageWin(ii), 'Position') + [0 0 0 -winWidthMenuBar], 'MenuBar', 'figure', 'WindowButtonMotionFcn', '');
                 set(zoomWin(ii), 'Position', get(zoomWin(ii), 'Position') + [0 0 0 -winWidthMenuBar], 'MenuBar', 'figure', 'WindowButtonMotionFcn', '');
                 set(plotWin(ii), 'Position', get(plotWin(ii), 'Position') + [0 0 0 -winWidthMenuBar], 'MenuBar', 'figure', 'WindowButtonMotionFcn', '');
+                if matlabVer > 9.4
+                  imAx.Toolbar.Visible = 'on';
+                  zoomAx.Toolbar.Visible = 'on';
+                  if ~isempty(subPlotHandles); subPlotHandles.Toolbar.Visible = 'on'; end
+                end
             end
             for hh = [histWin profileTraceWin]
               if ~isempty(hh)
@@ -4067,6 +4074,10 @@ end
                 set(imageWin(ii), 'Position', get(imageWin(ii), 'Position') + [0 0 0 winWidthMenuBar], 'MenuBar', 'none', 'WindowButtonMotionFcn', @mouseMotion);
                 set(zoomWin(ii), 'Position', get(zoomWin(ii), 'Position') + [0 0 0 winWidthMenuBar], 'MenuBar', 'none', 'WindowButtonMotionFcn', @mouseMotion);
                 set(plotWin(ii), 'Position', get(plotWin(ii), 'Position') + [0 0 0 winWidthMenuBar], 'MenuBar', 'none', 'WindowButtonMotionFcn', @mouseMotion);
+                if matlabVer > 9.4
+                  imAx.Toolbar.Visible = 'off';
+                  zoomAx.Toolbar.Visible = 'off';
+                end
             end
             for hh = [histWin profileTraceWin]
               if ~isempty(hh)
@@ -6199,6 +6210,12 @@ end
                         imHandle(ii) = imagesc(currIm{ii}, cmMinMax(ii,:));
                     end
                     imAx(ii) = myGca;
+                    if matlabVer > 9.4
+                      axtoolbar(imAx(ii),'datacursor');
+                      if tb_menuBars.Value; imAx(ii).Toolbar.Visible = 'on';
+                      else; imAx(ii).Toolbar.Visible = 'off';
+                      end
+                    end
                     set(imageWin(ii), 'HandleVisibility', 'off');
                     if ~withDimUnits
                         xlabel(imAx(ii), [dimNames{xySel(2)}]);
@@ -6227,6 +6244,12 @@ end
                         zoomHandle(ii) = imagesc(currIm{ii}, cmMinMax(ii,:));
                     end
                     zoomAx(ii) = myGca;
+                    if matlabVer > 9.4
+                      axtoolbar(zoomAx(ii),'datacursor');
+                      if tb_menuBars.Value; zoomAx(ii).Toolbar.Visible = 'on';
+                      else; zoomAx(ii).Toolbar.Visible = 'off';
+                      end
+                    end
                     %                     colormap(zoomAx(ii), cmap);
                     set(zoomWin(ii), 'HandleVisibility', 'off');
                     set(myGca, 'Position', [0 0 1 1]);
@@ -6360,7 +6383,7 @@ end
     function drawObjects(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         if get(tbWin(1), 'Value') == 1 || strcmp(projMethodStr{projMethod+1},'tile')
-          if oldMATLAB
+          if matlabVer < 8.4 % to differenciate for HG2 
             rectPlotArea_Im = []; %#ok
           else
             rectPlotArea_Im = matlab.graphics.primitive.Rectangle.empty;
@@ -6389,7 +6412,7 @@ end
           end
         end
         if get(tbWin(2), 'Value') == 1
-            if oldMATLAB
+            if matlabVer < 8.4 % to differenciate for HG2 
                 rectPlotArea_Zoom = []; %#ok
             else
                 rectPlotArea_Zoom = matlab.graphics.primitive.Rectangle.empty;
@@ -6634,17 +6657,17 @@ end
             end
             plotValues = [];plotValuesAlpha = [];
             updatePlotValues;
-            if oldMATLAB
+            if matlabVer < 8.4 % to differenciate for HG2 
                 subPlotHandles = [];
                 subPlotPlots = [];
                 if withAlpha
                   subPlotPlotsAlpha = [];
                 end
             else
-                subPlotHandles = matlab.graphics.chart.primitive.Line.empty;                     %Handles to subplot axes in Plots Window
-                subPlotPlots = matlab.graphics.chart.primitive.Line.empty;                       %Handles to data displayed in Plots Window
+                subPlotHandles = matlab.graphics.axis.Axes.empty;                               %Handles to subplot axes in Plots Window
+                subPlotPlots = matlab.graphics.chart.primitive.Line.empty;                      %Handles to data displayed in Plots Window
                 if withAlpha
-                  subPlotPlotsAlpha = matlab.graphics.chart.primitive.Line.empty;                %Handles to data displayed in Plots Window
+                  subPlotPlotsAlpha = matlab.graphics.chart.primitive.Line.empty;               %Handles to data displayed in Plots Window
                 end
             end
             if get(tbRoi, 'Value')
@@ -8506,7 +8529,7 @@ end
         if config.RGB && ~withAlpha && nDim>2
             set(cmImage, 'String', 'Channel');
             set(tb_switchRGB, 'Value', 1);
-            if oldMATLAB
+            if matlabVer < 8.4 % to differenciate for HG2 
               set(bg_colormap, 'SelectedObject',...
                 strcmp(get(get(bg_colormap,'Children'),'String'),config.colormapMode)'*get(bg_colormap,'Children'));   %Default: 'Global'
             else
@@ -8517,7 +8540,7 @@ end
         end
         %Colormap Mode (Global, Local or Manual)
         if ~config.RGB && withAlpha
-          if oldMATLAB
+          if matlabVer < 8.4 % to differenciate for HG2 
             set(bg_colormap, 'SelectedObject',...
               strcmp(get(get(bg_colormap,'Children'),'String'),config.colormapMode)'*get(bg_colormap,'Children'));   %Default: 'Global'
           else
