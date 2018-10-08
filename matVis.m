@@ -2931,7 +2931,7 @@ if withDipimage || withImageProcessingTB
     end
     if debugMatVis, ttt1 = sprintf('Handle: ''popFilter''\nCallback: ''updateFilter'''); else,  ttt1 = ttt; end
     popFilter = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', @updateFilter, 'Units', 'Pixel', ...
-        'Position', [108 160 60 20], 'String',s, 'Value',xySel(1),'FontSize',7, 'Tooltip',ttt1,'Tag',ttt);
+        'Position', [108 160 60 20], 'String',s, 'Value',1, 'FontSize',7, 'Tooltip',ttt1,'Tag',ttt);
     % Filter size
     ttt = sprintf('Enter filter size (0 = no filter applied)\n(works only with ImageProcessingToolbox and DIPimage)'); 
     if debugMatVis, ttt1 = sprintf('Handle: ''txtFilterPar''\nCallback: ''none'''); else,  ttt1 = ttt; end
