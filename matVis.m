@@ -10835,9 +10835,6 @@ end
           updateRoiSelection(numberRoi);
         end
         drawPlots;
-        
-        
-
         if debugMatVis, debugMatVisFcn(2); end
     end
     function drawRois
@@ -10863,6 +10860,10 @@ end
                 roiLine.zoom(jj,ii) = line(roiList(ii).corners(1  ,:),roiList(ii).corners(2,:),'Color','w','Parent',zoomAx(jj));
                 roiText.zoom(jj,ii) = text(max(roiList(ii).corners(1  ,:))+1  ,mean(roiList(ii).corners(2,:)),roiList(ii).name,'Color','w','HorizontalAlignment','left','Parent',zoomAx(jj));
             end
+        end
+        for iii = 1:numel(data)
+          roiCenterIndicator(1,iii) = text(0,0,'+','Parent',zoomAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+          roiCenterIndicator(2,iii) = text(0,0,'+','Parent',imAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
         end
         updateRoiSelection;
         if debugMatVis, debugMatVisFcn(2); end
