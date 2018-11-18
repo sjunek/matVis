@@ -3139,12 +3139,12 @@ uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'Bac
 ttt = sprintf('Set minimum (''black point'') of colormap.\nThis value is linked to the slider to the left.');
 if debugMatVis, ttt1 = sprintf('Handle: ''sldLimMin''\nCallback: ''setColormapFromEdit'''); else,  ttt1 = ttt; end
 valSldMin = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
-    'Position', [268 80 45 12], 'String', num2str(minVal(1)), 'Callback', @setColormapFromEdit,...
+    'Position', [268 80 45 12], 'String', num2str(minVal(1)), 'Callback', {@setColormapFromEdit,1},...
     'HorizontalAlignment', 'right','Tooltip',ttt1,'Tag',ttt);
 ttt = sprintf('Set maximum (''white point'') of colormap.\nThis value is linked to the slider to the left.');
 if debugMatVis, ttt1 = sprintf('Handle: ''sldLimMax''\nCallback: ''setColormapFromEdit'''); else,  ttt1 = ttt; end
 valSldMax = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
-    'Position', [268 69 45 12], 'String', num2str(maxVal(1)), 'Callback', @setColormapFromEdit,...
+    'Position', [268 69 45 12], 'String', num2str(maxVal(1)), 'Callback', {@setColormapFromEdit,2},...
     'HorizontalAlignment', 'right','Tooltip',ttt1,'Tag',ttt);
 
 % Small histogram on top of sliders
@@ -6919,14 +6919,24 @@ end
     function setColormapFromEdit(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         % Called from edit fields for contrast values
-            if str2double(get(valSldMin, 'String')) < get(sldMin, 'Min')
-                set(valSldMin, 'String', num2str(get(sldMin, 'Min')));
-            end
-            if str2double(get(valSldMax, 'String')) > get(sldMax, 'Max')
-                set(valSldMax, 'String', num2str(get(sldMax, 'Max')));
+        switch varargin{3}
+          case 1 % sldLimMin
+            myVal = str2double(get(valSldMin, 'String'));
+            if  myVal < get(sldMin, 'Min')
+              set(valSldMin, 'String', num2str(get(sldMin, 'Min')));
+            elseif myVal > get(sldMax, 'Value')
+              set(valSldMin, 'String', num2str(get(sldMax, 'Value')-(get(sldMin, 'Max')-get(sldMin, 'Min'))/1000));
             end
             set(sldMin, 'Value', max(get(sldMin, 'Min'), str2double(get(valSldMin, 'String'))));
+          case 2
+            myVal = str2double(get(valSldMax, 'String'));
+            if  myVal > get(sldMax, 'Max')
+              set(valSldMax, 'String', num2str(get(sldMax, 'Max')));
+            elseif myVal < get(sldMin, 'Value')
+              set(valSldMin, 'String', num2str(get(sldMin, 'Value')-(get(sldMin, 'Max')-get(sldMin, 'Min'))/1000));
+            end
             set(sldMax, 'Value', min(get(sldMin, 'Max'), str2double(get(valSldMax, 'String'))));
+        end
             if rgbCount
                 updateImages;
             else
