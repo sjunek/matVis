@@ -645,6 +645,8 @@ end
 %% Set initial values
 dim = size(data{1});                     %Dimensions of data set
 nDim = length(dim);                      %Number of dimensions
+if ~customDimScale, dimScale = zeros(nDim,1); dimScale(:,2) = dim; end
+
 % additional variable predefinition (consider reorganization)
 % predefinition is required since R2018a
 sldPos = zeros(4  ,nDim);                % slider positions (will be set in gui configuration)
@@ -10048,7 +10050,7 @@ end
             end
             axis image;
             set(roiAxes,'FontSize',8,'Color','k');
-            roiLine.roi = line(0,0,'Parent', roiAxes,'Color','w');
+            roiLine.roi = line(dimScale(xySel(2),1),dimScale(xySel(1),1),'Parent', roiAxes,'Color','w');
             for iii = 1:numel(data)
                 roiCenterIndicator(1,iii) = text(0,0,'+','Parent',zoomAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
                 roiCenterIndicator(2,iii) = text(0,0,'+','Parent',imAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
@@ -10466,7 +10468,7 @@ end
         if customDimScale
             roiList(numberRoi).corners = [];
             for ii = 1:size(roi,2)
-                roiList(numberRoi).corners(:,ii) = scaledLocation(roi(:,ii)');
+                roiList(numberRoi).corners([2 1],ii) = scaledLocation(roi([2 1],ii)');
             end
         else
             roiList(numberRoi).corners = roi;
