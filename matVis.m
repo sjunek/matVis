@@ -894,6 +894,7 @@ bt_roiExport = [];
 bt_exportRoiData = [];
 newRoiSize = 5;                          %Size of "one-click" ROIs (radius, squares will have 2*newRoiSize+1 side length)
 jump2ROIPos_cb = 1;                      %Handle to checkbox indidacting whether the current position chould be changed when a new ROI is selected (jump to position where ROI was created)
+showROIcenter_cb = 1;                      %Handle to checkbox indidacting whether the current position chould be changed when a new ROI is selected (jump to position where ROI was created)
 etxt_newRoiName = [];
 txt_RoiPropWinTxt = [];                  %Handle Textfield in Figure for ROI update of ROI settings
 
@@ -1077,6 +1078,7 @@ defaultConfig.tooltips = 1;              %Default: 1 (display tooltips)
 % Jump to ROI position/zoom where ROI was created when changing ROI
 % selection
 defaultConfig.jump2ROIPos = 1;    
+defaultConfig.showROIcenter = 1;    
 [matVisPath,f,e] = fileparts(which('matVis.m'));
 compName = strtrim(getenv('Computername'));
 configFile = [];
@@ -3775,22 +3777,15 @@ end
             set(pop(2), 'Value', xySel(1));
             xySel(1) = get(pop(1), 'Value');
             xySel(2) = get(pop(2), 'Value');
-            zoomValXY = [zoomValXY(2) zoomValXY(1) zoomValXY(4) zoomValXY(3)];
+            zoomValXY = zoomValXY([2 1 4 3]);
             if customDimScale
                 set(roiImage,'XData',dimScale(xySel(2),:),'YData',dimScale(xySel(1),:),'CData',currIm{1},'AlphaData',1);
             else
                 set(roiImage,'CData',currIm{1},'AlphaData',1);
             end
             if nRois > 0
-                for ii=1:nRois
-                    x =  roiList(ii).index.x;
-                    roiList(ii).index.x = roiList(ii).index.y;
-                    roiList(ii).index.y = x;
-                    roiList(ii).rectangle = roiList(ii).rectangle([2,1  ,4,3]);
-                    roiList(ii).corners = circshift(roiList(ii).corners,[1 0]);
-                    roiList(ii).mask = roiList(ii).mask';
-                end
-                drawRois;
+              roiList = flipROIdims(roiList);
+              drawRois;
             end
         end
         set(txt_dimName(xySel(1)), 'ForegroundColor', 'r');
@@ -8458,6 +8453,12 @@ end
         else
           currConfig.jump2ROIPos = customConfig.jump2ROIPos;
         end
+        % Show ROI center
+        if get(roiWin,'Visible')
+          currConfig.showROIcenter = get(showROIcenter_cb, 'Value');
+        else
+          currConfig.showROIcenter = customConfig.showROIcenter;
+        end
         if debugMatVis, debugMatVisFcn(2); end
     end
 
@@ -8595,6 +8596,10 @@ end
         % Jump to ROI selection position
         if ~isempty(roiWin)
             set(jump2ROIPos_cb, 'Value',config.jump2ROIPos);
+        end
+        % show ROI center
+        if ~isempty(roiWin)
+            set(showROIcenter_cb, 'Value',config.showROIcenter);
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
@@ -10022,9 +10027,12 @@ end
                     'CData', roiExportDataBt,'Callback', @exportRoiData,'Enable','on','ToolTipString', ' Export Roi data along specified dimension ',...
                     'Tag', 'Export ROI data along specified dimension into the workspace.', 'Enable', 'off');
             end
-            jump2ROIPos_cb = uicontrol(roiWin, 'Style', 'checkbox','Position', [10,2,250  ,22],...
-                    'Value',customConfig.jump2ROIPos,'String','Jump to ROI selection position',...
+            jump2ROIPos_cb = uicontrol(roiWin, 'Style', 'checkbox','Position', [10,2,130  ,22],...
+                    'Callback', @listboxCallback,'Value',customConfig.jump2ROIPos,'String','Jump to ROI sel. pos.',...
                     'Tag', 'Jump to position in data set at which ROI was defined.');
+            showROIcenter_cb = uicontrol(roiWin, 'Style', 'checkbox','Position', [150,2,130  ,22],...
+                    'Callback', @updateCenterOfGravity,'Value',customConfig.showROIcenter,...
+                    'String','Show ROI center', 'Tag', 'Show ROI center.'); % 
             %             %Roi Calculator
             %              uicontrol(roiWin, 'Style', 'Text', 'Position', [90 28 110 15], ...
             %                     'String','ROI Calculator','FontWeight', 'bold',...
@@ -10051,10 +10059,14 @@ end
             axis image;
             set(roiAxes,'FontSize',8,'Color','k');
             roiLine.roi = line(dimScale(xySel(2),1),dimScale(xySel(1),1),'Parent', roiAxes,'Color','w');
-            for iii = 1:numel(data)
-                roiCenterIndicator(1,iii) = text(0,0,'+','Parent',zoomAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
-                roiCenterIndicator(2,iii) = text(0,0,'+','Parent',imAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
-            end
+%             set([imAx(:) zoomAx(:)],'NextPlot','add')
+%             for iii = 1:numel(data)
+%                 roiCenterIndicator(1,iii) = plot(0,0,'+','Parent',zoomAx(iii),'Color','r','Visible','off','Markersize',max([15,max(dim(xySel))/100]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+%                 roiCenterIndicator(2,iii) = plot(0,0,'+','Parent',imAx(iii),'Color','r','Visible','off','Markersize',max([15,max(dim(xySel))/100]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+%                 roiCenterIndicator(3,iii) = plot(0,0,'o','Parent',zoomAx(iii),'Color','r','Visible','off','Markersize',max([15,max(dim(xySel))/100]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+%                 roiCenterIndicator(4,iii) = plot(0,0,'o','Parent',imAx(iii),'Color','r','Visible','off','Markersize',max([15,max(dim(xySel))/100]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+%             end
+%             set([imAx(:) zoomAx(:)],'NextPlot','replace')
             set(roiWin, 'HandleVisibility', 'off');
             %Set first entry of roi list (so it is not empty - will be
             %replaced by 1 when first Roi is selected)
@@ -10406,6 +10418,24 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
+    function cog = calcCenterOfGravity(mask, currPos)
+        if debugMatVis, debugMatVisFcn(1); end
+        [maskXIdx, maskYIdx] = find(mask);
+        cog = [mean(maskXIdx), mean(maskYIdx)];
+        for ii = 1:nDim
+          imIndex{ii} = currPos(ii);  %#ok
+        end
+        imIndex{xySel(1)} = ':';
+        imIndex{xySel(2)} = ':';
+        if withAlpha
+          dmask = alphaMap{1}(imIndex{:});
+        else
+          dmask = data{1}(imIndex{:});
+        end
+        dmask = double(dmask(mask));
+        cog(2,:) = [sum(maskXIdx(:).*dmask(:),'omitnan')/sum(dmask(:),'omitnan'), sum(maskYIdx(:).*dmask(:),'omitnan')/sum(dmask(:),'omitnan')];
+        if debugMatVis, debugMatVisFcn(2); end
+    end
     function addNewRoi(roi,numberRoi,newOld)
         if debugMatVis, debugMatVisFcn(1); end
         %Add selected Roi to list and create related objects
@@ -10435,8 +10465,7 @@ end
         % end
         roiList(numberRoi).mask = false(dim(xySel(1)),dim(xySel(2)));
         roiList(numberRoi).mask(inregion) = 1;
-        [maskXIdx, maskYIdx] = find(roiList(numberRoi).mask);
-        roiList(numberRoi).centerOfGravity = [mean(maskXIdx), mean(maskYIdx)];
+        roiList(numberRoi).centerOfGravity = calcCenterOfGravity(roiList(numberRoi).mask, currPos);
         %         toc
         if ~any(roiList(numberRoi).mask(:))
             roiList(numberRoi) = [];
@@ -10655,6 +10684,10 @@ end
           return
         end
         currRoi = get(roiListbox, 'Value');
+        if isscalar(currRoi) && isempty(roiList(currRoi).settings)
+          roiList(currRoi).settings.position = currPos;
+          roiList(currRoi).settings.zoomVal = zoomVal;
+        end
         ROIpos = roiList(currRoi).settings.position;
         nROIDim = length(ROIpos);
         ROIZoomVal = roiList(currRoi).settings.zoomVal;
@@ -10760,16 +10793,7 @@ end
         set(roiText.zoom, 'FontWeight', 'normal','Color','w');   %'Color', 'b');
         set(roiText.im(:,numberRoi), 'FontWeight', 'bold'); %'Color','r');
         set(roiText.zoom(:,numberRoi),'FontWeight', 'bold'); % 'Color','r');
-        if numel(numberRoi) == 1 && isfield(roiList(numberRoi),'centerOfGravity') && ~isempty(roiList(numberRoi).centerOfGravity)
-          if customDimScale
-            set(roiCenterIndicator(:),'Visible','on','Position',[roiList(numberRoi).centerOfGravity([2 1]).*pxWidth(xySel([2 1])),0]);
-          else
-            set(roiCenterIndicator(:),'Visible','on','Position',[roiList(numberRoi).centerOfGravity([2 1]),0]);
-          end
-        else
-          set(roiCenterIndicator(:),'Visible','off');
-        end
-        
+        updateCenterOfGravity
         % Color for selected ROIs
         colorcodePlots = plotColors(numel(numberRoi));
         for ii = 1:numel(numberRoi)
@@ -10787,6 +10811,24 @@ end
         updateRoiProperties(0);
         if debugMatVis, debugMatVisFcn(2); end
     end
+    function updateCenterOfGravity(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        numberRoi = get(roiListbox, 'Value');
+        if numel(numberRoi) == 1 && get(showROIcenter_cb, 'Value') && isfield(roiList(numberRoi),'centerOfGravity') && ~isempty(roiList(numberRoi).centerOfGravity)
+          cOG = roiList(numberRoi).centerOfGravity;
+          if customDimScale
+            set(roiCenterIndicator(1:2,:),'Visible','on','XData',cOG(1,2).*pxWidth(xySel(2)),'YData',cOG(1,1).*pxWidth(xySel(1)) );
+            set(roiCenterIndicator(3:4,:),'Visible','on','XData',cOG(2,2).*pxWidth(xySel(2)),'YData',cOG(2,1).*pxWidth(xySel(1)) );
+          else
+            set(roiCenterIndicator(1:2,:),'Visible','on','XData',cOG(1,2),'YData',cOG(1,1) );
+            set(roiCenterIndicator(3:4,:),'Visible','on','XData',cOG(2,2),'YData',cOG(2,1) );
+          end
+        else
+          set(roiCenterIndicator(:),'Visible','off');
+        end
+        if debugMatVis, debugMatVisFcn(2); end
+    end
+
     function updateRoiProperties(plotUpdate)
         if debugMatVis, debugMatVisFcn(1); end
         numberRoi = get(roiListbox, 'Value');
@@ -10832,7 +10874,10 @@ end
     function listboxCallback(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         numberRoi = get(roiListbox, 'Value');
-        if numel(numberRoi) == 1 && get(jump2ROIPos_cb,'Value') && isfield(roiList, 'settings')
+        if numel(numberRoi) == 1 && get(jump2ROIPos_cb,'Value') && isfield(roiList, 'settings') && ~isempty(roiList(numberRoi).settings)
+%           if isempty(roiList(66).settings)
+%             roiList(numberRoi).settings.position = ones(1,nDim);
+%           end
           ROIPos = roiList(numberRoi).settings.position;
           matchDims = min([length(currPos) length(ROIPos)]);
           matchDims = find([ROIPos(1:matchDims)>dim(1:matchDims) 1],1,'first')-1; % checks if saved ROIpos is larger than data dimension and reduces MATCHDIMS, in case
@@ -10874,10 +10919,18 @@ end
                 roiText.zoom(jj,ii) = text(max(roiList(ii).corners(1  ,:))+1  ,mean(roiList(ii).corners(2,:)),roiList(ii).name,'Color','w','HorizontalAlignment','left','Parent',zoomAx(jj));
             end
         end
-        for iii = 1:numel(data)
-          roiCenterIndicator(1,iii) = text(0,0,'+','Parent',zoomAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
-          roiCenterIndicator(2,iii) = text(0,0,'+','Parent',imAx(iii),'Color','r','FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+        try
+            delete(roiCenterIndicator)
+        catch    %#ok
         end
+        set([imAx(:) zoomAx(:)],'NextPlot','add')
+        for iii = 1:numel(data)
+          roiCenterIndicator(1,iii) = plot(0,0,'+','Parent',zoomAx(iii),'Color','r','Visible','off','Markersize',max([6,max(dim(xySel))/75]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+          roiCenterIndicator(2,iii) = plot(0,0,'+','Parent',imAx(iii),'Color','r','Visible','off','Markersize',max([6,max(dim(xySel))/75]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+          roiCenterIndicator(3,iii) = plot(0,0,'o','Parent',zoomAx(iii),'Color','r','Visible','off','Markersize',max([6,max(dim(xySel))/75]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+          roiCenterIndicator(4,iii) = plot(0,0,'o','Parent',imAx(iii),'Color','r','Visible','off','Markersize',max([6,max(dim(xySel))/75]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+        end
+        set([imAx(:) zoomAx(:)],'NextPlot','replace')
         updateRoiSelection;
         if debugMatVis, debugMatVisFcn(2); end
     end
@@ -11249,18 +11302,38 @@ end
         if nargin>2 
           matVisRoiExport = varargin{3};
         else
-        [f,p] = uigetfile('.mat','Choose file to load rois!');
-        if isequal(f,0)
+          [f,p] = uigetfile('.mat','Choose file to load rois!');
+          if isequal(f,0)
+            if debugMatVis, debugMatVisFcn(2); end
+            return
+          end
+          noMatVisROIs = false;
+          try
+            matVisRoiExport = cell2mat(struct2cell(load([p,f])));
+          catch    %#ok
+            noMatVisROIs = true;
+          end
+        end
+        if ~isstruct(matVisRoiExport) || ~all(strcmp(fieldnames(matVisRoiExport),{'number','mask','centerOfGravity','index' ,'corners','cornersPixelDim','rectangle','settings','name'}'))
+          noMatVisROIs = true;
+        end
+        if noMatVisROIs
+          errordlg('Chosen file does not contain rois exported using matVis (''matVisRoiExport'')!');
           if debugMatVis, debugMatVisFcn(2); end
           return
         end
-        try
-            matVisRoiExport = cell2mat(struct2cell(load([p,f])));
-        catch    %#ok
-            errordlg('Chosen file does not contain rois exported using matVis (''matVisRoiExport'')!');
-            if debugMatVis, debugMatVisFcn(2); end
-            return
+        if ~all(size(matVisRoiExport(1).mask)==dim([matVisRoiExport(1).settings.xySel]))
+          warning(sprintf('Size dimension missmatch\nROI dim: %d x %d\n',size(matVisRoiExport(1).mask)))
         end
+        if matVisRoiExport(1).settings.xySel==xySel([2 1])
+          matVisRoiExport = flipROIdims(matVisRoiExport);
+        end
+        %updateCenterOfGravity
+        for ii=1:length(matVisRoiExport)
+          if ~all(size(matVisRoiExport(ii).centerOfGravity)==[2 2])
+            matVisRoiExport(ii).centerOfGravity = calcCenterOfGravity(matVisRoiExport(ii).mask, matVisRoiExport(ii).settings.position);
+            warning(sprintf('Recalculated CenterOfGravity for ROI%d', ii))
+          end
         end
         if customDimScale
             for ii=1:numel(matVisRoiExport)
@@ -11287,11 +11360,6 @@ end
         end
         nRois = size(roiList,2);
         s = [];
-        for ii=1:nRois
-            s{ii} = roiList(ii).name;
-        end
-        s = [];
-        set(roiListbox, 'String', '', 'Value', 1);
         for ii=1:nRois
             s{ii} = [num2str(ii,'%03d'),': ',roiList(ii).name];
         end
@@ -11337,6 +11405,22 @@ end
                     assignin('base',sprintf('roiDataAlphaWeighted_set%02d_%s',ii,dimNames{exportDim}), exportValuesAlphaWeighted);
                 end
             end
+        end
+        if debugMatVis, debugMatVisFcn(2); end
+    end
+    function rois = flipROIdims(rois)
+        if debugMatVis, debugMatVisFcn(1); end
+        for ii=1:length(rois)
+          x =  rois(ii).index.x;
+          rois(ii).index.x = rois(ii).index.y;
+          rois(ii).index.y = x;
+          rois(ii).rectangle = rois(ii).rectangle([2,1  ,4,3]);
+          rois(ii).corners = circshift(rois(ii).corners,[1 0]);
+          rois(ii).mask = rois(ii).mask';
+          rois(ii).centerOfGravity = rois(ii).centerOfGravity(:,[2, 1]);
+          rois(ii).settings.xySel = rois(ii).settings.xySel([2, 1]);
+          %rois(ii).settings.position(xySel) = rois(ii).settings.position(xySel([2, 1]));
+          %rois(ii).settings.zoomVal(xySel,:) = rois(ii).settings.zoomVal(xySel([2, 1]),:);
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
