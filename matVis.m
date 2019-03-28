@@ -263,9 +263,9 @@ if nargin == 0 || ischar(varargin{1})
                     dimNames{3} = 'z';
                     dimNames{4} = 't';
                     dimNames{5} = 'l';
-                    dimUnits{1} = 'µm';
-                    dimUnits{2} = 'µm';
-                    dimUnits{3} = 'µm';
+                    dimUnits{1} = 'Âµm';
+                    dimUnits{2} = 'Âµm';
+                    dimUnits{3} = 'Âµm';
                     dimUnits{4} = 's';
                     dimUnits{5} = 'channel';
                     withDimUnits = 1;
@@ -364,10 +364,10 @@ if nargin == 0 || ischar(varargin{1})
                         dimScale(4,:) = [1 ww.NUMBER_OF_CHANNELS];
                         dimScale(3,:) = ww.VoxelSizeZ*1e6*[1 lsmDim(3)];
                         dimScale(5,:) = ww.TIMESTACKSIZE*[1 lsmDim(5)];
-                        dimUnits{1} = 'µm';
-                        dimUnits{2} = 'µm';
+                        dimUnits{1} = 'Âµm';
+                        dimUnits{2} = 'Âµm';
                         dimUnits{4} = 'channel';
-                        dimUnits{3} = 'µm';
+                        dimUnits{3} = 'Âµm';
                         dimUnits{5} = 's';
                         dimUnits{6} = '';
                         customDimScale = 1;
@@ -2865,7 +2865,7 @@ if numel(data) == 1
 end
 
 %Button for display of CustomTif Parameter
-ttt = sprintf('Display parameters of custom tif files used in the Schild lab (University of Göttingen).'); 
+ttt = sprintf('Display parameters of custom tif files used in the Schild lab (University of GÃ¶ttingen).'); 
 if debugMatVis, ttt1 = sprintf('Handle: ''tb_tifPar''\nCallback: ''linkWins''');else,  ttt1 = ttt; end
 tb_tifPar = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'CData', tifParBt,  ...
     'Position', [250 10 24 24], 'Callback', @showTifPar,  'Value', 0, 'Tooltip',ttt1,'Tag',ttt); %[145 85 24 24]
@@ -7896,8 +7896,8 @@ end
         % So far only tested on Windows!
         if debugMatVis, debugMatVisFcn(1); end
         ge = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment;
-        gd = ge.getDefaultScreenDevice;
-        actualScreensize = [gd.getDisplayMode.getWidth gd.getDisplayMode.getHeight];
+        gd = ge.getDefaultScreenDevice.getDisplayMode;
+        actualScreensize = [gd.getWidth gd.getHeight];
         matlabScreensize = get(0,'Screensize');
         scalingFct = matlabScreensize(3)/actualScreensize(1);
         if debugMatVis, debugMatVisFcn(2); end
@@ -8347,7 +8347,7 @@ end
             set([matVis2DHist.figHandles.gui matVis2DHist.figHandles.imageWin], 'Visible','off');
         elseif   ishandle(tbHist) && get(tbHist,'Value') % Update and/or create 2D hist
             % Create 2d hist from data and alpha map
-            % 2D Histogram implementation from André Zeug
+            % 2D Histogram implementation from AndrÃ© Zeug
             dd = [currImVal{1}(:),currAlphaMapVal{1}(:),currAlphaMapVal{1}(:)];
             x_2DHist = linspace(minVal(1), maxVal(1),201);
             y_2DHist = linspace(minVal(nMat+1), maxVal(nMat+1),201);
@@ -10935,12 +10935,12 @@ end
         try
             delete(roiLine.zoom)
             delete(roiText.zoom)
-        catch    %#ok
+        catch    
         end
         try
             delete(roiLine.im)
             delete(roiText.im)
-        catch    %#ok
+        catch    
         end
         roiLine.zoom = [];
         roiText.zoom = [];
