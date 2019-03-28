@@ -529,8 +529,10 @@ else
             case 'scomplex', data{i} = single(abs(varargin{i})); %#ok
             case 'dcomplex', data{i} = double(abs(varargin{i})); %#ok
           end
+        elseif isa(varargin{i}, 'gpuArray')
+          data{i} = gather(varargin{i});
         else
-            data{i} = varargin{i};  %#ok
+          data{i} = varargin{i};  %#ok
         end
         varName{i} = inputname(i);   %#ok %Name of input variable
         if isempty(varName{i}); varName{i} = sprintf('mat(%d)',i); end %#ok 
