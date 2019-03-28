@@ -1043,7 +1043,13 @@ end
 defaultConfig.aspectRatio = 1;           %Default: 1
 %Colorbar Display
 defaultConfig.colorbar = 0;              %Default: 0
-%Colormap
+%Colormaps available
+popLutString = {'Gray';'Gray (Range)';'4 x Gray';...
+  'Parula'; 'Jet'; 'HSV'; 'Hot'; 'Cool';...
+  'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2';...
+  'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';...
+  'Blue-Gray-Yellow (0 centered)';'Blue-Gray-Red (0 centered)';...
+  'Green-Gray-Red (0 centered)';'Magenta-Gray-Green (0 centered)'};
 defaultConfig.colormap = 1;              %Default: 1 (gray)
 %Gamma
 defaultConfig.gamma = ones(1,nMat);
@@ -1156,8 +1162,13 @@ if ~isempty(startPar)
                 end
                 customConfig.colormapMode = 'Manual';
                 customConfig.linkContrastSettings = 0;
-            case 'cmap'       % checked
+            case {'cmap','colormap'}       % checked
+              if ischar(propVal)
+                propVal = find(ismember(popLutString, propVal)); 
+              end
+              if isscalar(propVal) && any(propVal==1:22)
                 customConfig.colormap = propVal;
+              end
             case 'aspRatio'   % checked
                 customConfig.aspectRatio = propVal;
             case 'rgbDim'     % seems ok
@@ -3272,12 +3283,16 @@ if withAlpha
 end
 
 %popup for colormap (look up table)
+popLutString = {'Gray';'Gray (Range)';'4 x Gray';...
+  'Parula'; 'Jet'; 'HSV'; 'Hot'; 'Cool';...
+  'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2';...
+  'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';...
+  'Blue-Gray-Yellow (0 centered)';'Blue-Gray-Red (0 centered)';...
+  'Green-Gray-Red (0 centered)';'Magenta-Gray-Green (0 centered)'};
 ttt = sprintf('Choose colormap.');
 if debugMatVis, ttt1 = sprintf('Handle: ''popLut''\nCallback: ''updateColormap'''); else,  ttt1 = ttt; end
 popLut = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', @updateColormap, 'Units', 'Pixel', ...
-    'Position', [7 14 80 15], 'String', {'Gray';'Gray (Range)';'4 x Gray';'Parula'; 'Jet'; 'HSV'; 'Hot'; 'Cool';...
-    'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2'; 'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';...
-    'Blue-Gray-Yellow (0 centered)';'Blue-Gray-Red (0 centered)';'Green-Gray-Red (0 centered)';'Magenta-Gray-Green (0 centered)'},...
+    'Position', [7 14 80 15], 'String', popLutString,...
     'Value',customConfig.colormap,'FontSize',7,'Tooltip',ttt1,'Tag',ttt);
 
 if ~isempty(defaultColormap{1})
