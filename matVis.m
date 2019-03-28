@@ -8659,11 +8659,15 @@ end
         'BackgroundColor', get(exportWin, 'Color'), 'HorizontalAlignment', 'left');
       exportName = uicontrol(exportWin, 'Style', 'Edit',  'String', 'matVisExport',...
         'Position', [90 55 80 20]);
-      exportBt = uicontrol(exportWin, 'Style', 'Pushbutton', 'Units', 'Pixel', ...
-        'Position', [30 25 140 20], 'String', {'Export to Workspace'},'Callback',@exportNow);
+      uicontrol(exportWin, 'Style', 'Pushbutton', 'Units', 'Pixel', ...
+        'Position', [5 25 115 20], 'String', {'Export to Workspace'},'Callback',@exportNow);
       % newMatVisBt:
       uicontrol(exportWin, 'Style', 'Pushbutton', 'Units', 'Pixel', ...
-        'Position', [30 5 140 20], 'String', 'Open in new matVis','Callback',@newMatVis);
+        'Position', [5 5 115 20], 'String', 'Open in new matVis','Callback',@newMatVis);
+      uicontrol(exportWin, 'Style', 'Pushbutton', 'Units', 'Pixel', ...
+        'Position', [125 5 70 40], 'String', '<html><div align="center">Coordinates<br>to clipboard',...
+        'HorizontalAlignment', 'center', 'Callback',@copyCoordinatesToClipboard);
+      
       if debugMatVis, debugMatVisFcn(2); end
       function exportNow(varargin)
         if debugMatVis, debugMatVisFcn(1); end
@@ -8814,7 +8818,18 @@ end
         matVis(inputArg{:});
         delete(exportWin);
         exportWin = [];
-        set(bt_export, 'Value', 0);
+        %set(bt_export, 'Value', 0);
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+      function copyCoordinatesToClipboard(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        copyStr = sprintf('%s = %s(%s', get(exportName, 'String'),  varName{:}, get(exportTxt(1), 'String'));
+        for iii = 2:nDim
+          copyStr = sprintf('%s, %s', copyStr, get(exportTxt(iii), 'String'));   
+        end
+        copyStr = sprintf('%s);', copyStr);   
+        clipboard('copy',copyStr)
+        fprintf('\nCopied content list to clipboard\n\n')
         if debugMatVis, debugMatVisFcn(2); end
       end
    end
