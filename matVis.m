@@ -3887,10 +3887,16 @@ end
             set([sld_up(xySel(1)) sld_down(xySel(1))], 'Max', size(currIm{1},1));
             set([sld_up(xySel(2)) sld_down(xySel(2))], 'Max', size(currIm{1},2));
             if customDimScale
-                set(imAx, 'XLim', dimScale(1,:), 'YLim',dimScale(1,:));
+              set([imHandle(1) zoomHandle(1)], ...
+                'XData', dimScale(xySel(2),1) + [0 nCols*diff(dimScale(xySel(2),:))], ...
+                'YData', dimScale(xySel(1),1) + [0 nRows*diff(dimScale(xySel(1),:))]);
+              set(imAx, ...
+                'XLim', dimScale(xySel(2),1) + [0 nCols*diff(dimScale(xySel(2),:))], ...
+                'YLim', dimScale(xySel(1),1) + [0 nRows*diff(dimScale(xySel(1),:))]);
             else
                 set(imAx, 'XLim', .5+[0 size(currIm{1},2)], 'YLim', .5+[0 size(currIm{1},1)]);
-            end
+                set(zoomAx, 'XLim', .5+[0 size(currIm{1},2)], 'YLim', .5+[0 size(currIm{1},1)]);
+           end
         else
             if strcmp(projMethodStr{prevProjMethod+1},'tile')
                 set([sld(xySel) etxt(xySel) bt_playAll(xySel) bt_playZoom(xySel)],'Enable','on');
@@ -3903,7 +3909,8 @@ end
                 updateZoom(1,1,xySel(1),'sld');
                 updateZoom(1,1,xySel(2),'sld');
                 if customDimScale
-                    set(imAx, 'XLim', dimScale(1,:), 'YLim',dimScale(1,:));
+                  set([imHandle(1) zoomHandle(1)], 'XData', dimScale(xySel(2),:), 'YData',dimScale(xySel(1),:));
+                  set(imAx, 'XLim', dimScale(xySel(2),:), 'YLim',dimScale(xySel(1),:) );
                 else
                     set(imAx, 'XLim', .5+[0 size(currIm{1},2)], 'YLim', .5+[0 size(currIm{1},1)]);
                 end
