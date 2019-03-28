@@ -848,8 +848,11 @@ projMethod = 0;                          %Number indicating method for projectio
 if withAlpha
   projMethodStr = {'none';'max';sprintf('max(%s)',char(945));'min';'mean';'std';'var'; 'tile'};
 else
-  projMethodStr = {'none';'max';'min';'mean';'std';'var'; 'tile'};
+  projMethodStr = {'none';'max';'min';'mean';'sum';'std';'var'; 'tile'};
 end
+% Tile scan definition
+nRows = 1;
+nCols = 1;
 %0 - no projection, 1 - maximum
 %projection, 2 - mean projection,...
 projDim = 3;
@@ -1164,24 +1167,12 @@ if ~isempty(startPar)
                 updateProj = 1;
                 projDim = propVal;
             case 'projMethod'   % checked
-                if isa(propVal(1),'char')
-                    switch propVal
-                        case 'max'
-                            projMethod = 1;
-                        case 'min'
-                            projMethod = 2;
-                        case 'mean'
-                            projMethod = 3;
-                        case 'std'
-                            projMethod = 4;
-                        case 'var'
-                            projMethod = 5;
-                        case 'tile'
-                            projMethod = 6;
-                    end
-                else
-                    projMethod = propVal;
-                end
+              if ischar(propVal)
+                propVal = find(ismember(projMethodStr, propVal)); 
+              end
+              if isscalar(propVal) && any(propVal==0:8)
+                projMethod = propVal;
+              end
             case 'windowVisibility'
                 customConfig.winVis.imageWin = propVal(1);
                 customConfig.winVis.zoomWin  = propVal(2);
@@ -5674,6 +5665,8 @@ end
                 else
                   currIm{ii} = squeeze(mean(c,  3, 'omitnan')); % used to be nanmean
                 end
+              case 'sum'      %mean projection
+                  currIm{ii} = squeeze(sum(c,  3, 'omitnan')); % used to be nanmean
               case 'std'      %standard deviation projection
                 if withAlpha
                   % standard error:  SE = sum( (x - <x>)^2.*w, 3) ./ sum(w, 3)
