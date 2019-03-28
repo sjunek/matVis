@@ -10450,11 +10450,14 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-    function cog = calcCenterOfGravity(mask, currPos)
+    function cog = calcCenterOfGravity(mask, roiPos)
         if debugMatVis, debugMatVisFcn(1); end
         [maskXIdx, maskYIdx] = find(mask);
         cog = [mean(maskXIdx), mean(maskYIdx)];
-        for ii = 1:nDim
+        for ii = 1:min(nDim,length(roiPos))
+          imIndex{ii} = roiPos(ii);  %#ok
+        end
+        for ii = (length(roiPos)+1):nDim
           imIndex{ii} = currPos(ii);  %#ok
         end
         imIndex{xySel(1)} = ':';
@@ -10953,14 +10956,14 @@ end
         end
         try
             delete(roiCenterIndicator)
-        catch    %#ok
+        catch    
         end
         set([imAx(:) zoomAx(:)],'NextPlot','add')
         for iii = 1:numel(data)
-          roiCenterIndicator(1,iii) = plot(0,0,'+','Parent',zoomAx(iii),'Color','r','Visible','off','Markersize',max([6,max(dim(xySel))/75]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
-          roiCenterIndicator(2,iii) = plot(0,0,'+','Parent',imAx(iii),'Color','r','Visible','off','Markersize',max([6,max(dim(xySel))/75]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
-          roiCenterIndicator(3,iii) = plot(0,0,'o','Parent',zoomAx(iii),'Color','r','Visible','off','Markersize',max([6,max(dim(xySel))/75]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
-          roiCenterIndicator(4,iii) = plot(0,0,'o','Parent',imAx(iii),'Color','r','Visible','off','Markersize',max([6,max(dim(xySel))/75]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+          roiCenterIndicator(1,iii) = plot(0,0,'+','Parent',zoomAx(iii),'Color','r','Visible','off','Markersize',max([6,monSizeMax*screenSizeScaling/300]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+          roiCenterIndicator(2,iii) = plot(0,0,'+','Parent',imAx(iii),  'Color','r','Visible','off','Markersize',max([6,monSizeMax*screenSizeScaling/300]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+          roiCenterIndicator(3,iii) = plot(0,0,'o','Parent',zoomAx(iii),'Color','r','Visible','off','Markersize',max([6,monSizeMax*screenSizeScaling/300]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
+          roiCenterIndicator(4,iii) = plot(0,0,'o','Parent',imAx(iii),  'Color','r','Visible','off','Markersize',max([6,monSizeMax*screenSizeScaling/300]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
         end
         set([imAx(:) zoomAx(:)],'NextPlot','replace')
         updateRoiSelection;
@@ -11346,7 +11349,7 @@ end
             noMatVisROIs = true;
           end
         end
-        if ~isstruct(matVisRoiExport) || ~all(strcmp(fieldnames(matVisRoiExport),{'number','mask','centerOfGravity','index' ,'corners','cornersPixelDim','rectangle','settings','name'}'))
+        if ~isstruct(matVisRoiExport) || ~all(ismember({'corners','cornersPixelDim','index' ,'mask','name','number','rectangle','settings'},fieldnames(matVisRoiExport)))
           noMatVisROIs = true;
         end
         if noMatVisROIs
@@ -11362,7 +11365,7 @@ end
         end
         %updateCenterOfGravity
         for ii=1:length(matVisRoiExport)
-          if ~all(size(matVisRoiExport(ii).centerOfGravity)==[2 2])
+          if ~isfield(matVisRoiExport(ii),'centerOfGravity') || ~all(size(matVisRoiExport(ii).centerOfGravity)==[2 2])
             matVisRoiExport(ii).centerOfGravity = calcCenterOfGravity(matVisRoiExport(ii).mask, matVisRoiExport(ii).settings.position);
             warning(sprintf('Recalculated CenterOfGravity for ROI%d', ii))
           end
