@@ -768,11 +768,18 @@ if matlabVer < 8.4 % to differenciate for HG2
   roiWin = [];                             %Handle to Roi Manager Window
   roiImage = [];                           %Handle to image displaying current Roi
   roiAxes = [];                            %Handle to axes displaying current Roi
+  roiHistAxes = [];                        %Handle to axes displaying 2D histogram of current Roi
+  roiHistAxesIm = [];                      %Handle to axes displaying image of 2D histogram of current Roi
+  roiHistAxesLine = [];                    %Handle to Line displaying 1D histogram of current Roi
+  roiHistAxesLinePerc = [];                %Handle to Line displaying Percentile borders of 2D histogram of current Roi
+  roiToolTipTxt = [];                      %Handle to ToolTip text
+  roiPropWinTab = [];
   profileWin = [];                         %Handle to Profile Manager Window
   profileImage = [];                           %Handle to image displaying current profile
   profileTraceWin = [];
   profileAxes = [];                            %Handle to axes displaying current profile
   tempRoiPropWin = [];                         %Handle of Figure for ROI update of ROI settings
+  tempRoiSetWin = [];                         %Handle of Figure for ROI update of ROI settings
 else
   % if the array of handles is defined as empty matrix (double) some functions (like colorbar) do not work
   % correct predefinition is only required for arrays of objects!!!
@@ -805,11 +812,18 @@ else
   roiWin = matlab.ui.Figure.empty;                                          %Handle to Roi Manager Window
   roiImage = matlab.graphics.primitive.Image;                               %Handle to image displaying current Roi
   roiAxes = matlab.graphics.axis.Axes.empty;                                %Handle to axes displaying current Roi
+  roiHistAxes = matlab.graphics.axis.Axes.empty;                            %Handle to axes displaying 2D histogram of current Roi
+  roiHistAxesIm = matlab.graphics.primitive.Image;                          %Handle to axes displaying image of 2D histogram of current Roi
+  roiHistAxesLine = matlab.graphics.chart.primitive.Line.empty;             %Handle to axes displaying 1D histogram of current Roi
+  roiHistAxesLinePerc = matlab.graphics.chart.primitive.Line.empty;         %Handle to Line displaying Percentile borders of 2D histogram of current Roi
+  roiToolTipTxt = matlab.graphics.primitive.Text;                           %Handle to ToolTip text
+  roiPropWinTab = matlab.ui.control.Table;
   profileWin = matlab.ui.Figure.empty;                                      %Handle to Roi Manager Window
   profileImage = matlab.graphics.primitive.Image;                           %Handle to image displaying current profile
   profileTraceWin = matlab.ui.Figure.empty;               
   profileAxes = matlab.graphics.axis.Axes.empty;                            %Handle to axes displaying current profile
   tempRoiPropWin = matlab.ui.Figure.empty;                                  %Handle of Figure for ROI update of ROI settings
+  tempRoiSetWin = matlab.ui.Figure.empty;                                  %Handle of Figure for ROI update of ROI settings
 end
   
 currImVal = [];                          %Values of current image (currIm might contain altered values due to filtering and/or gamma values ~= 1)
@@ -904,7 +918,9 @@ jump2ROIPos_cb = 1;                      %Handle to checkbox indidacting whether
 showROIcenter_cb = 1;                      %Handle to checkbox indidacting whether the current position chould be changed when a new ROI is selected (jump to position where ROI was created)
 etxt_newRoiName = [];
 txt_RoiPropWinTxt = [];                  %Handle Textfield in Figure for ROI update of ROI settings
-
+roiToolTip = 'none';                        % Display ROI property
+roiToolTipVal = [];
+roiToolTipCell = {};
 %profilePoints = [];
 %profileInwork = 0;
 %profileComplete = 0;
@@ -4851,8 +4867,11 @@ end
                     figure(movdata.gui.hvidgen);
                     figure(movdata.prev.hprev);
                 end
-                if get(roiBtRename, 'Value')
+                if get(roiName, 'Value')
                     figure(tempRoiPropWin);
+                end
+                if get(roiBtRename, 'Value')
+                    figure(tempRoiSetWin);
                 end
                 if get(bt_export, 'Value')
                     figure(exportWin);
@@ -4871,7 +4890,9 @@ end
                 if ~isempty(roiWin);          startPosWins(5,ii,:) = get(roiWin,'Position');          end
                 if ~isempty(profileWin);      startPosWins(6,ii,:) = get(profileWin,'Position');      end
                 if ~isempty(profileTraceWin); startPosWins(7,ii,:) = get(profileTraceWin,'Position'); end
-            end
+                if ~isempty(tempRoiSetWin);   startPosWins(8,ii,:) = get(tempRoiSetWin,'Position');   end
+                if ~isempty(tempRoiPropWin);  startPosWins(9,ii,:) = get(tempRoiPropWin,'Position');  end
+           end
         end
         if debugMatVis, debugMatVisFcn(2); end
         function moveAllWindows(varargin)
@@ -4882,11 +4903,13 @@ end
                 set(imageWin(iii),'Position', squeeze(startPosWins(1,iii,:))' + [p2-p1 0 0]);
                 set(zoomWin(iii),'Position', squeeze(startPosWins(2,iii,:))' + [p2-p1 0 0]);
                 set(plotWin(iii),'Position',squeeze(startPosWins(3,iii,:))' + [p2-p1 0 0]);
-                if ~isempty(histWin);         set(histWin,'Position',squeeze(startPosWins(4,iii,:))' + [p2-p1 0 0]);         end
-                if ~isempty(roiWin);          set(roiWin,'Position',squeeze(startPosWins(5,iii,:))' + [p2-p1 0 0]);          end
-                if ~isempty(profileWin);      set(profileWin,'Position',squeeze(startPosWins(6,iii,:))' + [p2-p1 0 0]);      end
+                if ~isempty(histWin);         set(histWin,        'Position',squeeze(startPosWins(4,iii,:))' + [p2-p1 0 0]); end
+                if ~isempty(roiWin);          set(roiWin,         'Position',squeeze(startPosWins(5,iii,:))' + [p2-p1 0 0]); end
+                if ~isempty(profileWin);      set(profileWin,     'Position',squeeze(startPosWins(6,iii,:))' + [p2-p1 0 0]); end
                 if ~isempty(profileTraceWin); set(profileTraceWin,'Position',squeeze(startPosWins(7,iii,:))' + [p2-p1 0 0]); end
-            end
+                if ~isempty(tempRoiSetWin);   set(tempRoiSetWin,  'Position',squeeze(startPosWins(8,iii,:))' + [p2-p1 0 0]); end
+                if ~isempty(tempRoiPropWin);  set(tempRoiPropWin, 'Position',squeeze(startPosWins(9,iii,:))' + [p2-p1 0 0]); end
+           end
         end
         function releaseMiddleClickGui(varargin)
             set(gui,'WindowButtonMotionFcn',[]);
@@ -5347,16 +5370,16 @@ end
                 % selected and the cross hair in the image should be moved
                 % - with the mouse - the projection will be recomputed
                 % which might take some time!
-%                 if ~imageUpdated
-%                     updateCurrIm;
-%                 end
+                %                 if ~imageUpdated
+                %                     updateCurrIm;
+                %                 end
                 updatePlots;
             end
             updateObjects;
             if (get(tbProfile,'Value') && nProfiles)
                updateProfileProperties; 
             end
-            if get(tbRoi,'Value') & nRois & rgbCount~=dimNum
+            if get(tbRoi,'Value') & rgbCount~=dimNum %&& nRois 
               updateRoiSelection(get(roiListbox, 'Value')); % updateRoiProperties(0);
             end
         end
@@ -7470,6 +7493,9 @@ end
               end
             else
               set([imAx(ii) zoomAx(ii)], 'ALim', cmMinMax(nMat+ii,:));
+              if get(tbRoi, 'Value')
+                set(roiAxes, 'ALim', cmMinMax(nMat+ii,:));
+              end
               if get(tbProfile,'Value')
                 set(profileStruct.gui.traceim.ax, 'ALim', cmMinMax(nMat+ii,:));
               end
@@ -7639,6 +7665,9 @@ end
                 end
             end
             updateHistObjects;
+        end
+        if get(tbRoi,'Value') && nRois
+          updateRoiSelection;
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
@@ -9918,8 +9947,11 @@ end
                 'WindowButtonDownFcn',@buttonDownCallback,...
                 'WindowButtonUpFcn','');
             drawPlots;
-            if get(roiBtRename, 'Value')
+            if get(roiName, 'Value')
               set(tempRoiPropWin, 'Visible','off');
+            end
+            if get(roiBtRename, 'Value')
+              set(tempRoiSetWin, 'Visible','off');
             end
             if debugMatVis, debugMatVisFcn(2); end
             return
@@ -9927,6 +9959,9 @@ end
         %% Make Roi Gui and all related objects visible
         set(roiWin, 'Visible','on');
         set(bt_mean, 'Enable','off');
+        if get(roiName, 'Value')
+          set(tempRoiPropWin, 'Visible','on');
+        end
         if get(roiBtRename, 'UserData')
           set(tempRoiPropWin, 'Visible','on');
         end
@@ -9938,14 +9973,14 @@ end
         set(cb_plots(xySel),  'Value', 0 ,'Enable', 'off'); %necessary when call from WindowCloseRequestFcn
         plotSel(xySel) = 0;
         drawPlots;
-        drawRois;
         %% Create ROI GuiWindow (only during first call)
         if isempty(roiWin)
             %% Roi Manager Window with text
             gp = get(gui,'Position');
             roiWin =  figure;
             set(roiWin,'Units', 'Pixel', 'Name', 'ROI Manager',...
-                'MenuBar', 'none', 'NumberTitle', 'off','CloseRequestFcn', {@roiGui,0}, 'HandleVisibility', 'off',...
+                'MenuBar', 'none', 'NumberTitle', 'off','HandleVisibility', 'off',...
+                'CloseRequestFcn', {@roiGui,0},...
                 'WindowStyle','normal', 'Position', [gp(1) gp(2)-362 320 330]);
             if ismac
                 set(roiWin, 'Resize','off');
@@ -9954,40 +9989,53 @@ end
             roi_jf = get(roiWin,'JavaFrame');
             roi_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_roi))));
             warning('on','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
-            txt_roiList = uicontrol(roiWin, 'Style', 'Text', 'Position', [10 305 110 15], ...
+            txt_roiList = uicontrol(roiWin, 'Style', 'Text', 'Position', [10 315 110 15], ...
                 'String','List of ROIs','FontWeight', 'bold',...
                 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'center');
             %Listbox for Rois
             roiListbox = uicontrol(roiWin, 'Style', 'listbox', 'Units', 'Pixel', ...
                 'BackgroundColor', get(roiWin, 'Color'),'Value',0,...
-                'Position', [10 153 110 147], 'String', '','Max',3, 'Callback', @listboxCallback,...
-                'Tag', 'List of ROIs. Multiple selections are possible. The Names of the ROIs can be changed (see buttons below), the numbers in front of the names are generated by matVIs and can not be edited.');
+                'Position', [10 153 110 157], 'String', '','Max',3, 'Callback', @listboxCallback,...
+                'Tooltip', sprintf('List of ROIs.\nMultiple selections are possible.\nThe Names of the ROIs can be changed (see buttons below),\nthe numbers in front of the names are generated by matVIs and can not be edited.'));
             %Panel for display of Roi properties
-            roiPropertiesPanel = uipanel(roiWin,'Units','Pixel','Position', [130,25,180,275],'Title', 'Selected ROI',...
-                'BackgroundColor',get(roiWin,'Color'),'FontWeight', 'bold','TitlePosition','centertop',...
-                'Tag','Shows the currently selected ROI and various properties (number of pixels, minimum, maximum and mean value). In case multiple ROIs are selected, only the first selected ROIs and its properties are shown here.');
-            roiName = uicontrol('Parent',roiPropertiesPanel, 'Style', 'Text', 'Position', [5 210 170 30], ...
+            roiName = uicontrol('Parent',roiWin, 'Style', 'Togglebutton', 'Position', [155 310 145 20], ...
                 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'center','FontWeight', 'bold',...
-                'String', 'ROI Name');
-            uicontrol(roiWin, 'Style', 'Text', 'Position', [152 75 40 15], ...
-                'String','# Px:', 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'left');
-            uicontrol(roiWin, 'Style', 'Text', 'Position', [152 60 40 15], ...
-                'String','Min:', 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'left');
-            uicontrol(roiWin, 'Style', 'Text', 'Position', [152 45 40 15], ...
-                'String','Max:', 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'left');
-            uicontrol(roiWin, 'Style', 'Text', 'Position', [152 30 55 15], ...
-                'String','Mean:', 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'left');
-            roiSize = uicontrol(roiWin, 'Style', 'Text', 'Position', [180 75 35 15], ...
-                'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'right');
-            roiMin = uicontrol(roiWin, 'Style', 'Text', 'Position', [180 60 35 15], ...
-                'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'right');
-            roiMax = uicontrol(roiWin, 'Style', 'Text', 'Position', [180 45 35 15], ...
-                'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'right');
-            roiMean = uicontrol(roiWin, 'Style', 'Text', 'Position', [180 30 35 15], ...
-                'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'right');
-            %roiFrame = uicontrol(roiWin,'Style','Frame',  'Position', [160,150,150,150],'Visible','off');
+                'String', 'ROI Name','Value',0,'Enable','off','Tooltip',roiToolTip, 'Callback', @showRoiProperties);
+            roiPropertiesPanel = uipanel(roiWin,'Units','Pixel','Position', [130,25,185,285],'Title', 'Selected ROI',...
+                'BackgroundColor',get(roiWin,'Color'),'FontWeight', 'bold','TitlePosition','centertop',...
+                'Tag',sprintf('Shows the currently selected ROI\nand various properties (number of pixels, minimum, maximum and mean value).\nIn case multiple ROIs are selected, only the first selected ROIs\nand its properties are shown here.'));
+              roiHistAxes  = axes('Parent', roiPropertiesPanel, 'Unit','pixel','OuterPosition', [0,0,190,150],'FontSize',7);
+              if withAlpha
+                roiHistAxesIm = imagesc(roiHistAxes,ones(50,50));
+                colormap(roiHistAxes,colorMap(256, 2, 1))
+                axis(roiHistAxes,'tight','xy')
+                if ~isempty(colorBarLabelString), ylabel(roiHistAxes,colorBarLabelString{1},'FontSize',9); else, ylabel(roiHistAxes,'Value','FontSize',9); end
+                if ~isempty(colorBarLabelString) && length(colorBarLabelString)>1; xlabel(roiHistAxes,colorBarLabelString{2},'FontSize',9); else, xlabel(roiHistAxes,'AlphaValue','FontSize',9); end
+              else
+                roiHistAxesLine = plot(roiHistAxes,1:49,ones(1,49));
+                axis(roiHistAxes,'tight')
+                ylabel(roiHistAxes,'Frequency','FontSize',9);
+                if ~isempty(colorBarLabelString), xlabel(roiHistAxes,colorBarLabelString{1},'FontSize',9); else, xlabel(roiHistAxes,'Value','FontSize',9); end
+%                 uicontrol(roiWin, 'Style', 'Text', 'Position', [152 75 40 15], ...
+%                   'String','# Px:', 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'left');
+%                 uicontrol(roiWin, 'Style', 'Text', 'Position', [152 60 40 15], ...
+%                   'String','Min:', 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'left');
+%                 uicontrol(roiWin, 'Style', 'Text', 'Position', [152 45 40 15], ...
+%                   'String','Max:', 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'left');
+%                 uicontrol(roiWin, 'Style', 'Text', 'Position', [152 30 55 15], ...
+%                   'String','Mean:', 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'left');
+%                 roiSize = uicontrol(roiWin, 'Style', 'Text', 'Position', [180 75 35 15], ...
+%                   'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'right');
+%                 roiMin = uicontrol(roiWin, 'Style', 'Text', 'Position', [180 60 35 15], ...
+%                   'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'right');
+%                 roiMax = uicontrol(roiWin, 'Style', 'Text', 'Position', [180 45 35 15], ...
+%                   'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'right');
+%                 roiMean = uicontrol(roiWin, 'Style', 'Text', 'Position', [180 30 35 15], ...
+%                   'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'right');
+              end
+              %roiFrame = uicontrol(roiWin,'Style','Frame',  'Position', [160,150,150,150],'Visible','off');
             %Axes for display of Roi
-            roiAxes  = axes('Parent', roiPropertiesPanel, 'Unit','pixel','Position', [25 80 145 140]);
+            roiAxes  = axes('Parent', roiPropertiesPanel, 'Unit','pixel','Position', [25 150 145 110]);
             %% Add Rectangle Roi Button
             tb_newRoi(1) = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [10,125,32,22],...
                 'CData', roiRectBt,'Callback',{@getNewRoi,1,'one'}, ...
@@ -10092,20 +10140,15 @@ end
             axis image;
             set(roiAxes,'FontSize',8,'Color','k');
             roiLine.roi = line(dimScale(xySel(2),1),dimScale(xySel(1),1),'Parent', roiAxes,'Color','w');
-%             set([imAx(:) zoomAx(:)],'NextPlot','add')
-%             for iii = 1:numel(data)
-%                 roiCenterIndicator(1,iii) = plot(0,0,'+','Parent',zoomAx(iii),'Color','r','Visible','off','Markersize',max([15,max(dim(xySel))/100]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
-%                 roiCenterIndicator(2,iii) = plot(0,0,'+','Parent',imAx(iii),'Color','r','Visible','off','Markersize',max([15,max(dim(xySel))/100]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
-%                 roiCenterIndicator(3,iii) = plot(0,0,'o','Parent',zoomAx(iii),'Color','r','Visible','off','Markersize',max([15,max(dim(xySel))/100]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
-%                 roiCenterIndicator(4,iii) = plot(0,0,'o','Parent',imAx(iii),'Color','r','Visible','off','Markersize',max([15,max(dim(xySel))/100]));%,'FontWeight','b','FontSize',max([15,max(dim(xySel))/100]),'Visible','off','horizontalAlignment','center','FontName','Times');
-%             end
-%             set([imAx(:) zoomAx(:)],'NextPlot','replace')
             set(roiWin, 'HandleVisibility', 'off');
             %Set first entry of roi list (so it is not empty - will be
             %replaced by 1 when first Roi is selected)
             roiList(1).number = 0;
             updateColormap;
             set(roiWin, 'ResizeFcn',[]);adjustGuiSize(roiWin);set(roiWin,'ResizeFcn', @resizeRoiWin);
+            updateRoiProperties;
+        else
+          drawRois;
         end
         function resizeRoiWin(varargin)
             if debugMatVis, debugMatVisFcn(1); end
@@ -10646,11 +10689,12 @@ end
                     set(roiListbox,'String', s, 'Value', numberRoi);
                 end
             end
-            updateRoiSelection(numberRoi);
+            drawRois;
             set([roiBtRename tbRoiShift tbRoiRotate tbRoiScale roiBtReplace bt_roiExport bt_deleteRoi] , 'Enable', 'on');
             %             if isempty(bt_exportRoiData)
             set(bt_exportRoiData, 'Enable','on')
             set(bt_copyRoi, 'Enable', 'on');
+            set(roiName,'Enable','on')
             %             end
             set(roiBtReplace,'Value',0)
         else
@@ -10658,6 +10702,9 @@ end
 %                 [max(roiList(numberRoi).corners(1  ,:))+1  ,mean(roiList(numberRoi).corners(2,:))]);
 %             set(roiText.zoom(numberRoi),'Position',...
 %                 [max(roiList(numberRoi).corners(1  ,:))+1  ,mean(roiList(numberRoi).corners(2,:))]);
+        end
+        if get(roiName,'Value')
+          updateRoiHistAxesLinePerc
         end
         drawPlots;
 %         set(imageWin, 'WindowButtonMotionFcn',@mouseMotion);
@@ -10707,14 +10754,67 @@ end
                 set(bt_exportRoiData, 'Enable','off')
             end
             set(bt_copyRoi, 'Enable', 'off');
+            set(roiName,'Enable','off')
+            showRoiProperties
             drawPlots;
+            updateRoiSelection
+        end
+        if debugMatVis, debugMatVisFcn(2); end
+    end
+    function showRoiProperties(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        if nargin == 3 || ~get(roiName,'Value') || ~nRois
+          set(tempRoiPropWin, 'Visible','off');
+          set(roiName,'Value',0)
+          delete(roiHistAxesLinePerc);
+          if debugMatVis, debugMatVisFcn(2); end
+          return
+        end
+        if isempty(tempRoiPropWin)
+          %% create figure
+          gp = get(gui,'Position');
+          tempRoiPropWin = figure('MenuBar', 'none','NumberTitle', 'off', 'Name', 'ROI Properties!', 'CloseRequestFcn', {@showRoiProperties,0});%
+          uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 125 110 18],'String','Percentile Data','FontSize',10);
+          roiPropWinTab = uitable(tempRoiPropWin);
+          if withAlpha
+            set(roiPropWinTab,'ColumnName',{'Data','Data(w)','Weight'},'RowName',{'1%','25%','50%','75%','99%'},...
+              'Data',roiToolTipCell','Position',[10, 10, 271, 112]);
+            set(tempRoiPropWin,'Position', [gp(1)+320, max(50,gp(2)-444-100), 291, 145])
+           else
+            set(roiPropWinTab,'ColumnName',{'Data'},'RowName',{'1%','25%','50%','75%','99%'},...
+              'Data',roiToolTipCell','Position',[10, 10, 121, 112]);
+            set(tempRoiPropWin,'Position', [gp(1)+320, max(50,gp(2)-444-100), 141, 145])
+          end
+        else
+          set(roiPropWinTab,'Data',roiToolTipCell')
+          set(tempRoiPropWin, 'Visible','on');
+        end
+        %% create percentile border lines
+        if withAlpha
+          axLimsX = get(roiHistAxesIm,'XData');
+          axLimsY = get(roiHistAxesIm,'YData');
+          %roiHistAxesLinePercData(1) = line('XData',axLimsX,'YData',[1 1]*roiToolTipVal(1,1),'Parent',roiHistAxes,'Color','w','LineStyle',':');
+          lw = [1 1 1 1 1]; % [.5 1 2 1 .5]
+          ls = {':','--','-','--',':'};
+          for nn = 1:5
+            %roiHistAxesLinePerc(nn,1) = line(roiHistAxes,axLimsX([1 end]),[1 1]*roiToolTipVal(nn,1),'Color','w','LineStyle',ls{nn},'LineWidth',lw(nn));
+            roiHistAxesLinePerc(nn,2) = line(roiHistAxes,axLimsX([1 end]),[1 1]*roiToolTipVal(nn,2),'Color','w','LineStyle',ls{nn},'LineWidth',lw(nn));
+            roiHistAxesLinePerc(nn,3) = line(roiHistAxes,[1 1]*roiToolTipVal(nn,3),axLimsY([1 end]),'Color','w','LineStyle',ls{nn},'LineWidth',lw(nn));
+          end
+        else
+          axLimsY = [0 max(get(roiHistAxesLine,'YData'))];%get(roiHistAxesIm,'YData');
+          lw = [1 1 1 1 1]; % [.5 1 2 1 .5]
+          ls = {':','--','-','--',':'};
+          for nn = 1:5
+            roiHistAxesLinePerc(nn,1) = line(roiHistAxes,[1 1]*roiToolTipVal(nn),axLimsY,'Color','k','LineStyle',ls{nn},'LineWidth',lw(nn));
+          end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
     function updateRoiSettings(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         if nargin == 3 || ~get(roiBtRename,'Value')
-          set(tempRoiPropWin, 'Visible','off');
+          set(tempRoiSetWin, 'Visible','off');
           set(roiBtRename,'Value',0)
           if debugMatVis, debugMatVisFcn(2); end
           return
@@ -10734,25 +10834,25 @@ end
             np,ROIpos(np),char(hex2dec('2192')),currPos(np),...
             ROIZoomVal(np,1),sum(ROIZoomVal(np,:))-1,char(hex2dec('2192')),zoomVal(np,1),sum(zoomVal(np,:))-1);
         end
-        gp = get(gui,'Position');
-        if isempty(tempRoiPropWin)
-          tempRoiPropWin = figure('Position', [gp(1), max(50,gp(2)-444-25*nROIDim), 320, 25*nROIDim + 50],...
+        if isempty(tempRoiSetWin)
+          gp = get(gui,'Position');
+          tempRoiSetWin = figure('Position', [gp(1), max(50,gp(2)-444-25*nROIDim), 320, 25*nROIDim + 50],...
             'MenuBar', 'none','NumberTitle', 'off', 'Name', 'ROI Properties!', 'CloseRequestFcn', {@updateRoiSettings,0});%
           
-          uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 25*nROIDim+26 55 18],...
+          uicontrol(tempRoiSetWin,'Style', 'Text', 'Position', [12 25*nROIDim+26 55 18],...
             'String','ROI name:');
-          etxt_newRoiName = uicontrol(tempRoiPropWin,'Style', 'Edit', 'Position', [80 25*nROIDim+25 150 20],...
+          etxt_newRoiName = uicontrol(tempRoiSetWin,'Style', 'Edit', 'Position', [80 25*nROIDim+25 150 20],...
             'String',roiList(currRoi).name,'HorizontalAlignment','left');
-          uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 35 290 15*nROIDim+15],...
+          uicontrol(tempRoiSetWin,'Style', 'Text', 'Position', [12 35 290 15*nROIDim+15],...
             'String','         Position        Zoom Settings','HorizontalAlignment','left','FontName','Courier');%
           for np = 1:min(nROIDim,nDim)
             if projMethod  && np == find(projDim == sort([xySel projDim])); myCol = [.5 .5 .5]; else; myCol = [0 0 0]; end
-            txt_RoiPropWinTxt(np) = uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 35+15*(nROIDim-np) 290 15],...
+            txt_RoiPropWinTxt(np) = uicontrol(tempRoiSetWin,'Style', 'Text', 'Position', [12 35+15*(nROIDim-np) 290 15],...
               'String',ROIStr{np},'HorizontalAlignment','left','FontName','Courier','ForegroundColor',myCol);%
           end
-          btn1 = uicontrol(tempRoiPropWin,'Style', 'pushbutton', 'Position', [12 12 100 20],...
+          btn1 = uicontrol(tempRoiSetWin,'Style', 'pushbutton', 'Position', [12 12 100 20],...
             'String','Close','Callback', {@updateRoiSettings,0});%ROIStr
-          btn2 = uicontrol(tempRoiPropWin,'Style', 'pushbutton', 'Position', [200 12 100 20],...
+          btn2 = uicontrol(tempRoiSetWin,'Style', 'pushbutton', 'Position', [200 12 100 20],...
             'String','Update','Callback', {@getNewRoiProps,1});%ROIStr
         else
           set(etxt_newRoiName,'String',roiList(currRoi).name)
@@ -10760,7 +10860,7 @@ end
             if projMethod  && np == find(projDim == sort([xySel projDim])); myCol = [.5 .5 .5]; else; myCol = [0 0 0]; end
             set(txt_RoiPropWinTxt(np),'String',ROIStr{np},'ForegroundColor',myCol);%
           end
-          set(tempRoiPropWin, 'Visible','on');
+          set(tempRoiSetWin, 'Visible','on');
         end
         function getNewRoiProps(varargin)
             if debugMatVis, debugMatVisFcn(1); end
@@ -10787,6 +10887,16 @@ end
     function updateRoiSelection(numberRoi)
         if debugMatVis, debugMatVisFcn(1); end
         if nRois == 0
+            if withAlpha
+              set(roiImage, 'CData', currIm{1}, 'AlphaData', currAlphaMap{1},'AlphaDataMapping','scaled');
+            else
+              set(roiImage, 'CData', currIm{1});
+            end
+            set(roiAxes,'XLimMode','auto','YLimMode','auto')
+            set(roiLine.roi,'XData',dimScale(xySel(2),1),'YData',dimScale(xySel(1),1));
+            set(roiName,'Enable','off')
+            %showRoiProperties
+            updateRoiProperties
             if debugMatVis, debugMatVisFcn(2); end
             return
         end
@@ -10879,22 +10989,46 @@ end
             if withAlpha
               currRoiAlpha = currAlphaMapVal{1}(roiList(numberRoi(1)).mask);
             end
-            if isinteger(data{1})
-                set(roiMin, 'String', num2str(min(currRoi(:))));     % Used to be nanmin
-                set(roiMax, 'String', num2str(max(currRoi(:))));    % Used to be nanmax
-                set(roiMean, 'String', num2str(mean(currRoi(:),'omitnan'),'%6.0f'));  % Used to be nanmean
-            else
-              if withAlpha
-                set(roiMin, 'Position', [185 60 140 15], 'String',sprintf('%7.3f (without weight)',min(currRoi(:))), 'HorizontalAlignment', 'left');% Used to be nanmin
-                set(roiMax, 'Position', [185 45 140 15], 'String', sprintf('%7.3f (without weight)',max(currRoi(:))), 'HorizontalAlignment', 'left');% Used to be nanmax
-                set(roiMean, 'Position', [185 30 140 15], ...
-                  'String', sprintf('%7.3f (alpha weighted)',sum(currRoi(:).*currRoiAlpha(:), 'omitnan')./sum(currRoiAlpha(:).*~isnan(currRoi(:)), 'omitnan') ), ... % Used to be nansum
-                  'HorizontalAlignment', 'left');
-              else
-                set(roiMin, 'String', num2str(min(currRoi(:)),'%6.2f'));   % Used to be nanmin
-                set(roiMax, 'String', num2str(max(currRoi(:)),'%6.2f'));   % Used to be nanmax
-                set(roiMean, 'String', num2str(mean(currRoi(:), 'omitnan'),'%6.2f')); % Used to be nanmean
+            if withAlpha
+              y = linspace(min(currRoi(:)),max(currRoi(:)),50);
+              x = linspace(min(currRoiAlpha(:)),max(currRoiAlpha(:)),50);
+              hh = hist2wf([currRoi(:),currRoiAlpha(:)], y, x);
+              x = x(2:end)-diff(x(1:2))/2;
+              y = y(2:end)-diff(y(1:2))/2;
+              hhl = hh; hhl(hhl==0)=.9; hhl = log10(hhl);
+              set(roiHistAxesIm,'XData',x,'YData',y,'CData',hhl)
+              pfV = prctile(currRoi(:),[1 25 50 75 99]);
+              pfAV = prctile(currRoiAlpha(:),[1 25 50 75 99]);
+              wpfVAV = wpercentile(currRoi(:),currRoiAlpha(:),[1 25 50 75 99]/100);
+              roiToolTipVal = [pfV;wpfVAV;pfAV]';
+              roiToolTipCell = cellfun(@(x) num2Str(x,4),num2cell(roiToolTipVal'),'UniformOutput',false);
+              roiToolTip = sprintf('Percentile\n\t\t\t\t\tData\tData(w)\t\tWeight\n1%% \t\t %s\t %s\t %s\n25%% \t\t %s\t %s\t %s\n\n50%% \t\t %s\t %s\t %s\n\n75%% \t\t %s\t %s\t %s\n99%% \t\t %s\t %s\t %s',...
+                roiToolTipCell{:} );
+              %                 set(roiMin, 'Position', [185 60 140 15], 'String',sprintf('%7.3f (without weight)',min(currRoi(:))), 'HorizontalAlignment', 'left');% Used to be nanmin
+              %                 set(roiMax, 'Position', [185 45 140 15], 'String', sprintf('%7.3f (without weight)',max(currRoi(:))), 'HorizontalAlignment', 'left');% Used to be nanmax
+              %                 set(roiMean, 'Position', [185 30 140 15], ...
+              %                   'String', sprintf('%7.3f (alpha weighted)',sum(currRoi(:).*currRoiAlpha(:), 'omitnan')./sum(currRoiAlpha(:).*~isnan(currRoi(:)), 'omitnan') ), ... % Used to be nansum
+              %                   'HorizontalAlignment', 'left');
+              if get(roiName,'Value')
+                updateRoiHistAxesLinePerc();
               end
+            else
+              x = linspace(double(min(currRoi(:))),double(max(currRoi(:))),50);
+              hh = histcounts(currRoi(:),x);
+              x = x(2:end)-diff(x(1:2))/2;
+              set(roiHistAxesLine,'XData',x,'YData',hh)
+              roiToolTipVal =  prctile(currRoi(:),[1 25 50 75 99]);
+              roiToolTipCell = cellfun(@(x) num2Str(x,4),num2cell(roiToolTipVal),'UniformOutput',false);
+              roiToolTip = sprintf('Percentile\n\t\t\t\t\tData\n1%% \t\t %s\n25%% \t\t %s\n\n50%% \t\t %s\n\n75%% \t\t %s\n99%% \t\t %s',roiToolTipCell{:} );
+              
+              %                 set(roiMin, 'String', num2str(min(currRoi(:)),'%6.2f'));   % Used to be nanmin
+              %                 set(roiMax, 'String', num2str(max(currRoi(:)),'%6.2f'));   % Used to be nanmax
+              %                 set(roiMean, 'String', num2str(mean(currRoi(:), 'omitnan'),'%6.2f')); % Used to be nanmean
+            end
+            set(roiName,'Tooltip',roiToolTip)
+            if get(roiName,'Value')
+              set(roiPropWinTab,'Data',roiToolTipCell'); 
+              updateRoiHistAxesLinePerc
             end
             if plotUpdate
                 if isempty(subPlotHandles)
@@ -10904,8 +11038,42 @@ end
                 end
             end
             if get(roiBtRename,'Value'); updateRoiSettings; end
+        else
+          if withAlpha
+            y = linspace(min(currIm{1}(:)),max(currIm{1}(:)),50);
+            x = linspace(min(currAlphaMap{1}(:)),max(currAlphaMap{1}(:)),50);
+            hh = hist2wf([currIm{1}(:),currAlphaMap{1}(:)], y, x);
+            x = x(2:end)-diff(x(1:2))/2;
+            y = y(2:end)-diff(y(1:2))/2;
+            hhl = hh; hhl(hhl==0)=.9; hhl = log10(hhl);
+            set(roiHistAxesIm,'XData',x,'YData',y,'CData',hhl)
+          else
+            x = linspace(double(min(currIm{1}(:))),double(max(currIm{1}(:))),50);
+            hh = histcounts(currIm{1}(:),x);
+            x = x(2:end)-diff(x(1:2))/2;
+            set(roiHistAxesLine,'XData',x,'YData',hh)
+          end
         end
         if debugMatVis, debugMatVisFcn(2); end
+    end
+    function updateRoiHistAxesLinePerc
+      %% update percentile border lines
+      if withAlpha
+        axLimsX = get(roiHistAxesIm,'XData');
+        axLimsY = get(roiHistAxesIm,'YData');
+        %roiHistAxesLinePercData(1) = line('XData',axLimsX,'YData',[1 1]*roiToolTipVal(1,1),'Parent',roiHistAxes,'Color','w','LineStyle',':');
+        for nn = 1:5
+          %set(roiHistAxesLinePerc(nn,1),'XData',axLimsX([1 end]),'YData',[1 1]*roiToolTipVal(nn,1));
+          set(roiHistAxesLinePerc(nn,2),'XData',axLimsX([1 end]),'YData',[1 1]*roiToolTipVal(nn,2));
+          set(roiHistAxesLinePerc(nn,3),'XData',[1 1]*roiToolTipVal(nn,3),'YData',axLimsY([1 end]));
+        end
+      else
+        axLimsY = [0 max(get(roiHistAxesLine,'YData'))];
+        for nn = 1:5
+          set(roiHistAxesLinePerc(nn,1),'XData',[1 1]*roiToolTipVal(nn),'YData',axLimsY);
+        end
+      end
+
     end
     function listboxCallback(varargin)
         if debugMatVis, debugMatVisFcn(1); end
@@ -11401,6 +11569,7 @@ end
         end
         set(roiListbox, 'String',s,'Value', 1);
         set([roiBtRename tbRoiShift tbRoiRotate tbRoiScale roiBtReplace bt_roiExport bt_deleteRoi bt_exportRoiData] , 'Enable', 'on');
+        set(roiName,'Enable','on')
         drawPlots;
         drawRois;
         if debugMatVis, debugMatVisFcn(2); end
@@ -11789,11 +11958,49 @@ end
       dy = (y(end)-y(1))/(l_y);
       d(:,1) = min(max(ceil((d(:,1)-x(1))/dx), 1), l_x);
       d(:,2) = min(max(ceil((d(:,2)-y(1))/dy), 1), l_y);
+      if size(d,2)==2; d(:,3)=1; end
       wHist = zeros(l_x,l_y);
       for nn=1:size(d,1)
         wHist(d(nn,1),d(nn,2)) = wHist(d(nn,1),d(nn,2)) + d(nn,3);
       end
       wHist = wHist/sum(wHist(:))*size(d,1);
+      if debugMatVis, debugMatVisFcn(2); end
+    end
+    function val = wpercentile(d,w,pct)
+      % calculates the weighted percentile along the first dimension
+      if debugMatVis, debugMatVisFcn(1); end
+
+      lpct = length(pct);
+      val = zeros([1 lpct]);
+      [~,indS] = sort(d(:),1); % is most timeconsuming
+      indS(~isfinite(d(indS))) = [];
+      indS(~isfinite(w(indS))) = [];
+      indS(w(indS)==0) = [];
+      if numel(unique(d(indS)))>3 %sum(~isnan(unique(d(:,n))))>3 && sum(~isnan(unique(w(:,n))))>3
+        % sorts the data along dim 1
+        % calcs cumulative sum of weights for data which are ~NaN according data sorting
+        cumd = cumsum(w(indS));
+        cumd = cumd / max(cumd(:));
+        % search for first index above 50% level
+        for np = 1:lpct
+          indq2 = find(cumd>pct(np),1);
+          % assuming cumd(ind-1)<=.5*max(cumd(:)) && cumd(ind)<cumd(ind+1)
+          % calc x position of 50% cumd value by linear approcimation
+          if indq2==1
+            val(np) = d(indS(indq2));
+          else
+            try
+              val(np) = d(indS(indq2-1))+(pct(np) - cumd(indq2-1))/(cumd(indq2) - cumd(indq2-1))*( d(indS(indq2))- d(indS(indq2-1)));
+            catch
+              stopHere
+            end
+          end
+        end
+      else
+        for np = 1:lpct
+          val(np) = NaN;
+        end
+      end
       if debugMatVis, debugMatVisFcn(2); end
     end
     function myGcf = myGcf
@@ -13167,10 +13374,10 @@ end
             delete(histWin); catch    %#ok
         end
         try
-            delete(tempRoiWin); catch    %#ok
+            delete(tempRoiPropWin); catch    %#ok
         end
         try
-            delete(tempRoiPropWin); catch    %#ok
+            delete(tempRoiSetWin); catch    %#ok
         end
         
         delete(gui);
