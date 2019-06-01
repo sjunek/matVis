@@ -7962,10 +7962,17 @@ end
         for ii=1:nMat
             winPos = get(zoomWin(ii), 'Position');
             winPos2 = [winPos(1) winPos(2) round(screenSizeScaling*currWinScale/100*zoomValXY(3)) round(screenSizeScaling*currWinScale/100*zoomValXY(4))];
-            if winPos2(2)+round(zoomValXY(4)*currWinScale/100) > scnSize(4)
-                winPos2(2) = scnSize(4)-round(zoomValXY(4)*currWinScale/100)-30;
-            else
-              winPos2(2) = winPos(2)+winPos(4)-round(zoomValXY(4)*currWinScale/100);
+            if any(max(monSize(:,3:4))<winPos2(3:4))
+              currWinScale = floor(min((scnSize(3:4)-[5 30])./winPos2(3:4))*currWinScale);
+              set(bt_100pct, 'String',[num2str(currWinScale) '%']);
+              if ~isempty(tempWin)
+                set(tempWinEtxt,'String',[num2str(currWinScale)])
+              end
+              winPos2 = [winPos(1) winPos(2) round(screenSizeScaling*currWinScale/100*zoomValXY(3)) round(screenSizeScaling*currWinScale/100*zoomValXY(4))];
+            end
+            winPos2(2) = winPos(2)+winPos(4) - winPos2(4);
+            if winPos2(2)+winPos2(4) > scnSize(4) || winPos2(2) < 0 
+                winPos2(2) = scnSize(4)-winPos2(4)-30;
             end
             set(zoomWin(ii), 'Position', winPos2);
             % Note:   The Windows operating system enforces a minimum window width and a maximum window size. 
@@ -7978,13 +7985,14 @@ end
               if ~isempty(tempWin)
                 set(tempWinEtxt,'String',[num2str(currWinScale)])
               end
-              winPos2 = [winPos(1) winPos(2) round(screenSizeScaling*currWinScale/100*zoomValXY(3)) round(screenSizeScaling*currWinScale/100*zoomValXY(4))];
-              if winPos2(2)+round(zoomValXY(4)*currWinScale/100) > scnSize(4)
-                winPos2(2) = scnSize(4)-round(zoomValXY(4)*currWinScale/100)-30;
-              else
-                winPos2(2) = winPos(2)+winPos(4)-round(zoomValXY(4)*currWinScale/100);
-              end
-              set(zoomWin(ii), 'Position', winPos2);
+              set100Pct
+%               winPos2 = [winPos(1) winPos(2) round(screenSizeScaling*currWinScale/100*zoomValXY(3)) round(screenSizeScaling*currWinScale/100*zoomValXY(4))];
+%               if winPos2(2)+round(zoomValXY(4)*currWinScale/100) > scnSize(4)
+%                 winPos2(2) = scnSize(4)-round(zoomValXY(4)*currWinScale/100)-30;
+%               else
+%                 winPos2(2) = winPos(2)+winPos(4)-round(zoomValXY(4)*currWinScale/100);
+%               end
+%               set(zoomWin(ii), 'Position', winPos2);
             end
         end
         drawnow
