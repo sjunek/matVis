@@ -8740,8 +8740,10 @@ end
         [p,f,e] = fileparts(which('matVis.m'));    %#ok
         try
             save(fullfile(p,['matVisConfig_' compName '.mat']), 'customConfig');
+            checkSavedFile(fullfile(p,['matVisConfig_' compName '.mat']));  % controls, if saving was successfull (due to some unknown issue, rearely the saved file is corrupt and cannot read by matlab)
         catch
-            save(fullfile(p,['matVisConfig.mat']), 'customConfig');
+            save(fullfile(p,'matVisConfig.mat'), 'customConfig');
+            checkSavedFile(fullfile(p,'matVisConfig.mat'));                 % controls, if saving was successfull (due to some unknown issue, rearely the saved file is corrupt and cannot read by matlab)
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
@@ -9698,6 +9700,10 @@ end
                     end
                     matVisProfileExport =  profileListExp(profileSel); %#ok
                     save([p,f],'matVisProfileExport');
+                    checkSavedFile([p,f]); % controls, if saving was successfull (due to some unknown issue, rearely the saved file is corrupt and cannot read by matlab) 
+                    fprintf('Profiles exported to file!\n');
+                else
+                  fprintf('Profile export CANCELed!\n')
                 end
                 clear matVisProfileExport profileListExp
                 warning(sprintf('ATTANTION!!!\nPlease be aware that independent from selection all profiles will be exported...'))
@@ -11574,6 +11580,7 @@ end
                 end
                 matVisRoiExport =  roiListExp(roiSel); %#ok
                 save([p,f],'matVisRoiExport');
+                checkSavedFile([p,f]); % controls, if saving was successfull (due to some unknown issue, rearely the saved file is corrupt and cannot read by matlab)
                 fprintf('ROIs exported to file!\n');
             else
               fprintf('Roi export CANCELed!\n')
@@ -12328,6 +12335,15 @@ end
               case 'calledFrom2DHist'
                 calledFrom2DHist = val;
             end
+        end
+        if debugMatVis, debugMatVisFcn(2); end
+    end
+    function checkSavedFile(saveFilename)
+        if debugMatVis, debugMatVisFcn(1); end
+        try
+          tmp = load(saveFilename);
+        catch
+          errordlg(sprintf('Saving was not successfull!!\nPlease try to save the file again!'),'File Saving Error');
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
