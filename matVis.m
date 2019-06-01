@@ -4070,6 +4070,7 @@ end
                 colorbar(imAx(ii),'off');
             end
         end
+        updateImAxPosition
         if debugMatVis, debugMatVisFcn(2); end
     end
 %Callback for play speed slider
@@ -4944,19 +4945,83 @@ end
             end
         end
         % update colorbar YTickLabel
-        if any(myGcf==imageWin) && get(tbColorbar, 'Value')
-          for ii=1:nMat
-            cb = findobj(imageWin(ii), 'Tag','Colorbar');
-            if currGamma(ii) == 1
-              set(cb, 'YTickLabel', get(cb,'YTick'));
-            else
-              ytl = applyGamma([cmMinMax(ii,1) get(cb,'YTick') cmMinMax(ii,2)],cmMinMax(ii,:),currGamma(ii),-1);
-              ytlC = {}; for nn=1:length(ytl)-2;ytlC{nn}=num2Str(ytl(nn+1),3);end
-              set(cb, 'YTickLabel', ytlC);
+        switch myGcf %if any(myGcf==imageWin)
+          case imageWin
+            if get(tbColorbar, 'Value')
+              for ii=1:nMat
+                cb = cb_axes(ii);
+                if currGamma(ii) == 1
+                  set(cb, 'YTickLabel', get(cb,'YTick'));
+                else
+                  ytl = applyGamma([cmMinMax(ii,1) get(cb,'YTick') cmMinMax(ii,2)],cmMinMax(ii,:),currGamma(ii),-1);
+                  ytlC = {}; for nn=1:length(ytl)-2;ytlC{nn}=num2Str(ytl(nn+1),3);end
+                  set(cb, 'YTickLabel', ytlC);
+                end
+              end
             end
-          end
+            updateImAxPosition()
+          case plotWin
+            updatePlotAxPosition()
         end
         if debugMatVis > 1, debugMatVisFcn(2); end
+    end
+    function updateImAxPosition()
+      if debugMatVis > 1, debugMatVisFcn(1); end
+      set(imAx,'Units','Pixel');
+      myMarginRight = 5;
+      myMarginTop = 5;
+      myLL = 0; % colorbar label length
+      if get(tbColorbar, 'Value') == 1
+        for ii=1:nMat
+          if iscell(cb_axes(ii).TickLabels)
+            myLL(ii) = max(cellfun(@(x) length(x),cb_axes(ii).TickLabels));
+          else
+            myLL(ii) = size(cb_axes(ii).TickLabels,2);
+          end
+        end
+        if ~isempty(colorBarLabelString)
+          myMarginRight = 5*max(myLL)+15;
+        else
+          myMarginRight = 5*max(myLL);
+        end
+        if cb_axes(ii).Ruler.Exponent
+          myMarginTop = 25;
+        end
+      end
+      for ii=1:nMat
+        %fprintf('TightInset:'); fprintf(' %.3f', imAx(ii).TightInset); fprintf('\n');
+        imAx(ii).LooseInset = imAx(ii).TightInset+[5 5 myMarginRight myMarginTop];
+        %fprintf('LooseInset:'); fprintf(' %.3f', imAx(ii).LooseInset); fprintf('\n\n');
+        %         imAx(ii).Position = [60 60 imageWin(ii).Position(3:4)-[myMargin 80]];
+      end
+      set(imAx,'Units','normalized');
+      if debugMatVis > 1, debugMatVisFcn(2); end
+    end
+    function updatePlotAxPosition()
+      if debugMatVis > 1, debugMatVisFcn(1); end
+      nPlots = sum(plotSel);
+      plotDim = find(plotSel == 1);
+      nPlotCol = ceil(nPlots/2);
+      opw = 1/nPlotCol;
+      if nPlots == 1
+        nPlotRow = 1;
+        oph = 1;
+      else
+        nPlotRow = 2;
+        oph = .5;
+      end
+      
+      for ii = 1 : nPlots
+        ophi = (nPlotRow - 1) - fix((ii - 1) / nPlotCol);
+        opwi = rem(ii - 1, nPlotCol);
+        for jj = 1:nMat
+          subPlotHandles(jj,ii).OuterPosition = [opwi ophi 1 1].*[opw oph opw oph];
+          subPlotHandles(jj,ii).Units = 'Pixel';
+          subPlotHandles(jj,ii).LooseInset = subPlotHandles(jj,ii).TightInset+[5 5 5 5];
+        end
+      end
+      set(subPlotHandles,'Units','normalized');
+      if debugMatVis > 1, debugMatVisFcn(2); end
     end
 % Callback function for toggle button for (un)linking figure position
 % and size
@@ -5818,7 +5883,7 @@ end
             % Set correct y-ticks in colorbar in image window
             if get(tbColorbar, 'Value') == 1
                 for ii=1:nMat
-                    cb = findobj(imageWin(ii), 'Tag','Colorbar');
+                    cb = cb_axes(ii);
                     if currGamma(ii) == 1
                       set(cb, 'YTickLabel', get(cb,'YTick'));
                     else
@@ -5945,7 +6010,7 @@ end
                     end
                     % Set correct y-ticks in colorbar in image window
                     if get(tbColorbar, 'Value') == 1
-                        cb = findobj(imageWin(ii), 'Tag','Colorbar');
+                        cb = cb_axes(ii);
                         ytl = applyGamma([cmMinMax(ii,1) get(cb,'YTick') cmMinMax(ii,2)],cmMinMax(ii,:),currGamma(ii),-1);
                         ytlC = {}; for nn=1:length(ytl)-2; ytlC{nn}=num2Str(ytl(nn+1),3);end
                         set(cb, 'YTickLabel', ytlC);
@@ -6054,6 +6119,7 @@ end
         if with2DHist
             update2DHist;
         end
+        if ~isempty(imAx); updateImAxPosition; end
         if debugMatVis, debugMatVisFcn(2); end
     end
     function out = rgbContrastAdjust(in, relMin, relMax)
@@ -6276,6 +6342,7 @@ end
                     axis(imAx, [dimScale(xySel(2),1) dimScale(xySel(2),2), dimScale(xySel(1),1), dimScale(xySel(1),2)]);
                 end
                 showColorbar;
+                updateImAxPosition
             end
             if get(tbWin(2), 'Value') == 1          %Zoom window(s)
                 for ii = 1:nMat
@@ -6833,10 +6900,13 @@ end
                 end
                 set(plotWin(jj), 'HandleVisibility', 'off');
             end
-        end
-        updatePlots('drawPlots');  %Necessary to make sure all axis limits etc. are correctly set
-        if ~isempty(plotDim)
-            updateObjects;  %Necessary to make sure the position lines have correct length
+            %        end
+            updatePlots('drawPlots');  %Necessary to make sure all axis limits etc. are correctly set
+            if ~isempty(plotDim)
+              updateObjects;  %Necessary to make sure the position lines have correct length
+            end
+            %        if get(tbWin(3), 'Value') == 1
+          updatePlotAxPosition()
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
@@ -7662,7 +7732,7 @@ end
                 set(contrastSldIm, 'CData',histXDataBin);
                 if get(tbColorbar, 'Value') == 1
                     for ii=1:nMat
-                        cb = findobj(imageWin(ii), 'Tag','Colorbar');
+                        cb = cb_axes(ii);
                         set(cb, 'YTickLabel', get(cb,'YTick'));
                     end
                 end
