@@ -8817,8 +8817,8 @@ end
         end
         %}
         matVis(inputArg{:});
-        delete(exportWin);
-        exportWin = [];
+        %delete(exportWin);
+        %exportWin = [];
         %set(bt_export, 'Value', 0);
         if debugMatVis, debugMatVisFcn(2); end
       end
