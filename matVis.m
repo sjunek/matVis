@@ -180,7 +180,7 @@ withStatisticsTB = any(strfind([mlVer.Name],'Statistics Toolbox'));  %#ok
 % Parameters that might be overwritten by optional arguments
 customDimScale = 0;  % Flag to indicate whether dimension scales are provided
 dimNames = [];       % Dimensions names
-colorBarLabelString = []; % String of the colorBar YLabel
+colorBarLabelString = {}; % Cell Array of String of the colorBar YLabel
 withDimUnits = 0;    % Dimension units
 fromFile = 0;        % Flag indicating whether data are loaded from file
 withMatVisROIs = false; % Flag for RoiData as start parameter
@@ -614,7 +614,7 @@ else
               if isstring(val)
                 error(sprintf('''colorBarLabel'' mut be a string!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
               end
-              colorBarLabelString = val{1};
+              colorBarLabelString = val;
             case 'debug'
               debugMatVis = val;
             otherwise
@@ -4027,13 +4027,14 @@ end
 %Callbakck for colorbar-display toggle button
     function showColorbar(varargin)
         if debugMatVis, debugMatVisFcn(1); end
+        tmp = []; fnames = []; fnamesu = [];
         if get(tbColorbar, 'Value') == 1
             for ii=1:nMat
-                cb_axes(ii) = colorbar(imAx(ii));      %#ok
-                set(cb_axes(ii),'FontSize',10);
-                if ~isempty(colorBarLabelString)
-                  ylabel(cb_axes(ii),colorBarLabelString,'FontSize',11);
-                end
+              cb_axes(ii) = colorbar(imAx(ii), 'AxisLocationMode', 'auto');      %#ok
+              set(cb_axes(ii),'FontSize',10);
+              if ~isempty(colorBarLabelString)
+                ylabel(cb_axes(ii),colorBarLabelString{1},'FontSize',11);
+              end
             end
             if withAlpha
               if get(tbImageWinBGCol, 'Value')
@@ -6795,15 +6796,13 @@ end
                     end
                     if withAlpha && ~verLessThan('matlab','9.0')
                       yyaxis(subPlotHandles(jj,ii),'right')
-                      ylabel('AlphaValue (:)')
+                      if ~isempty(colorBarLabelString) && length(colorBarLabelString)>1; ylabel(colorBarLabelString{2})
+                      else, ylabel('AlphaValue (:)')
+                      end
                       yyaxis(subPlotHandles(jj,ii),'left')
-                      if colorBarLabelString; ylabel(colorBarLabelString)
-                      else, ylabel('Value (-)')
-                      end
-                    else
-                      if colorBarLabelString; ylabel(colorBarLabelString)
-                      else, ylabel('Value (-)')
-                      end
+                    end
+                    if ~isempty(colorBarLabelString); ylabel(colorBarLabelString{1})
+                    else, ylabel('Value (-)')
                     end
                 end
                 set(plotWin(jj), 'HandleVisibility', 'off');
@@ -8778,9 +8777,9 @@ end
           inputArg{end+1} = 'matNames';
           inputArg{end+1} = varName;%{allNames};
         %end
-        if colorBarLabelString
+        if ~isempty(colorBarLabelString)
           inputArg{end+1} = 'colorBarLabel';
-          inputArg{end+1} = {colorBarLabelString};
+          inputArg{end+1} = colorBarLabelString;
         end
         if debugMatVis
           inputArg{end+1} = 'debug';
@@ -9419,7 +9418,7 @@ end
                   end
                   profileStruct.trace.profh{1} = plot(imgX,profileStruct.show.profile,'Parent',profileStruct.gui.profile.ax,...
                                                     'Color','k','tag',sprintf('traceplot_%.0f',profileStruct.instance));
-                  if colorBarLabelString; ylabel(profileStruct.gui.profile.ax,colorBarLabelString)
+                  if ~isempty(colorBarLabelString); ylabel(profileStruct.gui.profile.ax,colorBarLabelString{1})
                   else, ylabel(profileStruct.gui.profile.ax,'Value (-)')
                   end
                   if customDimScale
@@ -9833,7 +9832,7 @@ end
                   end
                   profileStruct.trace.profh{1} = plot(profileStruct.show.profile,'Parent',profileStruct.gui.profile.ax,...
                                                     'Color','k','tag',sprintf('traceplot_%.0f',profileStruct.instance));
-                  if colorBarLabelString; ylabel(profileStruct.gui.profile.ax,colorBarLabelString)
+                  if ~isempty(colorBarLabelString); ylabel(profileStruct.gui.profile.ax,colorBarLabelString{1})
                   else, ylabel(profileStruct.gui.profile.ax,'Value (-)')
                   end
                 else
