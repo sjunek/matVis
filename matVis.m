@@ -195,13 +195,15 @@ if nargin == 0 || ischar(varargin{1})
       debugMatVis = varargin{2};
     end
     if nargin == 0 || strcmp(varargin{1},'debug')
-        %Choose files
-        [f,p] = uigetfile( '*.mat;*.tif;*.tiff; *.jpg; *.bmp; *.gif; *.png; *.lsm; *.da; *.dat',...
-            'Select one or more files of identical dimension!', 'MultiSelect', 'on');
-        if isequal(f, 0)
-            varargout{1} = [];
-            return;
+      %Choose files
+      [f,p] = uigetfile( '*.mat;*.tif;*.tiff; *.jpg; *.bmp; *.gif; *.png; *.lsm; *.da; *.dat',...
+        'Select one or more files of identical dimension!', 'MultiSelect', 'on');
+      if isequal(f, 0)
+        if nargout
+          varargout{1} = [];
         end
+        return;
+      end
     else
         f = varargin{1};
         p = '';
