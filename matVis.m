@@ -4511,7 +4511,7 @@ end
     function myStr = num2Str(myNum,nd)
       if debugMatVis > 1, debugMatVisFcn(1); end
       myStr = [];
-      for nn=1:length(myNum)
+      for nn=1:length(myNum(:))
         myStr = sprintf('%s, %s', myStr, num2StrSingle(myNum(nn),nd));
       end
       myStr = myStr(3:end);
