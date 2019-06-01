@@ -11044,8 +11044,8 @@ end
         if numel(numberRoi) == 1 && get(showROIcenter_cb, 'Value') && isfield(roiList(numberRoi),'centerOfGravity') && ~isempty(roiList(numberRoi).centerOfGravity)
           cOG = roiList(numberRoi).centerOfGravity;
           if customDimScale
-            set(roiCenterIndicator(1:2,:),'Visible','on','XData',cOG(1,2).*pxWidth(xySel(2)),'YData',cOG(1,1).*pxWidth(xySel(1)) );
-            set(roiCenterIndicator(3:4,:),'Visible','on','XData',cOG(2,2).*pxWidth(xySel(2)),'YData',cOG(2,1).*pxWidth(xySel(1)) );
+            set(roiCenterIndicator(1:2,:),'Visible','on','XData',dimScale(xySel(2),1) + cOG(1,2).*pxWidth(xySel(2)),'YData',dimScale(xySel(1),1) + cOG(1,1).*pxWidth(xySel(1)) );
+            set(roiCenterIndicator(3:4,:),'Visible','on','XData',dimScale(xySel(2),1) + cOG(2,2).*pxWidth(xySel(2)),'YData',dimScale(xySel(1),1) + cOG(2,1).*pxWidth(xySel(1)) );
           else
             set(roiCenterIndicator(1:2,:),'Visible','on','XData',cOG(1,2),'YData',cOG(1,1) );
             set(roiCenterIndicator(3:4,:),'Visible','on','XData',cOG(2,2),'YData',cOG(2,1) );
