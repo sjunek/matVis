@@ -1138,6 +1138,9 @@ if ~isempty(configFile)
     if flag
         save(fullfile(matVisPath,'matVisConfig.mat'), 'customConfig');
     end
+    if  customConfig.plotMean == 5 && withAlpha
+      customConfig.plotMean = 0;              %Default: 0 (no averaging)
+    end
 else
     customConfig = defaultConfig;
 end
