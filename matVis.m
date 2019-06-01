@@ -12095,18 +12095,18 @@ end
       if debugMatVis, debugMatVisFcn(2); end
     end
     function myGcf = myGcf
-        if debugMatVis > 2, debugMatVisFcn(1); end
-        set(0, 'ShowHiddenHandles', 'on');
-        myGcf = gcf;
-        set(0, 'ShowHiddenHandles', 'off');
-        if debugMatVis > 2, debugMatVisFcn(2); end
+      if debugMatVis > 2, debugMatVisFcn(1); end
+      set(0, 'ShowHiddenHandles', 'on');
+      myGcf = gcf;
+      set(0, 'ShowHiddenHandles', 'off');
+      if debugMatVis > 2, debugMatVisFcn(2); end
     end
     function myGca = myGca
-        if debugMatVis > 2, debugMatVisFcn(1); end
-        set(0, 'ShowHiddenHandles', 'on');
-        myGca = gca;
-        set(0, 'ShowHiddenHandles', 'off');
-        if debugMatVis > 2, debugMatVisFcn(2); end
+      if debugMatVis > 2, debugMatVisFcn(1); end
+      set(0, 'ShowHiddenHandles', 'on');
+      myGca = gca;
+      set(0, 'ShowHiddenHandles', 'off');
+      if debugMatVis > 2, debugMatVisFcn(2); end
     end
     function closeTempWin(varargin)
         if debugMatVis, debugMatVisFcn(1); end
@@ -12381,7 +12381,7 @@ end
         newOutputStrct = out;
         if debugMatVis, debugMatVisFcn(2); end
     end
-%% Movie recording functions
+    %% Movie recording functions
     function vidGenerator(varargin)
       if debugMatVis, debugMatVisFcn(1); end
       if ~get(tbRecord, 'Value')
