@@ -13486,6 +13486,7 @@ end
         %ST.name
         fctLevel = length(ST)-1;
         fctName = strrep(strrep(ST(2).name,'matVis/',''),'/','_');          % name of executed function
+        myWarn = false;
         if inOut == 1
           if fctLevel == 1 && isstruct(fctCount)
             fnames = fieldnames(fctCount);
@@ -13505,6 +13506,9 @@ end
             fctCount.(fctName).callFct = [];
             fctCount.(fctName).countCallFct = 0;
           end
+          if fctCount.(fctName).count > 1
+            myWarn = true;
+          end
           % stores calling subfunction name
           if fctLevel > 1
             callFctName = strrep(strrep(ST(3).name,'matVis/',''),'/','_');  
@@ -13518,7 +13522,7 @@ end
             end
           end
           fctNameHLp = regexp(fctName,'_');
-          if isempty(fctNameHLp), fctNameHL=fctName; else fctNameHL=fctName(fctNameHLp+1:end); end
+          if isempty(fctNameHLp), fctNameHL=fctName; else fctNameHL=fctName(fctNameHLp(end)+1:end); end
           fctCount.(fctName).time  = tic;
           timeStr = [];
           fctNameStr = sprintf('<a href="matlab:matlab.desktop.editor.openAndGoToFunction(which(''matVis.m''),''%s'');">%s</a>',fctNameHL, fctName);%fctName
@@ -13529,7 +13533,12 @@ end
           timeStr = sprintf('(execution time: %.3f s)',toc(fctCount.(fctName).time));
           fctNameStr = sprintf('%s',fctName);%fctName
         end
-        fprintf('%s%s %d/%d:%s %s\n',repmat(sprintf('|\t'), 1, fctLevel-1), inOutStr{inOut},fctCount.(fctName).count,fctCount.(fctName).countTot, fctNameStr, timeStr);
+        if myWarn
+          fprintf('%s%s',repmat(sprintf('|\t'), 1, fctLevel-1), inOutStr{inOut});fprintf(2,' %d/%d:%s %s\n',fctCount.(fctName).count,fctCount.(fctName).countTot, fctNameStr, timeStr);
+          myWarn = false;
+        else
+          fprintf('%s%s %d/%d:%s %s\n',repmat(sprintf('|\t'), 1, fctLevel-1), inOutStr{inOut},fctCount.(fctName).count,fctCount.(fctName).countTot, fctNameStr, timeStr);
+        end
         if fctLevel == 1 && inOut == 2
           fprintf('\n')
           assignin('base', 'matVisFunctionCalls', fctCount);  % saves fctCount to matlab workspace when complete function call for later analysis
