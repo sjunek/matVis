@@ -5143,7 +5143,7 @@ end
                 zoomValXY([2,4]) = zoomVal(xySel(1),:);
               end
               updateZoom;
-              updateObjects;
+              %updateObjects;
             case 'open'   % Double click: Copy content of  current figure to clipboard (only MS Windows)
               if strcmp(os(1:5),'PCWIN')
                   a = listdlg('PromptString','Copy/save/export figure content:',...
@@ -8654,6 +8654,9 @@ end
         set(tbAspRatio, 'Value', config.aspectRatio);            %Default: 1
         %Colorbar Display
         set(tbColorbar,'Value', config.colorbar);                 %Default: 0
+        if config.colorbar
+          showColorbar
+        end
         %Colormap
         set(popLut, 'Value', config.colormap);              %Default: 1 (gray)
         %Gamma
@@ -8716,8 +8719,7 @@ end
         windowVisibility;
         updateImages;
         updateColormap;
-        showColorbar;
-        drawPlots;
+        %drawPlots;
         cbCallback;
         toggleShowObjects;
         updateObjects;
@@ -11174,12 +11176,13 @@ end
           matchDims = find([ROIPos(1:matchDims)>dim(1:matchDims) 1],1,'first')-1; % checks if saved ROIpos is larger than data dimension and reduces MATCHDIMS, in case
           currPos(1:matchDims) = ROIPos(1:matchDims);
           currPos(currPos(1:matchDims)>dim(1:matchDims))=1;
+          updateSelection(1:length(currPos));
+          
           zoomVal(1:matchDims,:) = roiList(numberRoi).settings.zoomVal(1:matchDims,:); 
           % checks if saved zoomVals are larger than data dimension and reduces MATCHDIMS, in case
           zoomVal(sum(zoomVal(1:matchDims,:),2)-1 > dim(1:matchDims)',1) = 1; 
           zoomVal(zoomVal(1:matchDims,2) > dim(1:matchDims)',2) = dim(zoomVal(1:matchDims,2)' > dim(1:matchDims));
           updateZoom(1,1,1:nDim,'ROIupdate');
-          updateSelection(1:length(currPos));
         else
           updateRoiSelection(numberRoi);
         end
