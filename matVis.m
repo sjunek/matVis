@@ -3620,6 +3620,9 @@ if nargout == 1
     out = [];
     updateOutputStrct;
     varargout{1} = out;
+    withOutput = 1;
+else
+    withOutput = 0;
 end
 % timerHist = timer('TimerFcn',@updateGlobalHist,'StartDelay',.1);
 % start(timerHist);
@@ -13435,6 +13438,13 @@ end
         %             delete(timerHist);
         %         catch %#ok
         %         end
+        % If return variable was requested, assign last settings to caller
+        % workspace
+        if withOutput
+            matVis_closeSettings.zoomVal = zoomVal;
+            matVis_closeSettings.zoomXY = zoomValXY;
+            assignin('caller','matVis_closeSettings',matVis_closeSettings);
+        end
         isPlaying = 0;  %Stop play to avoid error message
         if with2DHist && ishandle(matVis2DHist.figHandles.gui)
             matVis2DHist.fctHandles.closeGui();
