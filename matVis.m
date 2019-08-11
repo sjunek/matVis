@@ -189,6 +189,14 @@ macScaleFactor = [1.05 1.05]; % Scaling factor to adjust width and height of GUI
 %% Read Data ...
 % ... from Files
 optionalArgIdentifier = [];                 % variable declaration
+%popup for colormap (look up table)
+popLutString = {'Gray';'Gray (Range)';'4 x Gray';...
+  'Parula'; 'Jet'; 'HSV'; 'Hot'; 'Cool';...
+  'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2';...
+  'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';...
+  'Blue-Gray-Yellow (0 centered)';'Blue-Gray-Red (0 centered)';...
+  'Green-Gray-Red (0 centered)';'Magenta-Gray-Green (0 centered)'};
+customColormap = [];
 if nargin == 0 || ischar(varargin{1})
     debugMatVis = 0;
     if nargin && strcmp(varargin{1},'debug') && (islogical(varargin{2}) || isscalar(varargin{2}))
@@ -615,6 +623,12 @@ else
                 error(sprintf('''colorBarLabel'' mut be a string!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
               end
               colorBarLabelString = val;
+            case 'colorMap'
+              if ismatrix(val)&& size(val,2)==3
+                customConfig.colormap = 23;
+                popLutString{23} = 'customColormap';
+                customColormap = val;
+              end
             case 'debug'
               debugMatVis = val;
             otherwise
@@ -1062,12 +1076,6 @@ defaultConfig.aspectRatio = 1;           %Default: 1
 %Colorbar Display
 defaultConfig.colorbar = 0;              %Default: 0
 %Colormaps available
-popLutString = {'Gray';'Gray (Range)';'4 x Gray';...
-  'Parula'; 'Jet'; 'HSV'; 'Hot'; 'Cool';...
-  'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2';...
-  'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';...
-  'Blue-Gray-Yellow (0 centered)';'Blue-Gray-Red (0 centered)';...
-  'Green-Gray-Red (0 centered)';'Magenta-Gray-Green (0 centered)'};
 defaultConfig.colormap = 1;              %Default: 1 (gray)
 %Gamma
 defaultConfig.gamma = ones(1,nMat);
@@ -1144,6 +1152,10 @@ if ~isempty(configFile)
 else
     customConfig = defaultConfig;
 end
+if ~isempty(customColormap)
+  customConfig.colormap = 23;
+end
+
 % currConfig = customConfig; %Not necessary after removing currConfig
 % option
 
@@ -1183,7 +1195,7 @@ if ~isempty(startPar)
                 end
                 customConfig.colormapMode = 'Manual';
                 customConfig.linkContrastSettings = 0;
-            case {'cmap','colormap'}       % checked
+            case {'cmap','colormap','colorMap'}       % checked
               if ischar(propVal)
                 propVal = find(ismember(popLutString, propVal)); 
               end
@@ -3303,13 +3315,6 @@ if withAlpha
         'Position', [-2 -5 1], 'String', '$\gamma_{\alpha}$','Interpreter','Latex','Tag', ttt1);
 end
 
-%popup for colormap (look up table)
-popLutString = {'Gray';'Gray (Range)';'4 x Gray';...
-  'Parula'; 'Jet'; 'HSV'; 'Hot'; 'Cool';...
-  'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2';...
-  'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';...
-  'Blue-Gray-Yellow (0 centered)';'Blue-Gray-Red (0 centered)';...
-  'Green-Gray-Red (0 centered)';'Magenta-Gray-Green (0 centered)'};
 ttt = sprintf('Choose colormap.');
 if debugMatVis, ttt1 = sprintf('Handle: ''popLut''\nCallback: ''updateColormap'''); else,  ttt1 = ttt; end
 popLut = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', @updateColormap, 'Units', 'Pixel', ...
@@ -7449,7 +7454,8 @@ end
                     set(valSldGamma(1),'String','1.000');
                     updateImages;
                 end
-
+            case 'customColormap'
+              cmap = customColormap;
             otherwise
                 cmap = defaultColormap{1};
                 if get(bg_colormap, 'SelectedObject') == cmGlobal
