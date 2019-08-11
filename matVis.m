@@ -8484,7 +8484,7 @@ end
                 zv(2,1) = find(y_2DHist>=cmMinMax(nMat+1,1),1) ;
                 zv(2,2) = find(y_2DHist>=cmMinMax(nMat+1,2),1)-find(y_2DHist>=cmMinMax(nMat+1,1),1);
                 matVis2DHist = matVis(data2DHist,'dimScale',[minVal(1) maxVal(1);minVal(2) maxVal(2)],...
-                                                 'dimUnit',{'au.','au.'},...
+                                                 'dimUnits',{'au.','au.'},...
                                                  'dimNames',{'Data values';'Alpha values'},...
                                                  'matNames',{[varName{1} ': 2D Hist']},'debug',debugMatVis,...
                                                  'startPar',{'zoomVal';zv;'aspRatio';0;'windowPositions';wp;'objVisibility';1;'windowVisibility';[1 0 0];'calledAs2DHist';{outStrct.fctHandles.loadNewSettings;double([min(dd(:,1)) max(dd(:,1))]);double([min(dd(:,2)) max(dd(:,2))])}});
@@ -10597,7 +10597,7 @@ end
         [maskXIdx, maskYIdx] = find(mask);
         cog = [mean(maskXIdx), mean(maskYIdx)];
         for ii = 1:min(nDim,length(roiPos))
-          imIndex{ii} = roiPos(ii);  %#ok
+          imIndex{ii} = max([1 min([dim(ii) roiPos(ii)]) ]);  %#ok
         end
         for ii = (length(roiPos)+1):nDim
           imIndex{ii} = currPos(ii);  %#ok
@@ -11239,10 +11239,12 @@ end
     end
     function showRoiNames(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        if get(roiBtShowNames, 'Value')
+        if ~isempty(roiText)
+          if get(roiBtShowNames, 'Value')
             set([roiText.im roiText.zoom], 'Visible', 'on');
-        else
+          else
             set([roiText.im roiText.zoom], 'Visible', 'off');
+          end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
@@ -11605,6 +11607,7 @@ end
         if debugMatVis, debugMatVisFcn(1); end
         if nargin>2 
           matVisRoiExport = varargin{3};
+          noMatVisROIs = false;
         else
           [f,p] = uigetfile('.mat','Choose file to load rois!');
           if isequal(f,0)
