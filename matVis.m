@@ -13449,10 +13449,12 @@ end
         %         end
         % If return variable was requested, assign last settings to caller
         % workspace
-        if withOutput
-            matVis_closeSettings.zoomVal = zoomVal;
-            matVis_closeSettings.zoomXY = zoomValXY;
-            assignin('caller','matVis_closeSettings',matVis_closeSettings);
+        try %#ok Can result in errors if called from a static workspace (eg nested function)
+            if withOutput
+                matVis_closeSettings.zoomVal = zoomVal;
+                matVis_closeSettings.zoomXY = zoomValXY;
+                assignin('caller','matVis_closeSettings',matVis_closeSettings);
+            end
         end
         isPlaying = 0;  %Stop play to avoid error message
         if with2DHist && ishandle(matVis2DHist.figHandles.gui)
