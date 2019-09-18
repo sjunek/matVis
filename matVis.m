@@ -595,7 +595,7 @@ else
               dimNames = val;
             case 'dimUnits'
               if length(val) ~= ndims(varargin{1})
-                error(sprintf('Dimension of ''dimUnits'' mut fit matrix dimension!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
+                error(sprintf('Dimension of ''dimUnits'' must fit matrix dimension!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
               end
               dimUnits = val;
               withDimUnits = 1;
@@ -613,19 +613,18 @@ else
               startPar = val;
             case 'dimScale'
               if ~all(size(val) == [ndims(varargin{1}) 2])
-                error(sprintf('Dimension of ''dimScale'' mut fit matrix dimension!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
+                error(sprintf('Dimension of ''dimScale'' must fit matrix dimension!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
               end
               dimScale = val;
               customDimScale = 1;
               pxWidth = diff(dimScale,1,2)'./(size(data{1})-1);
             case 'colorBarLabel'
               if isstring(val)
-                error(sprintf('''colorBarLabel'' mut be a string!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
+                error(sprintf('''colorBarLabel'' must be a string!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
               end
               colorBarLabelString = val;
             case 'colorMap'
               if ismatrix(val)&& size(val,2)==3
-                customConfig.colormap = 23;
                 popLutString{23} = 'customColormap';
                 customColormap = val;
               end
@@ -1206,7 +1205,7 @@ if ~isempty(startPar)
                 customConfig.aspectRatio = propVal;
             case 'rgbDim'     % seems ok
                 rgbDim = propVal;
-                updateRGB = 1;
+                if ~isempty(rgbDim); updateRGB = 1; end
             case 'projDim'   % checked
                 updateProj = 1;
                 projDim = propVal;
@@ -8487,7 +8486,12 @@ end
                                                  'dimUnits',{'au.','au.'},...
                                                  'dimNames',{'Data values';'Alpha values'},...
                                                  'matNames',{[varName{1} ': 2D Hist']},'debug',debugMatVis,...
-                                                 'startPar',{'zoomVal';zv;'aspRatio';0;'windowPositions';wp;'objVisibility';1;'windowVisibility';[1 0 0];'calledAs2DHist';{outStrct.fctHandles.loadNewSettings;double([min(dd(:,1)) max(dd(:,1))]);double([min(dd(:,2)) max(dd(:,2))])}});
+                                                 'startPar',{'zoomVal';zv;...
+                                                             'aspRatio';0;...
+                                                             'windowPositions';wp;...
+                                                             'objVisibility';1;...
+                                                             'windowVisibility';[1 0 0];...
+                                                             'calledAs2DHist';{outStrct.fctHandles.loadNewSettings;double([min(dd(:,1)) max(dd(:,1))]);double([min(dd(:,2)) max(dd(:,2))])}});
                 with2DHist = 1;
             else
                 matVis2DHist.fctHandles.loadNewData(data2DHist);
@@ -8795,11 +8799,14 @@ end
       if debugMatVis, debugMatVisFcn(2); end
       function exportNow(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        ind = []; indC = false(1,nDim);
+        ind = [];             % index list of new dataset 
+        indC = false(1,nDim); % index of all singular dimensions
+        indCE = indC;
         for iii = 1:nDim
-          ind{iii} = eval(get(exportTxt(iii), 'String'));    %#ok
+          ind{iii}  = eval(get(exportTxt(iii), 'String'));    %#ok
+          indC(iii) = length(ind{iii})==1;
         end
-        indC(iii) = length(ind{iii})==1;
+        indCE(end) = indC(end); 
         assignin('base', strrep(sprintf('%s_index',get(exportName, 'String')),' ','_'), ind);
         expProp = [];lEA = 1;
         if customDimScale
@@ -8807,19 +8814,19 @@ end
           for iii=1:length(ind)
             expProp{lEA+1}(iii,:) = dimScale(iii,1) + diff(dimScale(iii,:))/(dim(iii)-1)*(ind{iii}([1 end])-1);
           end
-          expProp{lEA+1}(indC,:) = [];
+          expProp{lEA+1}(indCE,:) = [];
           lEA = lEA+2;
         end
         %if exist('dimNames','var') && ~isempty(dimNames)
           expProp{lEA} = 'dimNames';
           expProp{lEA+1} = dimNames;
-          expProp{lEA+1}(indC) = [];
+          expProp{lEA+1}(indCE) = [];
           lEA = lEA+2;
         %end
         if withDimUnits
           expProp{lEA} = 'dimUnits';
           expProp{lEA+1} = dimUnits;
-          expProp{lEA+1}(indC) = [];
+          expProp{lEA+1}(indCE) = [];
           lEA = lEA+2;
         end
         %if exist('allNames','var') && ~isempty(allNames)
@@ -8866,11 +8873,14 @@ end
       end
       function newMatVis(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        ind = []; indC = false(1,nDim);
+        ind = [];             % index list of new dataset 
+        indC = false(1,nDim); % index of all singular dimensions
+        indCE = indC;         
         for iii = 1:nDim
-          ind{iii} = eval(get(exportTxt(iii), 'String'));    %#ok
+          ind{iii}  = eval(get(exportTxt(iii), 'String'));    %#ok
+          indC(iii) = length(ind{iii})==1;
         end
-        indC(iii) = length(ind{iii})==1;
+        indCE(end) = indC(end); 
         for iii = 1:numel(data)
           inputArg{iii} = data{iii}(ind{:});
         end
@@ -8884,26 +8894,35 @@ end
           for iii=1:length(ind)
             inputArg{lIA}(iii,:) = dimScale(iii,1) + diff(dimScale(iii,:))/(dim(iii)-1)*(ind{iii}([1 end])-1);
           end
-          inputArg{lIA}(indC,:) = [];
+          inputArg{lIA}(indCE,:) = [];
         end
-        %if exist('dimNames','var') && ~isempty(dimNames)
-          inputArg{end+1} = 'dimNames';
-          inputArg{end+1} = dimNames;
-          inputArg{end}(indC) = [];
-        %end
+        inputArg{end+1} = 'dimNames';
+        inputArg{end+1} = dimNames;
+        inputArg{end}(indCE) = [];
         if withDimUnits
           inputArg{end+1} = 'dimUnits';
           inputArg{end+1} = dimUnits;
-          inputArg{end}(indC) = [];
+          inputArg{end}(indCE) = [];
         end
-        %if exist('allNames','var') && ~isempty(allNames)
-          inputArg{end+1} = 'matNames';
-          inputArg{end+1} = varName;%{allNames};
-        %end
+        inputArg{end+1} = 'matNames';
+        inputArg{end+1} = varName;%{allNames};
         if ~isempty(colorBarLabelString)
           inputArg{end+1} = 'colorBarLabel';
           inputArg{end+1} = colorBarLabelString;
         end
+        % 'startPar', {'cmMinMax',[par.rLims; par.iLims],'colormap','Rainbow3'}
+        inputArg{end+1} = 'startPar';
+        inputArg{end+1} = {'xySel', xySel,...
+                           'plotDim',logical(plotSel(~indC)),...
+                           'plotMean',customConfig.plotMean,...
+                           'cmMinMax',cmMinMax,...
+                           'colorMap',customConfig.colormap,...
+                           'aspRatio',customConfig.aspectRatio,...
+                           'rgbDim',rgbDim,...
+                           'projDim',projDim-sum(indC(1:projDim)),...
+                           'projMethod' ,projMethod,...
+                           'windowVisibility',[customConfig.winVis.imageWin,customConfig.winVis.zoomWin,customConfig.winVis.plotWin],...
+                           'objVisibility',customConfig.lineVis};
         if debugMatVis
           inputArg{end+1} = 'debug';
           inputArg{end+1} = debugMatVis;
