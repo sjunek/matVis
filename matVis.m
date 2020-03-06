@@ -11600,11 +11600,17 @@ end
                 roiListExp(roiSel(ii)).corners(1,roiListExp(roiSel(ii)).corners(1,:) < 0) = 0;
                 roiListExp(roiSel(ii)).corners(2,roiListExp(roiSel(ii)).corners(2,:) < 0) = 0;
             end
-            
-            q = questdlg('Export Rois to workspace or save as .mat file?','ROI Export', 'To File', 'To Workspace', 'Cancel', 'To File');
-            if strcmp(q,'To Workspace')
+            if length(dbstack) == 1
+                q = questdlg('Export Rois to workspace or save as .mat file?','ROI Export', 'To file', 'To workspace', 'Cancel', 'To file');
+            else
+                q = questdlg('Export Rois to workspace or save as .mat file?','ROI Export', 'To file', 'To ''base'' workspace', 'To ''caller'' workspace', 'To file');
+            end
+            if strcmp(q,'To ''base'' workspace') || strcmp(q,'To workspace') 
                 assignin('base', 'matVisRoiExport', roiListExp(roiSel));
-                fprintf('ROIs exported to workspace!\n');
+                fprintf('ROIs exported to base workspace!\n');
+            elseif strcmp(q, 'To ''caller'' workspace')
+                assignin('caller', 'matVisRoiExport', roiListExp(roiSel));
+                fprintf('ROIs exported to caller workspace!\n');
             elseif strcmp(q, 'To File')
                 [f,p] = uiputfile('.mat','Choose folder and filename to save rois!');
                 if f == 0
