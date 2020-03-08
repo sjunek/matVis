@@ -631,14 +631,14 @@ else
             case 'debug'
               debugMatVis = val;
             otherwise
-              warning(sprintf('Name-Value Pair Argument ''%s'' not understood!\nPlease check <a href="matlab:doc matVis">matVis documentation</a> for further information.',optionalArgIdentifier{i}))
+              warning(sprintf('Name-Value Pair Argument ''%s'' not understood!\nPlease check <a href="matlab:doc matVis">matVis documentation</a> for further information.',optionalArgIdentifier{i})) %#ok
         end
     end
     %Check Input Dimensions
     defaultColormap{1} = [];
     isCustomTif = 0;
 end
-% start debug modus recognition
+%% start debug modus recognition
 fctCount = [];                           %Function Counter for debug mode
 if debugMatVis, debugMatVisFcn(1); end
 
@@ -656,7 +656,7 @@ elseif  any(dim == 1)
     if withDimUnits,  dimUnits(indC) = []; end
     if customDimScale, dimScale(indC,:) = []; pxWidth(indC) = []; end
     for i=1:nMat
-        data{i} = squeeze(data{i});  %#ok
+        data{i} = squeeze(data{i});
     end
 end
 %% Set initial values
@@ -669,8 +669,6 @@ if ~customDimScale, dimScale = zeros(nDim,1); dimScale(:,2) = dim; end
 sldPos = zeros(4  ,nDim);                % slider positions (will be set in gui configuration)
 plotXLim = zeros(nDim, 2);               % XLims for PlotFigureAxes
 plotYLim = zeros(nDim, 2);               % YLims for PlotFigureAxes
-
-
 if customDimScale
   pxWidth(pxWidth==0) = 1;  % Avoid error messages
 else
@@ -689,7 +687,6 @@ for i=1:nMat
     [maxVal(i) maxValInd(i)] = max(data{i}(:));         %Maximum Data Value
     [minVal(i) minValInd(i)] = min(data{i}(:));         %Minimum Data Value
     sldLimVal(i,:) = [minVal(i) maxVal(i)];
-    
     if minVal(i) == maxVal(i)
         minVal(i) = maxVal(i)-1; % to avoid error messages
         warning('All numbers in the data set ''%s'' equal %f.',varName{i},minVal(i))
@@ -716,15 +713,15 @@ if withAlpha
 end
 
 clear d;
-%Set initial plot limits
+%% Set initial plot limits
 for i=1:nDim
-    plotXLim(i,:) = [1 dim(i)]; %#ok
+    plotXLim(i,:) = [1 dim(i)];
 end
 if customDimScale
     plotXLimScale = dimScale;
 end
 for i=1:nMat
-    plotYLim(i,:) = [minVal(i) maxVal(i)]; %#ok
+    plotYLim(i,:) = [minVal(i) maxVal(i)];
 end
 %Find position of maximum value (adopted from ind2sub function) and set as
 %starting position; if data set is too large to find this position set
@@ -751,7 +748,7 @@ catch    %#ok
 end
 savedPos = [];                           %Matrix for saved positions using small buttons to the right
 savedZoom = [];                          %Matrix for saved zoom using small buttons to the right
-
+%% peallocation of handles
 % peallocation of handles
 if matlabVer < 8.4 % to differenciate for HG2 
   currIm = [];                             %data of Current Image (compare currImVal)
@@ -3430,7 +3427,7 @@ tbWin(3) = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Uni
 ttt = sprintf('Show / hide histogram of complete data set.\nHistogram not yet calculated.\nPress button to calculate and display.');
 if debugMatVis, if withAlpha, ttt1 = sprintf('Handle: ''tbHist''\nCallback: ''showHist''');
                 else;         ttt1 = sprintf('Handle: ''tbHist''\nCallback: ''update2DHist'''); 
-                end; 
+                end 
 else,  ttt1 = ttt; 
 end
 tbHist = uicontrol('Parent',panel_windowButtons, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Position', [87 1 28 28], ...
@@ -3513,7 +3510,7 @@ for i = 1:nMat
     try
         im_jf = get(imageWin(i),'JavaFrame');
         im_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_image))));
-    catch    %#ok
+    catch    
     end
     %winVis{imageWin(i)} =   'on';
     zoomWin(i) = figure('Units', 'Pixel', 'Position', customConfig.winPos.zoomWin(i,:),'Name', ['Zoom (', varName{i},')'], ...
@@ -3524,7 +3521,7 @@ for i = 1:nMat
     try
         zoom_jf = get(zoomWin(i),'JavaFrame');
         zoom_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_zoom))));
-    catch    %#ok
+    catch    
     end
     %winVis{zoomWin(i)} =   'on';
     plotWin(i) = figure('Units', 'Pixel', 'Position', customConfig.winPos.plotWin(i,:),'Name', ['Plots (', varName{i}, ')'], ...
@@ -3535,29 +3532,29 @@ for i = 1:nMat
         plot_jf = get(plotWin(i),'JavaFrame');
         xx = javax.swing.ImageIcon(im2java(uint8(icon_plot)));
         plot_jf.setFigureIcon(xx);
-    catch    %#ok
+    catch    
     end
     %winVis{plotWin(i)} =   'on';
 end
 try
-    % Avoid that selfmade icons appear in figure container (dirty solution ...)                                                                                          -
+    % Avoid that selfmade icons appear in figure container (dirty solution ...) -
     f = figure;
     fake_jf = get(f,'JavaFrame');
     xxx = fake_jf.getFigureIcon;
     fake_jf.setFigureIcon(xx);
     fake_jf.setFigureIcon(xxx);
     delete(f);
-catch    %#ok
+catch    
 end
 warning('on','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
 %Set Scrollwheel Callback if possible (starting from Matlab 2007a)
 try
     set([imageWin,zoomWin], 'WindowScrollWheelFcn', @scrollWheelCallback);
-catch    %#ok
+catch
 end
 try
     set(gui, 'WindowScrollWheelFcn', @scrollWheelCallbackGui);
-catch    %#ok
+catch
 end
 %Set background to black if alpha map is used
 if withAlpha
@@ -4845,7 +4842,7 @@ end
             elseif pointInArea(p1, btPos_findGlobalMinZm), findExtremum([],[],'min','globalZoom',0);
             elseif pointInArea(p1, btPos_findGlobalMaxZm), findExtremum([],[],'max','globalZoom',0);
             else
-                %Right click on main gui: Bring all visible windows to front
+                %% Right click on main gui: Bring all visible windows to front
                 if get(tb_tifPar, 'Value')
                     figure(tifParFig);
                 end
@@ -4888,7 +4885,8 @@ end
                     figure(exportWin);
                 end
             end
-        elseif strcmp(get(gui,'SelectionType'),'extend')  % Move all windows together 
+        elseif strcmp(get(gui,'SelectionType'),'extend')  
+            %% Move all windows together 
             startPosGui = get(gui, 'Position');
             p1 = startPosGui(1:2) + get(gui,'CurrentPoint');
             set(gui,'WindowButtonUpFcn',@releaseMiddleClickGui);
@@ -5901,7 +5899,7 @@ end
                 end
             end
         else
-            % RGB mode
+            %% RGB mode
             % Update slider for RGB mode (update otherwise by updateColormap function)
             if get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value')
                 busy(1);
@@ -9010,7 +9008,6 @@ end
 %   this kind.
 %   When changing xySel (and not simply exchanging them), all profile
 %   information will be lost and the profile Manager will be reset (resetprofiles).
-
 %%  Build profile Gui during first call or make it visible/unvisible during
 %   later calls or from WindowCloseRequestFcn
     function profileGui(varargin)
@@ -9998,7 +9995,6 @@ end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
 %% Region of interest manager
 %     nRois: actual number of "ROIs"
 %     The structure roiList contains information for all Rois:
@@ -10045,7 +10041,6 @@ end
 %   this kind.
 %   When changing xySel (and not simply exchanging them), all Roi
 %   information will be lost and the Roi Manager will be reset (resetRois).
-
 %%  Build Roi Gui during first call or make it visible/unvisible during
 %   later calls or from WindowCloseRequestFcn
     function roiGui(varargin)
@@ -10286,8 +10281,8 @@ end
         function buttonDownRoiGui(varargin)
             if debugMatVis, debugMatVisFcn(1); end
             if strcmp(get(roiWin,'SelectionType'),'alt')
-                %Check for mouse position to enable fake 'button right-clicks'
                 p1 = round(get(myGcf,'CurrentPoint'));
+                %% Check for mouse position to enable fake 'button right-clicks'
                 for ii=1:3
                     btPosNewRoi(:,ii) = get(tb_newRoi(ii), 'Position'); %#ok
                     if (p1(1) > btPosNewRoi(1,ii) && ...
@@ -10324,6 +10319,7 @@ end
             end
             if debugMatVis, debugMatVisFcn(2); end
         end
+
         function updateRoiSize(varargin)
             newRoiSize = str2double(get(varargin{1},'string'));
         end
@@ -10645,7 +10641,6 @@ end
         [X, Y] = meshgrid(1:dim(xySel(2)), 1:dim(xySel(1)));
         % Matlab inpolygon function very slow. Use alternatives from file
         % exchange server:
-        % tic
         % roiList(numberRoi).mask = inpolygon(Y,X,roi(2,:),roi(1  ,:));  % Slow Matlab function
         if exist('inpoly','file') == 3  % Check if mex-version (from Sebastien Paris) is available on path
             inregion = inpoly(cat(2,Y(:),X(:))',roi([2 1],:));
@@ -11096,7 +11091,7 @@ end
         if debugMatVis, debugMatVisFcn(1); end
         numberRoi = get(roiListbox, 'Value');
         if numberRoi % Check in case function is called before a ROI has been created
-            %Display in roiWin
+            %% Display in roiWin
             set(roiImage, 'CData',currIm{1});
             if withAlpha
               set(roiImage, 'AlphaData', currAlphaMap{1});
