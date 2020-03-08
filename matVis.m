@@ -906,12 +906,16 @@ roiList = [];                            %List of Rois
 roiLine = [];                            %Handle to lines indicating Rois
 roiCenterIndicator = [];                 %Handle to '+' (text) indicating center of current Roi
 nRois = 0;                               %Number of Rois
+roiCol = 'w';                            %default ROI color
+roiLineWidth = 1;                        %default ROI LineWidth
+roiLineStyle = '-';                      %default ROI LineStyle
 roiText = [];                            %Handle to text (numbers) for Rois
 roiName = [];                            %Roi name of currently selected roi above roiAxes
+roiTxtListbox = [];                      %Roi Gui text label
 roiListbox = [];                         %Listbox in Roi Gui containing all ROIs; selected ROI is "current Roi"
-roiBtRename = [];                        %Button to rename roi
-roiBtShowNames = [];                     %Button to show or hide Roi text in figure windows
-roiBtReplace = [];                       %Button to exchange existing Roi by new one.
+tbRoiRename = [];                        %Button to rename roi
+tbRoiShowNames = [];                     %Button to show or hide Roi text in figure windows
+tbRoiReplace = [];                       %Button to exchange existing Roi by new one.
 roiPopDataExport = [];                   %Handle to pop menu to choose dimension for Roi based data export
 tbRoiShift = [];                         %Handle for toggle button for shifting of Rois
 tbRoiRotate = [];                        %Handle for toggle button for rotating Rois
@@ -924,6 +928,11 @@ bt_exportRoiData = [];
 newRoiSize = 5;                          %Size of "one-click" ROIs (radius, squares will have 2*newRoiSize+1 side length)
 jump2ROIPos_cb = 1;                      %Handle to checkbox indidacting whether the current position chould be changed when a new ROI is selected (jump to position where ROI was created)
 showROIcenter_cb = 1;                      %Handle to checkbox indidacting whether the current position chould be changed when a new ROI is selected (jump to position where ROI was created)
+roiFixHistScale = [];
+roiTxtLineWidth = [];
+roiEdtLineWidth = [];
+roiTxtLineStyle = [];
+roiPopLineStyle = [];
 etxt_newRoiName = [];
 txt_RoiPropWinTxt = [];                  %Handle Textfield in Figure for ROI update of ROI settings
 roiToolTip = 'none';                        % Display ROI property
@@ -1113,7 +1122,8 @@ defaultConfig.tooltips = 1;              %Default: 1 (display tooltips)
 % Jump to ROI position/zoom where ROI was created when changing ROI
 % selection
 defaultConfig.jump2ROIPos = 1;    
-defaultConfig.showROIcenter = 1;    
+defaultConfig.showROIcenter = 1;
+%% Loading of customConfig
 if debugMatVis; t1 = debugMatVisOutput('Predefenition of Config: Loading of customConfig', whos, toc(tStart), t1); end
 [matVisPath,f,e] = fileparts(which('matVis.m'));
 compName = strtrim(getenv('Computername'));
@@ -6932,6 +6942,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     if ~isempty(colorBarLabelString); ylabel(colorBarLabelString{1})
                     else, ylabel('Value (-)')
                     end
+                    if get(tbRoi, 'Value') && ~isempty(subPlotPlots)
+                        legend(subPlotPlots(jj,ii,:));
+                        if ~get(tbRoiShowNames, 'Value');legend('hide');end
+                    else
+                        legend('hide'); %stopHere;
+                    end
+                    box on
                 end
                 set(plotWin(jj), 'HandleVisibility', 'off');
             end
@@ -10088,7 +10105,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             if nRois >0
                 set([roiLine.im, roiLine.zoom, roiText.im, roiText.zoom, roiCenterIndicator'],  'Visible', 'off');
             end
-            set([tb_newRoi tbRoiShift tbRoiRotate tbRoiScale roiBtReplace], 'Value', 0);
+            set([tb_newRoi tbRoiShift tbRoiRotate tbRoiScale tbRoiReplace], 'Value', 0, 'BackgroundColor',guiBGCol);
             set([imageWin zoomWin],'WindowButtonMotionFcn',@mouseMotion,...
                 'WindowButtonDownFcn',@buttonDownCallback,...
                 'WindowButtonUpFcn','');
@@ -10096,7 +10113,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             if get(roiName, 'Value')
               set(tempRoiPropWin, 'Visible','off');
             end
-            if get(roiBtRename, 'Value')
+            if get(tbRoiRename, 'Value')
               set(tempRoiSetWin, 'Visible','off');
             end
             if debugMatVis, debugMatVisFcn(2); end
@@ -10108,10 +10125,10 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         if get(roiName, 'Value')
           set(tempRoiPropWin, 'Visible','on');
         end
-        if get(roiBtRename, 'UserData')
+        if get(tbRoiRename, 'UserData')
           set(tempRoiPropWin, 'Visible','on');
         end
-        if nRois > 0 && get(roiBtShowNames, 'Value')
+        if nRois > 0 && get(tbRoiShowNames, 'Value')
             set([roiLine.im, roiLine.zoom, roiText.im, roiText.zoom, roiCenterIndicator'], 'Visible', 'on');
         elseif nRois > 0
             set([roiLine.im, roiLine.zoom, roiText.im, roiText.zoom, roiCenterIndicator'], 'Visible', 'off');
@@ -10124,10 +10141,12 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             %% Roi Manager Window with text
             gp = get(gui,'Position');
             roiWin =  figure;
+            roiWinPos = [gp(1) gp(2)-382 320 350];
+            roiWinCol = get(roiWin, 'Color');
             set(roiWin,'Units', 'Pixel', 'Name', 'ROI Manager',...
                 'MenuBar', 'none', 'NumberTitle', 'off','HandleVisibility', 'off',...
                 'CloseRequestFcn', {@roiGui,0},...
-                'WindowStyle','normal', 'Position', [gp(1) gp(2)-362 320 330]);
+                'WindowStyle','normal', 'Position', roiWinPos);
             if ismac
                 set(roiWin, 'Resize','off');
             end
@@ -10141,143 +10160,37 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             warning('on','MATLAB:ui:javaframe:PropertyToBeRemoved');
             roiTxtListbox = uicontrol(roiWin, 'Style', 'Text', 'Position', [10 roiWinPos(4)-15 110 15], ...
                 'String','List of ROIs','FontWeight', 'bold',...
-                'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'center');
+                'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'center');
             %Listbox for Rois
             roiListbox = uicontrol(roiWin, 'Style', 'listbox', 'Units', 'Pixel', ...
-                'BackgroundColor', get(roiWin, 'Color'),'Value',0,...
-                'Position', [10 153 110 157], 'String', '','Max',3, 'Callback', @listboxCallback,...
+                'BackgroundColor', roiWinCol,'Value',0,...
+                'Position', [10 roiWinPos(4)-177 110 157], 'String', '','Max',3, 'Callback', @listboxCallback,...
                 'Tooltip', sprintf('List of ROIs.\nMultiple selections are possible.\nThe Names of the ROIs can be changed (see buttons below),\nthe numbers in front of the names are generated by matVIs and can not be edited.'));
             %Panel for display of Roi properties
-            roiName = uicontrol('Parent',roiWin, 'Style', 'Togglebutton', 'Position', [155 310 145 20], ...
-                'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'center','FontWeight', 'bold',...
+            roiName = uicontrol('Parent',roiWin, 'Style', 'Togglebutton', 'Position', [155 roiWinPos(4)-20 145 20], ...
+                'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'center','FontWeight', 'bold',...
                 'String', 'ROI Name','Value',0,'Enable','off','Tooltip',roiToolTip, 'Callback', @showRoiProperties);
-            roiPropertiesPanel = uipanel(roiWin,'Units','Pixel','Position', [130,25,185,285],'Title', 'Selected ROI',...
+            roiPropertiesPanel = uipanel(roiWin,'Units','Pixel','Position', [130,roiWinPos(4)-305,185,285],'Title', 'Selected ROI',...
                 'BackgroundColor',get(roiWin,'Color'),'FontWeight', 'bold','TitlePosition','centertop',...
                 'Tag',sprintf('Shows the currently selected ROI\nand various properties (number of pixels, minimum, maximum and mean value).\nIn case multiple ROIs are selected, only the first selected ROIs\nand its properties are shown here.'));
-              roiHistAxes  = axes('Parent', roiPropertiesPanel, 'Unit','pixel','OuterPosition', [0,0,190,150],'FontSize',7);
-              if withAlpha
-                roiHistAxesIm = imagesc(roiHistAxes,ones(50,50));
-                colormap(roiHistAxes,colorMap(256, 2, 1))
-                axis(roiHistAxes,'tight','xy')
-                if ~isempty(colorBarLabelString), ylabel(roiHistAxes,colorBarLabelString{1},'FontSize',9); else, ylabel(roiHistAxes,'Value','FontSize',9); end
-                if ~isempty(colorBarLabelString) && length(colorBarLabelString)>1; xlabel(roiHistAxes,colorBarLabelString{2},'FontSize',9); else, xlabel(roiHistAxes,'AlphaValue','FontSize',9); end
-              else
-                roiHistAxesLine = plot(roiHistAxes,1:49,ones(1,49));
-                axis(roiHistAxes,'tight')
-                ylabel(roiHistAxes,'Frequency','FontSize',9);
-                if ~isempty(colorBarLabelString), xlabel(roiHistAxes,colorBarLabelString{1},'FontSize',9); else, xlabel(roiHistAxes,'Value','FontSize',9); end
-%                 uicontrol(roiWin, 'Style', 'Text', 'Position', [152 75 40 15], ...
-%                   'String','# Px:', 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'left');
-%                 uicontrol(roiWin, 'Style', 'Text', 'Position', [152 60 40 15], ...
-%                   'String','Min:', 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'left');
-%                 uicontrol(roiWin, 'Style', 'Text', 'Position', [152 45 40 15], ...
-%                   'String','Max:', 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'left');
-%                 uicontrol(roiWin, 'Style', 'Text', 'Position', [152 30 55 15], ...
-%                   'String','Mean:', 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'left');
-%                 roiSize = uicontrol(roiWin, 'Style', 'Text', 'Position', [180 75 35 15], ...
-%                   'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'right');
-%                 roiMin = uicontrol(roiWin, 'Style', 'Text', 'Position', [180 60 35 15], ...
-%                   'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'right');
-%                 roiMax = uicontrol(roiWin, 'Style', 'Text', 'Position', [180 45 35 15], ...
-%                   'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'right');
-%                 roiMean = uicontrol(roiWin, 'Style', 'Text', 'Position', [180 30 35 15], ...
-%                   'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'right');
-              end
-              %roiFrame = uicontrol(roiWin,'Style','Frame',  'Position', [160,150,150,150],'Visible','off');
-            %Axes for display of Roi
-            roiAxes  = axes('Parent', roiPropertiesPanel, 'Unit','pixel','Position', [25 150 145 110]);
-            %% Add Rectangle Roi Button
-            tb_newRoi(1) = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [10,125,32,22],...
-                'CData', roiRectBt,'Callback',{@getNewRoi,1,'one'}, ...
-                'ToolTipString', ' Add rectangular ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'') ',...
-                'Tag',  'Add rectangular ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'')');
-            %Add Ellipse Roi Button
-            tb_newRoi(2) = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [49,125,32,22],...
-                'CData', roiEllipseBt,'Callback',{@getNewRoi,2,'one'},...
-                'ToolTipString', ' Add ellipsoid ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'')',...
-                'Tag', 'Add ellipsoid ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'')');
-            %Add Poly Roi Button
-            tb_newRoi(3) = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [88,125,32,22],...
-                'CData', roiPolygonBt,'Callback',{@getNewRoi,3,'one'},...
-                'ToolTipString', 'Add polygonal/free hand ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'') ',...
-                'Tag', 'Add polygonal/free hand ROI. Draw straight lines using short clicks and free hand selections by keeping the mouse button pressed. End selection by right or double click. Left click for single ROI, right click for multiple selections');
-            
-            %Shift Roi Button
-            tbRoiShift = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [10,100,32,22], 'Enable', 'off',...
-                'CData', roiShiftBt,'Callback',@shiftRoi,...
-                'ToolTipString', ' Move selected Roi with mouse or keyboard. Use control, shift or alt to move by 5, 10 or 20 px, respectively. ',...
-                'Tag', 'Move selected ROI(s) with mouse or keyboard. Use control, shift or alt to move by 5, 10 or 20 px, respectively.  Note that this is a toggle button.',...
-                'Value',0);
-            %Rotate Roi Button
-            tbRoiRotate = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [49,100,32,22], 'Enable', 'off',...
-                'CData', roiRotateBt,'Callback',@rotateRoi,'ToolTipString', ' Rotate selected Roi ',...
-                'Tag', 'Rotate selected ROI(s).  Note that this is a toggle button.');
-            %Scale Roi Button
-            tbRoiScale = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [88,100,32,22], 'Enable', 'off',...
-                'CData', roiScaleBt,'Callback',@scaleRoi,'ToolTipString', ' Scale selected Roi ','Tag', 'Scale the selected ROI(s). Note that this is a toggle button.');
-            
-            %Replace Roi
-            roiBtReplace = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [10,75,32,22],...
-                'String', 'Replace','Tag', 'Replace the selected ROI. The position in the list and the name will be preserved. Note that this is a toggle button.',...
-                'FontSize', 6, 'Enable', 'off','ToolTipString','Replace selected ROI by new selection');
-            
-            %Rename Roi Button
-            roiBtRename = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [49,75,32,22],...
-                'String', 'ROI upd.','Callback', @updateRoiSettings,'FontSize', 6, 'Enable', 'off','UserData',0,...
-                'ToolTipString','Update settings for selected ROI','Tag','Update settings for selected ROI');
-            
-            %Show / hide Roi names button
-            roiBtShowNames = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [88,75,32,22],...
-                'String', 'ShowNames','Callback', @showRoiNames,'ToolTipString', ' Show or hide Roi names in figure windows ',...
-                'Tag', 'Show or hide the ROI names in the figure windows.','FontSize', 6, 'Value', 1);
-            
-            %Delete Roi Button
-            bt_deleteRoi = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [10,50,32,22],...
-                'CData',roiDeleteBt,'Callback', @deleteRoi,'ToolTipString', 'Delete selected ROI(s).','Tag', 'Delete the selected ROI(s).', 'Enable', 'off');
-            %Export Roi Button
-            bt_roiExport = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [49,50,32,22],...
-                'CData', roiExportBt,'Callback', @exportRois,'Enable','on','ToolTipString', ' Export selected Roi(s) ',...
-                'Tag', 'Export the selected ROI(s) to the Matlab workspace or to a mat-file.', 'Enable', 'off');
-            %Import Roi Button
-            uicontrol(roiWin, 'Style', 'Pushbutton','Position', [88,50,32,22],...
-                'CData', roiImportBt,'Callback', @importRois,'Enable','on','ToolTipString', ' Import Rois ',...
-                'Tag', 'Import ROIs.');
-            %Copy Roi Button
-            bt_copyRoi = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [10,24,32,22],...
-                'CData', copyRoiBt,'Callback', @copyRoi,'Enable','on','ToolTipString', ' Copy Roi ',...
-                'Tag', 'Copy ROI.', 'Enable','off');
-            if nDim>2
-                %Popup for Dimension for roi data export
-                n = dimNames;
-                n(xySel) = [];
-                roiPopDataExport = uicontrol(roiWin, 'Style', 'Popup','Position', [49,24,32  ,22],...
-                    'Enable','on','String',n,...
-                    'Tag', 'Select dimension for ROI data export.','Fontsize',8);
-                %Export Roi Data Button
-                bt_exportRoiData = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [88,25,32,22],...
-                    'CData', roiExportDataBt,'Callback', @exportRoiData,'Enable','on','ToolTipString', ' Export Roi data along specified dimension ',...
-                    'Tag', 'Export ROI data along specified dimension into the workspace.', 'Enable', 'off');
+            %% ROI Histogram
+            roiHistAxes  = axes('Parent', roiPropertiesPanel, 'Unit','pixel','OuterPosition', [0,0,190,150],'FontSize',7);
+            if withAlpha
+              roiHistAxesIm = imagesc(roiHistAxes,ones(50,50));
+              colormap(roiHistAxes,colorMap(256, 2, 1))
+              axis(roiHistAxes,'tight','xy')
+              set(roiHistAxes,'UserData','log')
+              if ~isempty(colorBarLabelString), ylabel(roiHistAxes,colorBarLabelString{1},'FontSize',9); else, ylabel(roiHistAxes,'Value','FontSize',9); end
+              if ~isempty(colorBarLabelString) && length(colorBarLabelString)>1; xlabel(roiHistAxes,colorBarLabelString{2},'FontSize',9); else, xlabel(roiHistAxes,'AlphaValue','FontSize',9); end
+            else
+              roiHistAxesLine = plot(roiHistAxes,1:49,ones(1,49));
+              axis(roiHistAxes,'tight')
+              ylabel(roiHistAxes,'Frequency','FontSize',9);
+              if ~isempty(colorBarLabelString), xlabel(roiHistAxes,colorBarLabelString{1},'FontSize',9); else, xlabel(roiHistAxes,'Value','FontSize',9); end
             end
-            jump2ROIPos_cb = uicontrol(roiWin, 'Style', 'checkbox','Position', [10,2,130  ,22],...
-                    'Callback', @listboxCallback,'Value',customConfig.jump2ROIPos,'String','Jump to ROI sel. pos.',...
-                    'Tag', 'Jump to position in data set at which ROI was defined.');
-            showROIcenter_cb = uicontrol(roiWin, 'Style', 'checkbox','Position', [150,2,130  ,22],...
-                    'Callback', @updateCenterOfGravity,'Value',customConfig.showROIcenter,...
-                    'String','Show ROI center', 'Tag', 'Show ROI center.'); % 
-            %             %Roi Calculator
-            %              uicontrol(roiWin, 'Style', 'Text', 'Position', [90 28 110 15], ...
-            %                     'String','ROI Calculator','FontWeight', 'bold',...
-            %                     'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'center');
-            %             roiCalc1 = uicontrol(roiWin, 'Style', 'Popup','Position', [10,10,71  ,15],'String',{'Roi1';'Roi2';'Roi3'});
-            %             roiCalcOp = uicontrol(roiWin, 'Style', 'Popup','Position', [88,10,30,15],'String',{'+';'-';'.*';'./'});
-            %             roiCalc2 = uicontrol(roiWin, 'Style', 'Popup','Position', [130,10,71  ,15],'String',{'Roi1';'Roi2';'Roi3'});
-            %             uicontrol(roiWin, 'Style', 'Text', 'Position', [201 6 8 15], ...
-            %                 'String','=','FontWeight', 'bold',...
-            %                 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'center');
-            %             roiCalcRes = uicontrol(roiWin, 'Style', 'edit','Position', [213,4,60,20],'String','Roi1 + Roi2');
-            %             %Add calculated term to list of Rois
-            %             roiCalcAdd = uicontrol(roiWin, 'Style', 'PushButton','Position', [280,4,30,20],'String','Add');
-            %% Fill Roi Axes with current image
+            %roiFrame = uicontrol(roiWin,'Style','Frame',  'Position', [160,150,150,150],'Visible','off');
+            %% Axes for display of Roi
+            roiAxes  = axes('Parent', roiPropertiesPanel, 'Unit','pixel','Position', [25 150 145 110]);
             set(roiWin, 'HandleVisibility', 'on','ResizeFcn', @resizeRoiWin,'WindowButtonDownFcn',@buttonDownRoiGui, 'WindowbuttonMotionFcn',@mouseMotion);
             if customDimScale
                 roiImage = imagesc(dimScale(xySel(2),:),dimScale(xySel(1),:),currIm{1});
@@ -10289,13 +10202,108 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             end
             axis image;
             set(roiAxes,'FontSize',8,'Color','k');
-            roiLine.roi = line(dimScale(xySel(2),1),dimScale(xySel(1),1),'Parent', roiAxes,'Color','w');
-            set(roiWin, 'HandleVisibility', 'off');
+            roiLine.roi = line(dimScale(xySel(2),1),dimScale(xySel(1),1),'Parent', roiAxes,'Color',roiCol,'LineWidth',roiLineWidth);
+            %% Add Rectangle Roi Button
+            tb_newRoi(1) = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [10,roiWinPos(4)-205,32,22],...
+                'CData', roiRectBt,'Callback',{@getNewRoi,1,'one'}, 'BackgroundColor',guiBGCol, 'UserData',0,...
+                'ToolTipString', ' Add rectangular ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'') ',...
+                'Tag',  'Add rectangular ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'')');
+            %Add Ellipse Roi Button
+            tb_newRoi(2) = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [49,roiWinPos(4)-205,32,22],...
+                'CData', roiEllipseBt,'Callback',{@getNewRoi,2,'one'},'BackgroundColor',guiBGCol, 'UserData',0, ...
+                'ToolTipString', ' Add ellipsoid ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'')',...
+                'Tag', 'Add ellipsoid ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'')');
+            %Add Poly Roi Button
+            tb_newRoi(3) = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [88,roiWinPos(4)-205,32,22],...
+                'CData', roiPolygonBt,'Callback',{@getNewRoi,3,'one'},'BackgroundColor',guiBGCol, 'UserData',0, ...
+                'ToolTipString', 'Add polygonal/free hand ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'') ',...
+                'Tag', 'Add polygonal/free hand ROI. Draw straight lines using short clicks and free hand selections by keeping the mouse button pressed. End selection by right or double click. Left click for single ROI, right click for multiple selections');
+            
+            %Shift Roi Button
+            tbRoiShift = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [10,roiWinPos(4)-230,32,22], 'Enable', 'off',...
+                'CData', roiShiftBt,'Callback',@shiftRoi,'BackgroundColor',guiBGCol, ...
+                'ToolTipString', ' Move selected Roi with mouse or keyboard. Use control, shift or alt to move by 5, 10 or 20 px, respectively. ',...
+                'Tag', 'Move selected ROI(s) with mouse or keyboard. Use control, shift or alt to move by 5, 10 or 20 px, respectively.  Note that this is a toggle button.',...
+                'Value',0);
+            %Rotate Roi Button
+            tbRoiRotate = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [49,roiWinPos(4)-230,32,22], 'Enable', 'off',...
+                'CData', roiRotateBt,'Callback',@rotateRoi,'ToolTipString', ' Rotate selected Roi ',...
+                'Tag', 'Rotate selected ROI(s).  Note that this is a toggle button.');
+            %Scale Roi Button
+            tbRoiScale = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [88,roiWinPos(4)-230,32,22], 'Enable', 'off',...
+                'CData', roiScaleBt,'Callback',@scaleRoi,'ToolTipString', ' Scale selected Roi ','Tag', 'Scale the selected ROI(s). Note that this is a toggle button.');
+            %Replace Roi
+            tbRoiReplace = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [10,roiWinPos(4)-255,32,22],...
+                'String', 'Replace','Callback', @togRoiReplace,'Tag', 'Replace the selected ROI. The position in the list and the name will be preserved. Note that this is a toggle button.',...
+                'FontSize', 6, 'Enable', 'off','ToolTipString','Replace selected ROI by new selection');
+            
+            %Rename Roi Button
+            tbRoiRename = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [49,roiWinPos(4)-255,32,22],...
+                'String', 'ROI upd.','Callback', @updateRoiSettings,'FontSize', 6, 'Enable', 'off','UserData',0,...
+                'ToolTipString','Update settings for selected ROI','Tag','Update settings for selected ROI');
+            
+            %Show / hide Roi names button
+            tbRoiShowNames = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [88,roiWinPos(4)-255,32,22],...
+                'String', 'ShowNames','Callback', @showRoiNames,'ToolTipString', ' Show or hide Roi names in figure windows ',...
+                'Tag', 'Show or hide the ROI names in the figure windows.','FontSize', 6, 'Value', 1, 'BackgroundColor',[168 198 247]/255);
+            
+            %Delete Roi Button
+            bt_deleteRoi = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [10,roiWinPos(4)-280,32,22],...
+                'CData',roiDeleteBt,'Callback', @deleteRoi,'ToolTipString', 'Delete selected ROI(s).','Tag', 'Delete the selected ROI(s).', 'Enable', 'off');
+            %Export Roi Button
+            bt_roiExport = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [49,roiWinPos(4)-280,32,22],...
+                'CData', roiExportBt,'Callback', @exportRois,'Enable','on','ToolTipString', ' Export selected Roi(s) ',...
+                'Tag', 'Export the selected ROI(s) to the Matlab workspace or to a mat-file.', 'Enable', 'off');
+            %Import Roi Button
+            uicontrol(roiWin, 'Style', 'Pushbutton','Position', [88,roiWinPos(4)-280,32,22],...
+                'CData', roiImportBt,'Callback', @importRois,'Enable','on','ToolTipString', ' Import Rois ',...
+                'Tag', 'Import ROIs.');
+            %Copy Roi Button
+            bt_copyRoi = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [10,roiWinPos(4)-305,32,22],...
+                'CData', copyRoiBt,'Callback', @copyRoi,'Enable','on','ToolTipString', ' Copy Roi ',...
+                'Tag', 'Copy ROI.', 'Enable','off');
+            if nDim>2
+                %Popup for Dimension for roi data export
+                n = dimNames;
+                n(xySel) = [];
+                roiPopDataExport = uicontrol(roiWin, 'Style', 'Popup','Position', [49,roiWinPos(4)-305,32  ,22],...
+                    'Enable','on','String',n,...
+                    'Tag', 'Select dimension for ROI data export.','Fontsize',8);
+                %Export Roi Data Button
+                bt_exportRoiData = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [88,roiWinPos(4)-305,32,22],...
+                    'CData', roiExportDataBt,'Callback', @exportRoiData,'Enable','on','ToolTipString', ' Export Roi data along specified dimension ',...
+                    'Tag', 'Export ROI data along specified dimension into the workspace.', 'Enable', 'off');
+            end
+            %% extra switches
+            jump2ROIPos_cb = uicontrol(roiWin, 'Style', 'checkbox','Position', [10,roiWinPos(4)-328,90  ,22],...
+              'Callback', @listboxCallback,'Value',customConfig.jump2ROIPos,'String','Jump to ROI',...
+              'Tooltip', 'Jump to position in data set at which ROI was defined.');
+            showROIcenter_cb = uicontrol(roiWin, 'Style', 'checkbox','Position', [110,roiWinPos(4)-328,90  ,22],...
+              'Callback', @updateCenterOfGravity,'Value',customConfig.showROIcenter,...
+              'String','Show center', 'Tooltip', 'Show ROI center.'); 
+            roiFixHistScale = uicontrol(roiWin, 'Style', 'checkbox','Position', [200,roiWinPos(4)-328,90  ,22],...
+              'Callback', @updateRoiProperties,'Value',0,...
+              'String','Global Hist.', 'Tooltip', 'Use global histogram scaling'); 
+            roiTxtLineWidth = uicontrol(roiWin, 'Style', 'Text', 'Position', [10 roiWinPos(4)-340 55 12], ...
+                'String','LineWidth', 'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'left', 'Tag', sprintf('Set ROI LineWidth.\ndefault 1'));
+            roiEdtLineWidth = uicontrol(roiWin, 'Style', 'Edit', 'Units', 'Pixel', 'Position', [62 roiWinPos(4)-340 30 12], ...
+              'String', num2Str(roiLineWidth,3), 'Callback', {@updateRoiStyle,'etxt'},...
+              'HorizontalAlignment', 'right');%,'Tooltip',ttt1,'Tag',ttt
+            roiTxtLineStyle = uicontrol(roiWin, 'Style', 'Text', 'Position', [110 roiWinPos(4)-340 70 12], ...
+              'String','ROI LineStyle', 'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'left');
+            roiPopLineStyle = uicontrol(roiWin, 'Style', 'popupmenu', 'Callback', {@updateRoiStyle,'pop'}, 'Units', 'Pixel', ...
+              'Position', [180 roiWinPos(4)-340 30 15], 'String', {'-','--',':','-.'},'FontSize',7, 'Value',1);%,'Tooltip',ttt1,'Tag',ttt
+
+            %% Fill Roi Axes with current image
+            if ~debugMatVis, set(roiWin, 'HandleVisibility', 'off'); end
+            %% final tuning
             %Set first entry of roi list (so it is not empty - will be
             %replaced by 1 when first Roi is selected)
             roiList(1).number = 0;
             updateColormap;
-            set(roiWin, 'ResizeFcn',[]);adjustGuiSize(roiWin);set(roiWin,'ResizeFcn', @resizeRoiWin);
+            set(roiWin, 'ResizeFcn',[]);
+            adjustGuiSize(roiWin);
+            set(roiWin,'ResizeFcn', @resizeRoiWin);
             updateRoiProperties;
         else
           drawRois;
@@ -10304,41 +10312,44 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             if debugMatVis, debugMatVisFcn(1); end
             adjustGuiSize(roiWin,-1);
             newPos = get(roiWin, 'Position');
-            if any(newPos(3:4) < [180 250])
-                newPos = [newPos(1) newPos(2) 180 250];
+            if any(newPos(3:4) < roiWinPos(3:4))
+                newPos = [newPos(1) newPos(2) roiWinPos(3:4)];
                 set(roiWin, 'Position', newPos);
             end
-            set(roiListbox, 'Position', [10 153 110 newPos(4)-183]);
-            set(txt_roiList, 'Position', [10 newPos(4)-25 110 15]);
-            set(roiPropertiesPanel, 'Position', [130 25 newPos(3)-140 newPos(4)-35]);
-            set(roiName, 'Position', [5 newPos(4)-90 newPos(3)-150 30]);
-            set(roiAxes, 'Position', [25 80 newPos(3)-175 newPos(4)-160]);
+            set(roiTxtListbox, 'Position', [10 newPos(4)-15 110 15]);
+            set(roiListbox, 'Position', [10 roiWinPos(4)-177 110 newPos(4)-193]);
+            set(roiName, 'Position', [155 newPos(4)-20 newPos(3)-185 20]);
+            set(roiPropertiesPanel, 'Position', [130 roiWinPos(4)-305 newPos(3)-135 newPos(4)-65]);
+            set(roiAxes,     'OuterPosition', [0 (newPos(4)-65)/2  newPos(3)-130 (newPos(4)-65)/2]);
+            set(roiHistAxes, 'OuterPosition', [0 0                 newPos(3)-130 (newPos(4)-65)/2]);
             adjustGuiSize(roiWin);
             if debugMatVis, debugMatVisFcn(2); end
         end
         function buttonDownRoiGui(varargin)
             if debugMatVis, debugMatVisFcn(1); end
+            p1 = round(get(roiWin,'CurrentPoint'));
+            posRoiHistAxes  = get(roiHistAxes,  'Position') + get(roiPropertiesPanel,    'Position') .* [1 1 0 0]; % set aspect value
+            btPosNewRoiRect = get(tb_newRoi(1), 'Position'); 
             if strcmp(get(roiWin,'SelectionType'),'alt')
-                p1 = round(get(myGcf,'CurrentPoint'));
                 %% Check for mouse position to enable fake 'button right-clicks'
                 for ii=1:3
                     btPosNewRoi(:,ii) = get(tb_newRoi(ii), 'Position'); %#ok
-                    if (p1(1) > btPosNewRoi(1,ii) && ...
-                            p1(1) < btPosNewRoi(1,ii) + btPosNewRoi(3,ii) && ...
-                            p1(2) > btPosNewRoi(2,ii) && ...
-                            p1(2) < btPosNewRoi(2,ii) + btPosNewRoi(4,ii))
-                        if get(tb_newRoi(ii), 'Value')
-                            set(tb_newRoi(ii), 'Value', 0);
+                    if pointInArea(p1,btPosNewRoi(:,ii))
+                        if get(tb_newRoi(ii), 'UserData')
+                            set(tb_newRoi, 'Value', 0, 'UserData',0,'BackgroundColor',guiBGCol);
                         else
-                            set(tb_newRoi, 'Value', 0);
-                            set(tb_newRoi(ii), 'Value', 1);
+                            set([tbRoiShift tbRoiRotate tbRoiScale],    'Value', 0, 'BackgroundColor',guiBGCol);
+                            set(tb_newRoi,     'Value', 0, 'UserData',0);
+                            set(tb_newRoi(ii), 'Value', 1, 'UserData',1);
                             getNewRoi(0,0,ii);
+                            set(tb_newRoi(ii), 'BackgroundColor',[168 247 198]/255);
                             if debugMatVis, debugMatVisFcn(2); end
                             return
                         end
                     end
                 end
             elseif strcmp(get(roiWin,'SelectionType'),'extend')
+              if pointInArea(p1,btPosNewRoiRect)
                 set(tempWin, 'HandleVisibility', 'on');
                 if ~isempty(tempWin) && any(get(0,'Children') == tempWin)
                     set(tempWin, 'HandleVisibility', 'on');
@@ -10354,6 +10365,22 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 uicontrol(tempWin, 'Style', 'Edit', 'Position', [40 10 50 15], ...
                     'String',num2str(newRoiSize),'FontWeight', 'bold',...
                     'HorizontalAlignment', 'center', 'Callback', @updateRoiSize);
+              elseif pointInArea(p1,posRoiHistAxes)
+                if withAlpha
+                  if strcmp(get(roiHistAxes,'UserData'),'linear')
+                    set(roiHistAxes,'UserData','log')
+                  else
+                    set(roiHistAxes,'UserData','linear')
+                  end
+                  updateRoiProperties
+                else
+                  if strcmp(get(roiHistAxes,'YScale'),'linear')
+                    set(roiHistAxes,'YScale','log')
+                  else
+                    set(roiHistAxes,'YScale','linear')
+                  end
+                end
+              end
             end
             if debugMatVis, debugMatVisFcn(2); end
         end
@@ -10368,15 +10395,18 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             roi = [];
             % Check if called with left mouse button ("push mode" = single ROI selection)
             if nargin == 4 && strcmp(varargin{4},'one')
+                set(tb_newRoi, 'BackgroundColor',guiBGCol);
                 if ~get(tb_newRoi(varargin{3}), 'Value') %If previously selected button is pressed: unpress and quit
-                    set(tb_newRoi, 'Value', 0);
-                    set([zoomWin imageWin],'WindowButtonMotionFcn',@mouseMotion);
-                    set([zoomWin imageWin],'WindowButtonDownFcn',@buttonDownCallback);
-                    set([zoomWin imageWin],'WindowButtonUpFcn','');
+                    set(tb_newRoi, 'Value',0, 'UserData',0);
+                    set([zoomWin imageWin],'WindowButtonMotionFcn',@mouseMotion,'WindowButtonDownFcn',@buttonDownCallback,'WindowButtonUpFcn','');
                     if debugMatVis, debugMatVisFcn(2); end
                     return
+                else
+                  set([tbRoiShift tbRoiRotate tbRoiScale],  'Value', 0, 'BackgroundColor',guiBGCol);
+                  set(tb_newRoi, 'Value',0, 'UserData',0, 'BackgroundColor',guiBGCol);
+                  set(tb_newRoi(varargin{3}), 'Value',1, 'BackgroundColor',[168 198 247]/255);
                 end
-                set(tb_newRoi, 'Value', 0);
+                %set(tb_newRoi, 'Value',0);
             end
             switch varargin{3}
                 case 1                  %Select Rectangle
@@ -10456,6 +10486,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     end
                 end
                 addNewRoi(roi,nRois,'new');
+                if ~get(tb_newRoi(1), 'UserData')
+                    set(tb_newRoi(1), 'Value',0, 'BackgroundColor',guiBGCol);
+                end
                 if debugMatVis, debugMatVisFcn(2); end
             end
             function selectEllipseRoi(varargin)
@@ -10533,6 +10566,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     delete(tempRect);
                     nRois = nRois + 1;
                     addNewRoi(roi,nRois,'new');
+                    if ~get(tb_newRoi(2), 'UserData')
+                        set(tb_newRoi(2), 'Value',0, 'BackgroundColor',guiBGCol);
+                    end
                     if debugMatVis, debugMatVisFcn(2); end
                 end
                 if debugMatVis, debugMatVisFcn(2); end
@@ -10555,9 +10591,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     %    fprintf('\tp(%f,%f)',p)
                     %end
                     %fprintf('\n')
-                    set(tempLine,'XData',[p(1  ,1),p(1  ,1)],'YData',[p(1  ,2),p(1  ,2)]);
+                    set(tempLine,'XData',[roi(1,1),roi(1,end)],'YData',[roi(2,1),roi(2,end)]);
                     roi(:,end+1) = p(1  ,1:2);
-                    set(roiSelLine,'XData',[roi(1  ,:) roi(1  ,1)],'YData',[roi(2,:) roi(2,1)]);
+                    set(roiSelLine,'XData',roi(1,:),'YData',roi(2,:));
                     if debugMatVis >1, debugMatVisFcn(2); end
                 end
                 function stopFreeDraw(varargin)
@@ -10589,8 +10625,8 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                         %    p = pixelLocation(p);
                         %end
                         set(myGcf, 'HandleVisibility', 'on');
-                        tempLine = line(p(1),p(2),'Color','w');
-                        roiSelLine = line(p(1),p(2),'Color','w');
+                        tempLine = line(p(1),p(2),'LineStyle',':','Color',roiCol,'LineWidth',roiLineWidth);
+                        roiSelLine = line(p(1),p(2),'Color',roiCol,'LineWidth',roiLineWidth);
                         set(myGcf, 'HandleVisibility', 'off');
                     end
                     p = get(myGca, 'CurrentPoint');
@@ -10627,16 +10663,16 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                         end
                     end
                     addNewRoi(roi,nRois,'new');
+                    if ~get(tb_newRoi(3), 'UserData')
+                        set(tb_newRoi(3), 'Value',0, 'BackgroundColor',guiBGCol);
+                    end
                     roi = [];           %Clear old roi position
                 end
                 function updateLine(varargin)
                     if debugMatVis > 1, debugMatVisFcn(1); end
                     p = get(myGca, 'CurrentPoint');
                     p = p(1  ,1:2);
-%                     if customDimScale
-%                         p = pixelLocation(p);
-%                     end
-                    set(tempLine,'XData',[roi(1  ,end),p(1  ,1)],'YData',[roi(2,end),p(1  ,2)]);
+                    set(tempLine,'XData',[roi(1, end), p(1), roi(1, 1)], 'YData',[roi(2, end), p(2), roi(2, 1)]);
                     if debugMatVis > 1, debugMatVisFcn(2); end
                 end
                 if debugMatVis, debugMatVisFcn(2); end
@@ -10671,7 +10707,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         %Add selected Roi to list and create related objects
         % Check if get(roiBtReplace,'Value') == 1 and if so update numberRoi to current
         % selection
-        if get(roiBtReplace,'Value')
+        if get(tbRoiReplace,'Value')
             numberRoi = get(roiListbox, 'Value');
             nRois = nRois - 1;
         end
@@ -10795,41 +10831,34 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             set(tbRoiShift, 'Value', 0);
             if numberRoi == 1
                 roiList(numberRoi).number = 1;
-            elseif ~get(roiBtReplace,'Value')
+            elseif ~get(tbRoiReplace,'Value')
                 roiList(numberRoi).number = max([roiList.number])+1;
             end
             %Remove lines and text if Roi is replaced (instead of newly
             %defined)
-            if get(roiBtReplace,'Value')
-                delete(roiLine.im(:,numberRoi),roiText.im(:,numberRoi),roiLine.zoom(:,numberRoi),roiText.zoom(:,numberRoi));
+            if get(tbRoiReplace,'Value')
+%                delete(roiLine.im(:,numberRoi),roiText.im(:,numberRoi),roiLine.zoom(:,numberRoi),roiText.zoom(:,numberRoi));
             else
                 roiList(numberRoi).name = ['Roi',num2str(roiList(numberRoi).number)];
             end
             %Draw final polygons and numbers in image and zoom
             %windows and delete temporary lines
-            %             set(0, 'CurrentFigure', imageWin(1));
-            %             set(imageWin(1), 'HandleVisibility', 'on');
-            for ii = 1:nMat
-                roiLine.im(ii,numberRoi) = line(roiList(numberRoi).corners(1,:),roiList(numberRoi).corners(2,:),'Color','w','Parent',imAx(ii));
-                roiLine.zoom(ii,numberRoi) = line(roiList(numberRoi).corners(1,:),roiList(numberRoi).corners(2,:),'Color','w','Parent',zoomAx(ii));
-                if customDimScale
-                    roiText.im(ii,numberRoi) = text(max(roiList(numberRoi).corners(1,:))+(dimScale(xySel(2),2)-dimScale(xySel(2),1))*0.01  ,mean(roiList(numberRoi).corners(2,:)),roiList(numberRoi).name,'Color','w','HorizontalAlignment','left','Parent',imAx(ii));
-                    roiText.zoom(ii,numberRoi) = text(max(roiList(numberRoi).corners(1,:))+(dimScale(xySel(2),2)-dimScale(xySel(2),1))*0.01  ,mean(roiList(numberRoi).corners(2,:)),roiList(numberRoi).name,'Color','w','HorizontalAlignment','left','Parent',zoomAx(ii));
-                else
-                    roiText.im(ii,numberRoi) = text(max(roiList(numberRoi).corners(1,:))+dim(xySel(2))*0.01  ,mean(roiList(numberRoi).corners(2,:)),roiList(numberRoi).name,'Color','w','HorizontalAlignment','left','Parent',imAx(ii));
-                    roiText.zoom(ii,numberRoi) = text(max(roiList(numberRoi).corners(1,:))+dim(xySel(2))*0.01  ,mean(roiList(numberRoi).corners(2,:)),roiList(numberRoi).name,'Color','w','HorizontalAlignment','left','Parent',zoomAx(ii));
-                end
-            end
-            %             set(imageWin(1), 'HandleVisibility', 'off');
-            %             set(0, 'CurrentFigure', zoomWin(1));
-            %             set(zoomWin(1), 'HandleVisibility', 'on');
-            
-            %             set(zoomWin(1), 'HandleVisibility', 'off');
+%             for ii = 1:nMat
+%                 roiLine.im(ii,numberRoi) = line(roiList(numberRoi).corners(1,:),roiList(numberRoi).corners(2,:),'Color',roiCol,'LineWidth',roiLineWidth,'Parent',imAx(ii));
+%                 roiLine.zoom(ii,numberRoi) = line(roiList(numberRoi).corners(1,:),roiList(numberRoi).corners(2,:),'Color',roiCol,'LineWidth',roiLineWidth,'Parent',zoomAx(ii));
+%                 if customDimScale
+%                     roiText.im(ii,numberRoi) = text(max(roiList(numberRoi).corners(1,:))+(dimScale(xySel(2),2)-dimScale(xySel(2),1))*0.01  ,mean(roiList(numberRoi).corners(2,:)),roiList(numberRoi).name,'Color',roiCol,'HorizontalAlignment','left','Parent',imAx(ii));
+%                     roiText.zoom(ii,numberRoi) = text(max(roiList(numberRoi).corners(1,:))+(dimScale(xySel(2),2)-dimScale(xySel(2),1))*0.01  ,mean(roiList(numberRoi).corners(2,:)),roiList(numberRoi).name,'Color',roiCol,'HorizontalAlignment','left','Parent',zoomAx(ii));
+%                 else
+%                     roiText.im(ii,numberRoi) = text(max(roiList(numberRoi).corners(1,:))+dim(xySel(2))*0.01  ,mean(roiList(numberRoi).corners(2,:)),roiList(numberRoi).name,'Color',roiCol,'HorizontalAlignment','left','Parent',imAx(ii));
+%                     roiText.zoom(ii,numberRoi) = text(max(roiList(numberRoi).corners(1,:))+dim(xySel(2))*0.01  ,mean(roiList(numberRoi).corners(2,:)),roiList(numberRoi).name,'Color',roiCol,'HorizontalAlignment','left','Parent',zoomAx(ii));
+%                 end
+%             end
             %Hide text if toggle button is off
-            if ~get(roiBtShowNames, 'Value')
+            if ~get(tbRoiShowNames, 'Value') && ~isempty(roiText)
                 set([roiText.im roiText.zoom], 'Visible', 'off');
             end
-            if ~get(roiBtReplace,'Value')
+            if ~get(tbRoiReplace,'Value')
                 %Add to listbox if Roi is new
                 s = get(roiListbox, 'String');
                 s{size(s,1)+1} = [num2str(size(get(roiListbox,'String'),1)+1  ,'%03d'),': ',roiList(numberRoi).name];
@@ -10840,13 +10869,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 end
             end
             drawRois;
-            set([roiBtRename tbRoiShift tbRoiRotate tbRoiScale roiBtReplace bt_roiExport bt_deleteRoi] , 'Enable', 'on');
+            set([tbRoiRename tbRoiShift tbRoiRotate tbRoiScale tbRoiReplace bt_roiExport bt_deleteRoi] , 'Enable', 'on');
             %             if isempty(bt_exportRoiData)
             set(bt_exportRoiData, 'Enable','on')
             set(bt_copyRoi, 'Enable', 'on');
             set(roiName,'Enable','on')
             %             end
-            set(roiBtReplace,'Value',0)
+            set(tbRoiReplace,'Value',0, 'BackgroundColor',guiBGCol)
         else
 %             set(roiText.im(numberRoi),'Position',...
 %                 [max(roiList(numberRoi).corners(1  ,:))+1  ,mean(roiList(numberRoi).corners(2,:))]);
@@ -10898,7 +10927,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             %updateRoiSelection(min(roiSel(1),nRois));
         else
             set(roiListbox, 'Value',0, 'String', '');
-            set([roiBtRename tbRoiShift tbRoiRotate tbRoiScale roiBtReplace bt_roiExport bt_deleteRoi bt_exportRoiData] , 'Enable', 'off');
+            set([tbRoiRename tbRoiShift tbRoiRotate tbRoiScale tbRoiReplace bt_roiExport bt_deleteRoi bt_exportRoiData] , 'Enable', 'off');
             set(roiCenterIndicator(:),'Visible','off');
             if ~isempty(bt_exportRoiData)
                 set(bt_exportRoiData, 'Enable','off')
@@ -10963,20 +10992,22 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
     end
     function updateRoiSettings(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        if nargin == 3 || ~get(roiBtRename,'Value')
+        if nargin == 3 || ~get(tbRoiRename,'Value')
           set(tempRoiSetWin, 'Visible','off');
-          set(roiBtRename,'Value',0)
+          set(tbRoiRename,'Value',0, 'BackgroundColor',guiBGCol)
           if debugMatVis, debugMatVisFcn(2); end
           return
+        else
+          set(tbRoiRename, 'BackgroundColor',[168 198 247]/255)
         end
         currRoi = get(roiListbox, 'Value');
         if isscalar(currRoi) && isempty(roiList(currRoi).settings)
           roiList(currRoi).settings.position = currPos;
           roiList(currRoi).settings.zoomVal = zoomVal;
         end
-        ROIpos = roiList(currRoi).settings.position;
+        ROIpos = roiList(currRoi(1)).settings.position;
         nROIDim = length(ROIpos);
-        ROIZoomVal = roiList(currRoi).settings.zoomVal;
+        ROIZoomVal = roiList(currRoi(1)).settings.zoomVal;
         %ROIZoomVal(end+1:nROIDim,2) = dim(size(ROIZoomVal,1)+1:nROIDim);
         %ROIZoomVal(end+1:nROIDim,1) = 1; 
         for np = 1:min(nROIDim,nDim)
@@ -10986,13 +11017,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         end
         if isempty(tempRoiSetWin)
           gp = get(gui,'Position');
-          tempRoiSetWin = figure('Position', [gp(1), max(50,gp(2)-444-25*nROIDim), 320, 25*nROIDim + 50],...
+          tempRoiSetWin = figure('Position', [gp(1), max(50,gp(2)-464-25*nROIDim), 320, 25*nROIDim + 50],...
             'MenuBar', 'none','NumberTitle', 'off', 'Name', 'ROI Properties!', 'CloseRequestFcn', {@updateRoiSettings,0});%
           
           uicontrol(tempRoiSetWin,'Style', 'Text', 'Position', [12 25*nROIDim+26 55 18],...
             'String','ROI name:');
           etxt_newRoiName = uicontrol(tempRoiSetWin,'Style', 'Edit', 'Position', [80 25*nROIDim+25 150 20],...
-            'String',roiList(currRoi).name,'HorizontalAlignment','left');
+            'String',roiList(currRoi(1)).name,'HorizontalAlignment','left');
           uicontrol(tempRoiSetWin,'Style', 'Text', 'Position', [12 35 290 15*nROIDim+15],...
             'String','         Position        Zoom Settings','HorizontalAlignment','left','FontName','Courier');%
           for np = 1:min(nROIDim,nDim)
@@ -11005,7 +11036,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           btn2 = uicontrol(tempRoiSetWin,'Style', 'pushbutton', 'Position', [200 12 100 20],...
             'String','Update','Callback', {@getNewRoiProps,1});%ROIStr
         else
-          set(etxt_newRoiName,'String',roiList(currRoi).name)
+          set(etxt_newRoiName,'String',roiList(currRoi(1)).name)
           for np = 1:min(nROIDim,nDim)
             if projMethod  && np == find(projDim == sort([xySel projDim])); myCol = [.5 .5 .5]; else; myCol = [0 0 0]; end
             set(txt_RoiPropWinTxt(np),'String',ROIStr{np},'ForegroundColor',myCol);%
@@ -11055,15 +11086,17 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         end
 
         if length(numberRoi) > 1
-            set(roiBtReplace, 'Enable','off')
+            set(tbRoiReplace, 'Enable','off')
+            if ~isempty(tempRoiSetWin); set(tempRoiSetWin, 'Visible','off'); end
         else
-            set(roiBtReplace, 'Enable','on')
+            set(tbRoiReplace, 'Enable','on')
+            if ~isempty(tempRoiSetWin); set(tempRoiSetWin, 'Visible','on'); end
         end
         if isempty(numberRoi)
-            set(roiLine.im, 'LineWidth',1,'Color','w');
-            set(roiLine.zoom, 'LineWidth',1,'Color','w');
-            set(roiText.im, 'FontWeight', 'normal','Color','w');
-            set(roiText.zoom, 'FontWeight', 'normal','Color','w');
+            set(roiLine.im,   'Color',roiCol,'LineWidth',roiLineWidth,'LineStyle',roiLineStyle);
+            set(roiLine.zoom, 'Color',roiCol,'LineWidth',roiLineWidth,'LineStyle',roiLineStyle);
+            set(roiText.im, 'FontWeight', 'normal','Color',roiCol);
+            set(roiText.zoom, 'FontWeight', 'normal','Color',roiCol);
             if debugMatVis, debugMatVisFcn(2); end
             return
         end
@@ -11081,12 +11114,12 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         %Update Roi lines and numbers in image/zoom windows
         set(roiLine.roi, 'XData', roiList(numberRoi(1)).corners(1  ,:),...
             'YData', roiList(numberRoi(1)).corners(2,:));
-        set(roiLine.im, 'LineWidth',.5,'Color','w');              %'Color', 'b');
-        set(roiLine.zoom, 'LineWidth',.5,'Color','w');            %'Color', 'b');
-        set(roiLine.im(:,numberRoi), 'LineWidth',1);   %'Color','r');
-        set(roiLine.zoom(:,numberRoi), 'LineWidth',1); %'Color','r');
-        set(roiText.im, 'FontWeight', 'normal','Color','w');     %'Color', 'b');
-        set(roiText.zoom, 'FontWeight', 'normal','Color','w');   %'Color', 'b');
+        set(roiLine.im,   'Color',roiCol,'LineWidth',roiLineWidth/2,'LineStyle',roiLineStyle);            %'Color', 'b');
+        set(roiLine.zoom, 'Color',roiCol,'LineWidth',roiLineWidth/2,'LineStyle',roiLineStyle);            %'Color', 'b');
+        set(roiLine.im(:,numberRoi), 'LineWidth',roiLineWidth);   %'Color','r');
+        set(roiLine.zoom(:,numberRoi), 'LineWidth',roiLineWidth); %'Color','r');
+        set(roiText.im, 'FontWeight', 'normal','Color',roiCol);     %'Color', 'b');
+        set(roiText.zoom, 'FontWeight', 'normal','Color',roiCol);   %'Color', 'b');
         set(roiText.im(:,numberRoi), 'FontWeight', 'bold'); %'Color','r');
         set(roiText.zoom(:,numberRoi),'FontWeight', 'bold'); % 'Color','r');
         updateCenterOfGravity
@@ -11096,9 +11129,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             set([roiLine.im(:,numberRoi(ii)) roiLine.zoom(:,numberRoi(ii)) roiText.zoom(:,numberRoi(ii)) roiText.im(:,numberRoi(ii))], 'Color', colorcodePlots(ii,:));
         end
         if length(numberRoi) > 1
-            set(roiBtRename, 'Enable', 'off');
+            set(tbRoiRename, 'Enable', 'off');
         else
-            set(roiBtRename, 'Enable', 'on');
+            set(tbRoiRename, 'Enable', 'on');
         end
         % Set ROI properties that are indepedent of selected dimension
         set(roiSize, 'String', num2str(sum(roiList(numberRoi(1)).mask(:))));
@@ -11124,8 +11157,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
-
-    function updateRoiProperties(plotUpdate)
+    function updateRoiProperties(varargin)% updateRoiProperties(plotUpdate)
         if debugMatVis, debugMatVisFcn(1); end
         numberRoi = get(roiListbox, 'Value');
         if numberRoi % Check in case function is called before a ROI has been created
@@ -11136,16 +11168,32 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             end
             %Update Roi properties
             currRoi = currImVal{1}(roiList(numberRoi(1)).mask);
-            if withAlpha
-              currRoiAlpha = currAlphaMapVal{1}(roiList(numberRoi(1)).mask);
+            for n=2:length(numberRoi) 
+              tmpVal = currImVal{1}(roiList(numberRoi(n)).mask); 
+              currRoi((end+1):(end+length(tmpVal))) = tmpVal;
             end
             if withAlpha
-              y = linspace(min(currRoi(:)),max(currRoi(:)),50);
-              x = linspace(min(currRoiAlpha(:)),max(currRoiAlpha(:)),50);
+              currRoiAlpha = currAlphaMapVal{1}(roiList(numberRoi(1)).mask);
+              for n=2:length(numberRoi)
+                tmpVal = currAlphaMapVal{1}(roiList(numberRoi(n)).mask);
+                currRoiAlpha((end+1):(end+length(tmpVal))) = tmpVal;
+              end
+            end
+            if withAlpha
+              if get(roiFixHistScale,'Value')
+                y = linspace(sldLimVal(1,1),sldLimVal(1,2),50);
+                x = linspace(sldLimVal(2,1),sldLimVal(2,2),50);
+              else
+                y = linspace(min(currRoi(:)),max(currRoi(:)),50);
+                x = linspace(min(currRoiAlpha(:)),max(currRoiAlpha(:)),50);
+              end
               hh = hist2wf([currRoi(:),currRoiAlpha(:)], y, x);
               x = x(2:end)-diff(x(1:2))/2;
               y = y(2:end)-diff(y(1:2))/2;
-              hhl = hh; hhl(hhl==0)=.9; hhl = log10(hhl);
+              hhl = hh;
+              if strcmp(get(roiHistAxes,'UserData'),'log')
+                hhl(hhl==0)=.9; hhl = log10(hhl);
+              end
               set(roiHistAxesIm,'XData',x,'YData',y,'CData',hhl)
               pfV = prctile(currRoi(:),[1 25 50 75 99]);
               pfAV = prctile(currRoiAlpha(:),[1 25 50 75 99]);
@@ -11163,42 +11211,47 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 updateRoiHistAxesLinePerc();
               end
             else
-              x = linspace(double(min(currRoi(:))),double(max(currRoi(:))),50);
+              if get(roiFixHistScale,'Value')
+                x = linspace(sldLimVal(1,1),sldLimVal(1,2),50);
+              else
+                x = linspace(double(min(currRoi(:))),double(max(currRoi(:))),50);
+              end
               hh = histcounts(currRoi(:),x);
               x = x(2:end)-diff(x(1:2))/2;
               set(roiHistAxesLine,'XData',x,'YData',hh)
               roiToolTipVal =  prctile(currRoi(:),[1 25 50 75 99]);
               roiToolTipCell = cellfun(@(x) num2Str(x,4),num2cell(roiToolTipVal),'UniformOutput',false);
               roiToolTip = sprintf('Percentile\n\t\t\t\t\tData\n1%% \t\t %s\n25%% \t\t %s\n\n50%% \t\t %s\n\n75%% \t\t %s\n99%% \t\t %s',roiToolTipCell{:} );
-              
-              %                 set(roiMin, 'String', num2str(min(currRoi(:)),'%6.2f'));   % Used to be nanmin
-              %                 set(roiMax, 'String', num2str(max(currRoi(:)),'%6.2f'));   % Used to be nanmax
-              %                 set(roiMean, 'String', num2str(mean(currRoi(:), 'omitnan'),'%6.2f')); % Used to be nanmean
             end
             set(roiName,'Tooltip',roiToolTip)
             if get(roiName,'Value')
               set(roiPropWinTab,'Data',roiToolTipCell'); 
               updateRoiHistAxesLinePerc
             end
-            if plotUpdate
-                if isempty(subPlotHandles)
-                    drawPlots;
-                else
-                    updatePlots;
-                end
-            end
-            if get(roiBtRename,'Value'); updateRoiSettings; end
+            if get(tbRoiRename,'Value'); updateRoiSettings; end
         else
           if withAlpha
-            y = linspace(min(currIm{1}(:)),max(currIm{1}(:)),50);
-            x = linspace(min(currAlphaMap{1}(:)),max(currAlphaMap{1}(:)),50);
+            if get(roiFixHistScale,'Value')
+              y = linspace(sldLimVal(1,1),sldLimVal(1,2),50);
+              x = linspace(sldLimVal(2,1),sldLimVal(2,2),50);
+            else
+              y = linspace(min(currIm{1}(:)),max(currIm{1}(:)),50);
+              x = linspace(min(currAlphaMap{1}(:)),max(currAlphaMap{1}(:)),50);
+            end
             hh = hist2wf([currIm{1}(:),currAlphaMap{1}(:)], y, x);
             x = x(2:end)-diff(x(1:2))/2;
             y = y(2:end)-diff(y(1:2))/2;
-            hhl = hh; hhl(hhl==0)=.9; hhl = log10(hhl);
+            hhl = hh;
+            if strcmp(get(roiHistAxes,'UserData'),'log')
+               hhl(hhl==0)=.9; hhl = log10(hhl);
+            end
             set(roiHistAxesIm,'XData',x,'YData',y,'CData',hhl)
           else
-            x = linspace(double(min(currIm{1}(:))),double(max(currIm{1}(:))),50);
+            if get(roiFixHistScale,'Value')
+              x = linspace(sldLimVal(1,1),sldLimVal(1,2),50);
+            else
+              x = linspace(double(min(currIm{1}(:))),double(max(currIm{1}(:))),50);
+            end
             hh = histcounts(currIm{1}(:),x);
             x = x(2:end)-diff(x(1:2))/2;
             set(roiHistAxesLine,'XData',x,'YData',hh)
@@ -11229,9 +11282,6 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         if debugMatVis, debugMatVisFcn(1); end
         numberRoi = get(roiListbox, 'Value');
         if numel(numberRoi) == 1 && get(jump2ROIPos_cb,'Value') && isfield(roiList, 'settings') && ~isempty(roiList(numberRoi).settings)
-%           if isempty(roiList(66).settings)
-%             roiList(numberRoi).settings.position = ones(1,nDim);
-%           end
           ROIPos = roiList(numberRoi).settings.position;
           matchDims = min([length(currPos) length(ROIPos)]);
           matchDims = find([ROIPos(1:matchDims)>dim(1:matchDims) 1],1,'first')-1; % checks if saved ROIpos is larger than data dimension and reduces MATCHDIMS, in case
@@ -11250,17 +11300,28 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         drawPlots;
         if debugMatVis, debugMatVisFcn(2); end
     end
+    function updateRoiStyle(varargin)
+      if debugMatVis, debugMatVisFcn(1); end
+      if nargin && strcmp(varargin{3},'etxt')
+        roiLineWidth = str2double(get(roiEdtLineWidth, 'String'));
+      elseif nargin && strcmp(varargin{3},'pop')
+        roiLineStyle = get(roiPopLineStyle, 'String');
+        roiLineStyle = roiLineStyle{get(roiPopLineStyle, 'Value')};
+      end
+      drawRois
+      if debugMatVis, debugMatVisFcn(2); end
+    end
     function drawRois
         if debugMatVis, debugMatVisFcn(1); end
-        try
-            delete(roiLine.zoom)
-            delete(roiText.zoom)
-        catch    
+        if isfield(roiLine,'zoom')
+          try  delete([roiLine.zoom roiText.zoom])
+          catch ME; if debugMatVis, fprintf(2,'%s\n%s',ME.identifier, ME.message); disp(getReport(ME)); end
+          end
         end
-        try
-            delete(roiLine.im)
-            delete(roiText.im)
-        catch    
+        if isfield(roiLine,'zoom')
+          try delete([roiLine.im roiText.im])
+          catch ME; if debugMatVis, fprintf(2,'%s\n%s',ME.identifier, ME.message); disp(getReport(ME)); end
+          end
         end
         roiLine.zoom = [];
         roiText.zoom = [];
@@ -11268,12 +11329,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         roiText.im = [];
         for ii=1:nRois
             for jj=1:nMat
-                roiLine.im(jj,ii) = line(roiList(ii).corners(1  ,:),roiList(ii).corners(2,:),'Color','w','Parent',imAx(jj));
-                roiText.im(jj,ii) = text(max(roiList(ii).corners(1  ,:))+1  ,mean(roiList(ii).corners(2,:)),roiList(ii).name,'Color','w','HorizontalAlignment','left','Parent',imAx(jj));
-                roiLine.zoom(jj,ii) = line(roiList(ii).corners(1  ,:),roiList(ii).corners(2,:),'Color','w','Parent',zoomAx(jj));
-                roiText.zoom(jj,ii) = text(max(roiList(ii).corners(1  ,:))+1  ,mean(roiList(ii).corners(2,:)),roiList(ii).name,'Color','w','HorizontalAlignment','left','Parent',zoomAx(jj));
+                roiLine.im(jj,ii)   = line(roiList(ii).corners(1  ,:),roiList(ii).corners(2,:),'Color',roiCol,'LineWidth',roiLineWidth,'LineStyle',roiLineStyle,'Parent',imAx(jj));
+                roiText.im(jj,ii)   = text(max(roiList(ii).corners(1  ,:))+1  ,mean(roiList(ii).corners(2,:)),roiList(ii).name,'Color',roiCol,'HorizontalAlignment','left','Parent',imAx(jj));
+                roiLine.zoom(jj,ii) = line(roiList(ii).corners(1  ,:),roiList(ii).corners(2,:),'Color',roiCol,'LineWidth',roiLineWidth,'LineStyle',roiLineStyle,'Parent',zoomAx(jj));
+                roiText.zoom(jj,ii) = text(max(roiList(ii).corners(1  ,:))+1  ,mean(roiList(ii).corners(2,:)),roiList(ii).name,'Color',roiCol,'HorizontalAlignment','left','Parent',zoomAx(jj));
             end
         end
+        showRoiNames
         try
             delete(roiCenterIndicator)
         catch ME; if debugMatVis, fprintf(2,'%s\n%s',ME.identifier, ME.message); disp(getReport(ME)); end    
@@ -11291,27 +11353,29 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
     end
     function showRoiNames(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        if ~isempty(roiText)
-          if get(roiBtShowNames, 'Value')
-            set([roiText.im roiText.zoom], 'Visible', 'on');
-          else
-            set([roiText.im roiText.zoom], 'Visible', 'off');
-          end
+        if get(tbRoiShowNames, 'Value')
+          if ~isempty(roiText); set([roiText.im roiText.zoom], 'Visible', 'on'); end
+          set(tbRoiShowNames, 'BackgroundColor',[168 198 247]/255);
+          legend(subPlotHandles(:),'show')
+        else
+          if ~isempty(roiText); set([roiText.im roiText.zoom], 'Visible', 'off'); end
+          set(tbRoiShowNames, 'BackgroundColor',guiBGCol);
+          legend(subPlotHandles(:),'hide')
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
     function shiftRoi(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         if get(tbRoiShift, 'Value')
-            set(imageWin,'WindowButtonDownFcn',@startShift);
-            set(zoomWin,'WindowButtonDownFcn',@startShift);
+            set([imageWin zoomWin],'WindowButtonDownFcn',@startShift);
             set(roiWin, 'KeyPressFcn', @shiftRoiWithKeyboard);
-            set(tbRoiRotate, 'Value', 0);
-            set(tbRoiScale, 'Value', 0);
+            set(tbRoiShift, 'BackgroundColor',[168 198 247]/255);
+            set([tbRoiRotate tbRoiScale tbRoiReplace], 'Value', 0, 'BackgroundColor',guiBGCol);
+            set(tb_newRoi, 'Value',0, 'UserData',0, 'BackgroundColor',guiBGCol);
         else
-            set(imageWin,'WindowButtonDownFcn',@buttonDownCallback);
-            set(zoomWin,'WindowButtonDownFcn',@buttonDownCallback);
+            set([imageWin zoomWin],'WindowButtonDownFcn',@buttonDownCallback);
             set(roiWin, 'KeyPressFcn', '');
+            set(tbRoiShift, 'BackgroundColor',guiBGCol);
         end
         function shiftRoiWithKeyboard(src,evnt)  %#ok
             if debugMatVis > 1, debugMatVisFcn(1); end
@@ -11339,12 +11403,6 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 end
             end
             selRois = get(roiListbox,'Value');
-            %             if any(roiList(selRois).corners(1,:)+shiftVector(1)<0) || ...
-            %                any(roiList(selRois).corners(2,:)+shiftVector(2)<0) || ...
-            %                any(roiList(selRois).corners(1,:)+shiftVector(1)>dim(xySel(1))+1) || ...
-            %                any(roiList(selRois).corners(2,:)+shiftVector(2)>dim(xySel(2))+1)
-            %                 return
-            %             end
             set(roiWin, 'Name', 'BUSY!'); drawnow;
             for ii=1:size(selRois,2)
                 roi(1,:) = roiList(selRois(ii)).corners(1,:)+shiftVector(1);
@@ -11388,14 +11446,11 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 shiftVector = round(p2 - p);
             end
             for ii=1:size(selRois,2)
-                set(roiLine.im(:,selRois(ii)),'XData',roiList(selRois(ii)).corners(1  ,:)+shiftVector(1),...
-                    'YData',roiList(selRois(ii)).corners(2,:)+shiftVector(2));
-                set(roiLine.zoom(:,selRois(ii)),'XData',roiList(selRois(ii)).corners(1  ,:)+shiftVector(1),...
-                    'YData',roiList(selRois(ii)).corners(2,:)+shiftVector(2));
-                set(roiText.im(:,selRois(ii)),'Position',...
-                    [max(roiList(selRois(ii)).corners(1  ,:))+1  ,mean(roiList(selRois(ii)).corners(2,:))] + shiftVector);
-                set(roiText.zoom(:,selRois(ii)),'Position',...
-                    [max(roiList(selRois(ii)).corners(1  ,:))+1  ,mean(roiList(selRois(ii)).corners(2,:))] + shiftVector);
+                set([roiLine.im(:,selRois(ii)) roiLine.zoom(:,selRois(ii))],...
+                  'XData',roiList(selRois(ii)).corners(1,:)+shiftVector(1),...
+                  'YData',roiList(selRois(ii)).corners(2,:)+shiftVector(2)  );
+                set([roiText.im(:,selRois(ii)) roiText.zoom(:,selRois(ii))],'Position',...
+                    [max(roiList(selRois(ii)).corners(1  ,:))+1, mean(roiList(selRois(ii)).corners(2,:))] + shiftVector);
             end
             set(myGcf, 'WindowButtonUpFcn',{@endShift,selRois,shiftVector});
             if debugMatVis, debugMatVisFcn(2); end
@@ -11416,7 +11471,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 roi = [];
             end
             updateRoiSelection(selRois);
-            set(tbRoiShift, 'Value', 0);
+            set(tbRoiShift, 'Value', 0, 'BackgroundColor',guiBGCol);
             if debugMatVis, debugMatVisFcn(2); end
         end
         if debugMatVis, debugMatVisFcn(2); end
@@ -11424,13 +11479,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
     function rotateRoi(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         if get(tbRoiRotate, 'Value')
-            set(imageWin,'WindowButtonDownFcn',@startRotation);
-            set(zoomWin,'WindowButtonDownFcn',@startRotation);
-            set(tbRoiShift, 'Value', 0);
-            set(tbRoiScale, 'Value', 0);
+            set([imageWin zoomWin],'WindowButtonDownFcn',@startRotation);
+            set(tbRoiRotate, 'BackgroundColor',[168 198 247]/255);
+            set([tbRoiShift tbRoiScale], 'Value', 0, 'BackgroundColor',guiBGCol);
+            set(tb_newRoi, 'Value',0, 'UserData',0, 'BackgroundColor',guiBGCol);
         else
-            set(imageWin,'WindowButtonDownFcn',@buttonDownCallback);
-            set(zoomWin,'WindowButtonDownFcn',@buttonDownCallback);
+            set([imageWin zoomWin],'WindowButtonDownFcn',@buttonDownCallback);
+            set(tbRoiRotate, 'BackgroundColor',guiBGCol);
         end
         function startRotation(varargin)
             if debugMatVis, debugMatVisFcn(1); end
@@ -11486,8 +11541,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         end
         function endRotation(hO,h,selRois,p,p2)  %#ok
             if debugMatVis, debugMatVisFcn(1); end
-            set(myGcf, 'WindowButtonMotionFcn',@mouseMotion);
-            set(myGcf, 'WindowButtonUpFcn','');
+            set(myGcf, 'WindowButtonMotionFcn',@mouseMotion, 'WindowButtonUpFcn','');
             if numel(selRois)>1
               minCornerROIs = roiList(selRois(1)).corners(:  ,1);
               maxCornerROIs = minCornerROIs;
@@ -11541,13 +11595,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
     function scaleRoi(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         if get(tbRoiScale, 'Value')
-            set(imageWin,'WindowButtonDownFcn',@startScaling);
-            set(zoomWin,'WindowButtonDownFcn',@startScaling);
-            set(tbRoiRotate, 'Value', 0);
-            set(tbRoiShift, 'Value', 0);
+            set([imageWin zoomWin],'WindowButtonDownFcn',@startScaling);
+            set([tbRoiRotate tbRoiShift], 'Value', 0, 'BackgroundColor',guiBGCol);
+            set(tbRoiScale, 'BackgroundColor',[168 198 247]/255);
+            set(tb_newRoi, 'Value',0, 'UserData',0, 'BackgroundColor',guiBGCol);
         else
-            set(imageWin,'WindowButtonDownFcn',@buttonDownCallback);
-            set(zoomWin,'WindowButtonDownFcn',@buttonDownCallback);
+            set([imageWin zoomWin],'WindowButtonDownFcn',@buttonDownCallback);
+            set(tbRoiScale, 'BackgroundColor',guiBGCol);
         end
         function startScaling(varargin)
             if debugMatVis, debugMatVisFcn(1); end
@@ -11607,42 +11661,73 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
+    function togRoiReplace(varargin)
+      if debugMatVis, debugMatVisFcn(1); end
+      if get(tbRoiReplace,'Value')
+        set(tbRoiReplace, 'BackgroundColor',[168 198 247]/255);
+        set([tbRoiShift tbRoiRotate tbRoiScale],  'Value', 0, 'BackgroundColor',guiBGCol);
+      else
+        set(tbRoiReplace, 'BackgroundColor',guiBGCol);
+      end
+      if debugMatVis, debugMatVisFcn(2); end
+    end
     function exportRois(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         roiSel = get(roiListbox, 'Value');
+        fieldNames = {'corners','cornersPixelDim','index' ,'mask','name','number','rectangle','settings','centerOfGravity'};
         if isempty(roiSel)
             warndlg('No ROIs selected. Select ROI first before exporting it/them.','No ROI available');
         else
-            roiListExp = roiList;
+            roiListExp = roiList(roiSel);
             % Convert corners to pixel values
             if customDimScale
                 for ii=1:numel(roiSel)
-                    for jj = 1:size(roiListExp(roiSel(ii)).corners,2)
-                        roiListExp(roiSel(ii)).corners(:,jj) = pixelLocation(roiListExp(roiSel(ii)).corners(:,jj)');
+                    for jj = 1:size(roiListExp(ii).corners,2)
+                        roiListExp(ii).corners(:,jj) = pixelLocation(roiListExp(ii).corners(:,jj)');
                     end
-                    roiListExp(roiSel(ii)).rectangle = [round(max(1  ,-1+min(roiListExp(roiSel(ii)).corners(1,:)))),...
-                        round(max(1  ,-1+min(roiListExp(roiSel(ii)).corners(2,:)))),...
-                        round(min(dim(xySel(2)),1+max(roiListExp(roiSel(ii)).corners(1  ,:)))),...
-                        round(min(dim(xySel(1)),1+max(roiListExp(roiSel(ii)).corners(2,:))))];
+                    roiListExp(ii).rectangle = [round(max(1  ,-1+min(roiListExp(ii).corners(1,:)))),...
+                        round(max(1  ,-1+min(roiListExp(ii).corners(2,:)))),...
+                        round(min(dim(xySel(2)),1+max(roiListExp(ii).corners(1  ,:)))),...
+                        round(min(dim(xySel(1)),1+max(roiListExp(ii).corners(2,:))))];
                 end
             end
             % Remove corners outside image (is this necessary?)
             for ii=1:numel(roiSel)
-                roiListExp(roiSel(ii)).corners(1,roiListExp(roiSel(ii)).corners(1,:) > dim(xySel(2))) = dim(xySel(2));
-                roiListExp(roiSel(ii)).corners(2,roiListExp(roiSel(ii)).corners(2,:) > dim(xySel(1))) = dim(xySel(1));
-                roiListExp(roiSel(ii)).corners(1,roiListExp(roiSel(ii)).corners(1,:) < 0) = 0;
-                roiListExp(roiSel(ii)).corners(2,roiListExp(roiSel(ii)).corners(2,:) < 0) = 0;
+                roiListExp(ii).corners(1,roiListExp(ii).corners(1,:) > dim(xySel(2))) = dim(xySel(2));
+                roiListExp(ii).corners(2,roiListExp(ii).corners(2,:) > dim(xySel(1))) = dim(xySel(1));
+                roiListExp(ii).corners(1,roiListExp(ii).corners(1,:) < 0) = 0;
+                roiListExp(ii).corners(2,roiListExp(ii).corners(2,:) < 0) = 0;
             end
+            % check for inconsistencies
+            badRois = false(1,numel(roiSel));
+            for ii=1:numel(roiSel)
+              if any(~isfield(roiListExp(ii), fieldNames)) || any(structfun(@isempty,roiListExp(ii)))
+                badRois(ii)=true;
+              end
+            end
+            if any(badRois)
+              fprintf('List of inconsistent ROIs:\n')
+              for ii=1:numel(roiSel)
+                if badRois(ii); fprintf(2, '%3d: %s (corrupt)\n', ii, roiListExp(ii).name); disp(roiListExp(ii)); end
+              end
+              q = questdlg('Tere are inconsistencies in selected ROIs','ROI Export', 'Continue anyway', 'Go back and check','Go back and check');
+              if strcmp(q,'Go back and check')
+                fprintf(2, 'Roi export CANCELed!\n')
+                if debugMatVis, debugMatVisFcn(2); end
+                return
+              end
+            end
+            % ExportDLG
             if length(dbstack) == 1
                 q = questdlg('Export Rois to workspace or save as .mat file?','ROI Export', 'To file', 'To workspace', 'Cancel', 'To file');
             else
                 q = questdlg('Export Rois to workspace or save as .mat file?','ROI Export', 'To file', 'To ''base'' workspace', 'To ''caller'' workspace', 'To file');
             end
             if strcmp(q,'To ''base'' workspace') || strcmp(q,'To workspace') 
-                assignin('base', 'matVisRoiExport', roiListExp(roiSel));
+                assignin('base', 'matVisRoiExport', roiListExp);
                 fprintf(2,'ROIs exported to base workspace!\n');
             elseif strcmp(q, 'To ''caller'' workspace')
-                assignin('caller', 'matVisRoiExport', roiListExp(roiSel));
+                assignin('caller', 'matVisRoiExport', roiListExp);
                 fprintf(2,'ROIs exported to caller workspace!\n');
             elseif strcmp(q, 'To File')
                 [f,p] = uiputfile('.mat','Choose folder and filename to save rois!');
@@ -11650,7 +11735,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                   if debugMatVis, debugMatVisFcn(2); end
                   return
                 end
-                matVisRoiExport =  roiListExp(roiSel); %#ok
+                matVisRoiExport =  roiListExp; %#ok
                 save([p,f],'matVisRoiExport');
                 checkSavedFile([p,f]); % controls, if saving was successfull (due to some unknown issue, rearely the saved file is corrupt and cannot read by matlab)
                 fprintf(2, 'ROIs exported to file!\n');
@@ -11731,7 +11816,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             s{ii} = [num2str(ii,'%03d'),': ',roiList(ii).name];
         end
         set(roiListbox, 'String',s,'Value', 1);
-        set([roiBtRename tbRoiShift tbRoiRotate tbRoiScale roiBtReplace bt_roiExport bt_deleteRoi bt_exportRoiData] , 'Enable', 'on');
+        set([tbRoiRename tbRoiShift tbRoiRotate tbRoiScale tbRoiReplace bt_roiExport bt_deleteRoi bt_exportRoiData] , 'Enable', 'on');
         set(roiName,'Enable','on')
         drawPlots;
         drawRois;
