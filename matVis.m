@@ -7105,11 +7105,11 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             end
             set(sldMax, 'Value', min(get(sldMin, 'Max'), str2double(get(valSldMax, 'String'))));
         end
-            if rgbCount
-                updateImages;
-            else
-                updateColormap;
-            end
+        if rgbCount
+          updateImages;
+        else
+          updateColormap;
+        end
         if debugMatVis, debugMatVisFcn(2); end
     end
 %Adjust Colormap
@@ -7117,25 +7117,20 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         if debugMatVis, debugMatVisFcn(1); end
         %Get Slider Values in Manual Mode
         if (~(any(get(bg_colormap, 'SelectedObject') == [cmManual cmThresh])) && ~rgbCount)
-            set(sldMin, 'Enable', 'off');
-            set(sldMax, 'Enable', 'off');
-            set(valSldMin, 'Enable', 'off');
-            set(valSldMax, 'Enable', 'off');
-            set(percMin, 'Enable', 'on');
-            set(percMax, 'Enable', 'on');
+            set([sldMin, sldMax],       'Enable', 'off');
+            set([valSldMin, valSldMax], 'Enable', 'off');
+            set([percMin, percMax],     'Enable', 'on');
         elseif get(bg_colormap, 'SelectedObject') == cmThresh
             set(sldMin, 'Enable', 'off');
             set(sldMax, 'Enable', 'on');
             set(valSldMin, 'Enable', 'off');
             set(valSldMax, 'Enable', 'on');
         else
-            set(sldMin, 'Enable', 'on');
-            set(sldMax, 'Enable', 'on');
-            set(valSldMin, 'Enable', 'on');
-            set(valSldMax, 'Enable', 'on');
-            set(percMin, 'Enable', 'off');
-            set(percMax, 'Enable', 'off');
+            set([sldMin, sldMax],       'Enable', 'on');
+            set([valSldMin, valSldMax], 'Enable', 'on');
+            set([percMin, percMax],     'Enable', 'off');
         end
+        set([sldGamma(1), valSldGamma(1)], 'Enable', 'on');
         switch get(bg_colormap, 'SelectedObject')
             case cmGlobal       %Global Min / Max Values (each data set seperateley)
               if percVal(1)>0
@@ -7489,15 +7484,28 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 end
                 if ~strcmp(lutStr{get(popLut, 'Value')},'Blue-Gray-Red (0 centered)')
                   if strcmp(lutStr{get(popLut, 'Value')},'Green-Gray-Red (0 centered)')
-                    cmap = cmap(:,[1 3 2]);
+                    if get(tb_flip, 'Value')
+                      cmap = cmap(:,[3 1 2]);
+                    else
+                      cmap = cmap(:,[1 3 2]);
+                    end
                   else
-                    cmap(:,2)=cmap(:,1); %LUT for 'Blue-Gray-Yellow (0 centered)'
+                    if get(tb_flip, 'Value')
+                      cmap = cmap(:,[3 3 1]); %LUT for 'Blue-Gray-Yellow (0 centered) fliped'
+                    else
+                      cmap = cmap(:,[1 1 3]); %LUT for 'Blue-Gray-Yellow (0 centered)'
+                    end
                     if ~strcmp(lutStr{get(popLut, 'Value')},'Blue-Gray-Yellow (0 centered)')
                         cmap(:,1)=cmap(:,3); %LUT for 'Magenta-Gray-Green (0 centered)'
                     end
                   end
+                else
+                  if get(tb_flip, 'Value')
+                    cmap = cmap(:,[3 2 1]);
+                  end
                 end
                 % set gamma value to 1
+                set([sldGamma(1), valSldGamma(1)], 'Enable', 'off');
                 if any(currGamma(1) ~= 1)
                     set(sldGamma(1), 'Value',1);
                     set(valSldGamma(1),'String','1.000');
@@ -7530,14 +7538,15 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         %             cmap(cmap>1)=1;
         %             cmap(cmap<0)=0;
         %         end
-        if any(currGamma ~= 1)
-            updateImages;
-        end
+%         if any(currGamma ~= 1)
+%             updateImages;
+%         end
         if get(tb_invert, 'Value')
             cmap = 1 - cmap;
         end
-        if get(tb_flip, 'Value')
-            cmap = flipdim(cmap,1);
+        
+        if get(tb_flip, 'Value') && ~any(strcmp(lutStr{get(popLut, 'Value')},{'Blue-Gray-Red (0 centered)';'Green-Gray-Red (0 centered)';'Blue-Gray-Yellow (0 centered)';'Magenta-Gray-Green (0 centered)'}))
+            cmap = flip(cmap,1);
         end
         if get(tbWin(1), 'Value')
             for ii = 1:nMat
@@ -7569,6 +7578,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         end
         if get(tbColorbar, 'Value') == 1 && all(currGamma == 1)
             showColorbar;
+        end
+        if any(currGamma ~= 1)
+            updateImages;
         end
         updateHistObjects;
         if rgbCount
