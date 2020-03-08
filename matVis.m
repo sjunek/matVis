@@ -682,16 +682,21 @@ end
 if ~withDimUnits
     dimUnits = cell(1,nDim);
 end
+%% Search for MinMax values
 if debugMatVis; t1 = debugMatVisOutput('Search for MinMax values', whos, toc(tStart), t1); end
 maxVal = zeros(1,nMat*(1+withAlpha));
 minVal = zeros(1,nMat*(1+withAlpha));
 maxValInd = zeros(1,nMat*(1+withAlpha));
 minValInd = zeros(1,nMat*(1+withAlpha));
+sldLimVal = zeros(nMat*(1+withAlpha),2);
 cmMinMax = zeros(nMat*(1+withAlpha),2);
 for i=1:nMat
     %         d = data{i};
-    [maxVal(i) maxValInd(i)] = max(data{i}(:));         %Maximum Data Value
-    [minVal(i) minValInd(i)] = min(data{i}(:));         %Minimum Data Value
+    [maxVal(i), maxValInd(i)] = max(data{i}(:),[],'omitnan'); % Maximum Data Value
+    [minVal(i), minValInd(i)] = min(data{i}(:),[],'omitnan'); % Minimum Data Value
+    % using ~isinf takes appr. 50x longer 
+    if ~isfinite(maxVal(i)), [maxVal(i), maxValInd(i)] = max(data{i}(~isinf(data{i}(:))),[],'omitnan'); end
+    if ~isfinite(minVal(i)), [minVal(i), minValInd(i)] = min(data{i}(~isinf(data{i}(:))),[],'omitnan'); end
     sldLimVal(i,:) = [minVal(i) maxVal(i)];
     if minVal(i) == maxVal(i)
         minVal(i) = maxVal(i)-1; % to avoid error messages
@@ -701,8 +706,11 @@ for i=1:nMat
 end
 if withAlpha
     for i=1:nMat
-        [maxVal(nMat+i) maxValInd(nMat+i)] = max(alphaMap{i}(:));         %Maximum Data Value    % Used to be nanmax
-        [minVal(nMat+i) minValInd(nMat+i)] = min(alphaMap{i}(:));         %Minimum Data Value   % Used to be nanmin
+        [maxVal(nMat+i), maxValInd(nMat+i)] = max(alphaMap{i}(:));         %Maximum Data Value    % Used to be nanmax
+        [minVal(nMat+i), minValInd(nMat+i)] = min(alphaMap{i}(:));         %Minimum Data Value   % Used to be nanmin
+        % using ~isinf takes appr. 50x longer
+        if ~isfinite(maxVal(nMat+i)), [maxVal(nMat+i), maxValInd(nMat+i)] = max(alphaMap{i}(~isinf(alphaMap{i}(:))),[],'omitnan'); end
+        if ~isfinite(minVal(nMat+i)), [minVal(nMat+i), minValInd(nMat+i)] = min(alphaMap{i}(~isinf(alphaMap{i}(:))),[],'omitnan'); end
         sldLimVal(nMat+i,:) = [minVal(nMat+i) maxVal(nMat+i)];
         if minVal(nMat+i) == maxVal(nMat+i)
             minVal(nMat+i) = maxVal(nMat+i)-1; % to avoid error messages
@@ -710,12 +718,6 @@ if withAlpha
         end
     end
     cmMinMax(nMat+i,:) = [minVal(nMat+1:2*nMat); maxVal(nMat+1:2*nMat)]'; %Colormap Limits
-%     if all(maxVal(nMat+1:end)<=1) && all(minVal(nMat+1:end)>=0) % If all alpha values are between 0 and 1, use [0,1] as alpha limits
-%         cmMinMax(nMat+1:2*nMat,1) = 0; %Colormap Limits
-%         cmMinMax(nMat+1:2*nMat,2) = 1; %Colormap Limits
-%     else
-%         cmMinMax(nMat+i,:) = [minVal(nMat+1:2*nMat); maxVal(nMat+1:2*nMat)]'; %Colormap Limits
-%     end
 end
 
 clear d;
@@ -730,29 +732,15 @@ end
 for i=1:nMat
     plotYLim(i,:) = [minVal(i) maxVal(i)];
 end
-%Find position of maximum value (adopted from ind2sub function) and set as
-%starting position; if data set is too large to find this position set
-%center of data set as starting position instead
-try
-    maxPosLin = maxValInd(1+withAlpha);
-    minPosLin = minValInd(1+withAlpha);
-    k = [1 cumprod(dim(1:end-1))];
-    for i = nDim:-1:1
-        viMax = rem(maxPosLin-1  , k(i)) + 1;
-        vjMax = (maxPosLin - viMax)/k(i) + 1;
-        maxPos(i) = vjMax; %#ok
-        maxPosLin = viMax;
-        viMin = rem(minPosLin-1  , k(i)) + 1;
-        vjMin = (minPosLin - viMin)/k(i) + 1;
-        minPos(i) = vjMin; %#ok
-        minPosLin = viMin;
-    end
-    currPos = maxPos;
-catch    %#ok
-    currPos = round(dim/2);                 %Starting Position
-    maxPos = currPos;
-    minPos = currPos;
-end
+maxPos = cell(1, nDim);
+[maxPos{:}] = ind2sub(dim, maxValInd(1+withAlpha));
+maxPos = cell2mat(maxPos);
+currPos = maxPos;
+
+minPos = cell(1, nDim);
+[minPos{:}] = ind2sub(dim, minValInd(1+withAlpha));
+minPos = cell2mat(minPos);
+
 savedPos = [];                           %Matrix for saved positions using small buttons to the right
 savedZoom = [];                          %Matrix for saved zoom using small buttons to the right
 %% peallocation of handles
