@@ -64,6 +64,9 @@ function varargout = matVis(varargin)
 %                               be set to black.
 %       'matVisROIs'            ROI structure 'matVisRoiExport' generated
 %                               by matVis, will be automatically imported.
+%       'colorMap'              a matrix by N x 3 which defines a custom
+%                               colormap according to Matlabs 'colormap'
+%                               specifications.
 %       'startPar'              List of configuration settings. These
 %                               settings 'override' the custom settings saved in a customConfig
 %                               file (if available). The list should be a cell array with the
