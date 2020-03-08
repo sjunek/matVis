@@ -5296,7 +5296,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
     end
     function zoomKeyReleaseFcn(src,evt,fcnHndl) %#ok
         if debugMatVis, debugMatVisFcn(1); end
-        if strcmp(func2str(get(zoomWin(1), 'WindowButtonMotionFcn')), 'matVis/panWindow')
+        if ~isempty(get(zoomWin(1), 'WindowButtonMotionFcn')) && strcmp(func2str(get(zoomWin(1), 'WindowButtonMotionFcn')), 'matVis/panWindow')
             if debugMatVis, debugMatVisFcn(2); end
             return
         end
@@ -5493,7 +5493,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             if (get(tbProfile,'Value') && nProfiles)
                updateProfileProperties; 
             end
-            if get(tbRoi,'Value') & rgbCount~=dimNum %&& nRois 
+            if get(tbRoi,'Value') %& rgbCount~=dimNum %&& nRois 
               updateRoiSelection(get(roiListbox, 'Value')); % updateRoiProperties(0);
             end
         end
@@ -8214,17 +8214,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         if debugMatVis, debugMatVisFcn(1); end
         if get(tbShowObjects, 'Value')
             set(zoomReg, 'Visible', 'on');
-            set(lineHorIm, 'Visible', 'on');
-            set(lineVertIm, 'Visible', 'on');
-            set(lineHorZoom, 'Visible', 'on');
-            set(lineVertZoom, 'Visible', 'on');
+            set([lineHorIm lineVertIm], 'Visible', 'on');
+            set([lineHorZoom lineVertZoom], 'Visible', 'on');
             %drawObjects;
         else
             set(zoomReg, 'Visible', 'off');
-            set(lineHorIm, 'Visible', 'off');
-            set(lineVertIm, 'Visible', 'off');
-            set(lineHorZoom, 'Visible', 'off');
-            set(lineVertZoom, 'Visible', 'off');
+            set([lineHorIm lineVertIm], 'Visible', 'off');
+            set([lineHorZoom lineVertZoom], 'Visible', 'off');
         end
         if strcmp(projMethodStr{projMethod+1},'tile')
             set(zoomReg, 'Visible', 'on');
@@ -8540,10 +8536,10 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 wp.image = [gp(1)+gp(3)+20 gp(2)-gp(4)-40 gp(4) gp(4) ];
                 %                 matVis2DHist =
                 %                 matVis(data2DHist,'dimScale',[get(sldMax,'Min') get(sldMax,'Max');minVal(2) maxVal(2)],'dimNames',{'Data values';'Alpha values'},'matNames',{[varName{1} ': 2D Hist']},'startPar',{'aspRatio';0;'windowPositions';wp;'objVisibility';1;'windowVisibility';[1 0 0];'calledAs2DHist';{outStrct.fctHandles.loadNewSettings;double([min(dd(:,1)) max(dd(:,1))]);double([min(dd(:,2)) max(dd(:,2))])}});
-                zv(1,1) = find(x_2DHist>=cmMinMax(1,1),1) ;
-                zv(1,2) = find(x_2DHist>=cmMinMax(1,2),1)-find(x_2DHist>=cmMinMax(1,1),1);
+                zv(1,1) = max([find(x_2DHist>=cmMinMax(1,1),1),1]) ;
+                zv(1,2) = max([find(x_2DHist>=cmMinMax(1,2),1),201])-zv(1,1);
                 zv(2,1) = find(y_2DHist>=cmMinMax(nMat+1,1),1) ;
-                zv(2,2) = find(y_2DHist>=cmMinMax(nMat+1,2),1)-find(y_2DHist>=cmMinMax(nMat+1,1),1);
+                zv(2,2) = find(y_2DHist>=cmMinMax(nMat+1,2),1)-zv(2,1);
                 matVis2DHist = matVis(data2DHist,'dimScale',[minVal(1) maxVal(1);minVal(2) maxVal(2)],...
                                                  'dimUnits',{'au.','au.'},...
                                                  'dimNames',{'Data values';'Alpha values'},...
@@ -12303,7 +12299,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
     end
     function openMatVisGuide(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        [w flag] = urlread('http://www.colors-and-contrasts.com/');
+        [~, flag] = urlread('http://www.colors-and-contrasts.com/');
         if ~flag
             msgbox('Internet connection or webhost not available. Connect to the internet or try later.');
         else
@@ -12469,8 +12465,8 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                         switch val{jj}
                             case 'sldMinMax'
                                 for kk=1:nMat
-                                    [maxVal(kk) maxValInd(kk)] = max(data{kk}(:));         %Maximum Data Value
-                                    [minVal(kk) minValInd(kk)] = min(data{kk}(:));         %Minimum Data Value
+                                    [maxVal(kk), maxValInd(kk)] = max(data{kk}(:));         %Maximum Data Value
+                                    [minVal(kk), minValInd(kk)] = min(data{kk}(:));         %Minimum Data Value
                                     cmMinMax(kk,:) = [minVal(kk) maxVal(kk)]'; %Colormap Limits
                                 end
                         end
