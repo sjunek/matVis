@@ -6843,17 +6843,18 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 clf;
                 colorcodePlots = plotColors(size(plotValues,3));
                 for ii = 1 : nPlots
-                    for kk = 1:size(plotValues,3)
                         subPlotHandles(jj,ii) = subplot(nPlotCol, nPlotRow, ii);
+                        hold all;
+                    for kk = 1:size(plotValues,3)
                         if ~get(tbRoi, 'Value')
                             if get(bt_mean, 'UserData') == 5  %RGB plot mode
                                 if get(cmStretchRGBMean,'Value') || get(cmStretchRGBMax, 'Value')  %RGB stretch mode
                                     try   %for dimensions with less plots, e.g. rgbDim in RGB plot mode
                                         if customDimScale
-                                            subPlotPlots{jj,ii,kk} = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValues{jj,ii,kk}),...
+                                            subPlotPlots(jj,ii,kk) = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValues{jj,ii,kk}),...
                                                 'Color', rgbValPlots(:,kk));
                                         else
-                                            subPlotPlots{jj,ii,kk} = plot(subPlotHandles(jj,ii), squeeze(plotValues{jj,ii,kk}),...
+                                            subPlotPlots(jj,ii,kk) = plot(subPlotHandles(jj,ii), squeeze(plotValues{jj,ii,kk}),...
                                                 'Color', rgbValPlots(:,kk));
                                         end
                                         
@@ -6862,10 +6863,10 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                                 else           % normal RGB mode
                                     try   %for dimensions with less plots, e.g. rgbDim in RGB plot mode
                                         if customDimScale
-                                            subPlotPlots{jj,ii,kk} = plot(subPlotHandles(jj,ii),  linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValues{jj,ii,kk}),...
+                                            subPlotPlots(jj,ii,kk) = plot(subPlotHandles(jj,ii),  linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValues{jj,ii,kk}),...
                                                 'Color', [kk==1 kk==2 kk==3]);
                                         else
-                                            subPlotPlots{jj,ii,kk} = plot(subPlotHandles(jj,ii), squeeze(plotValues{jj,ii,kk}),...
+                                            subPlotPlots(jj,ii,kk) = plot(subPlotHandles(jj,ii), squeeze(plotValues{jj,ii,kk}),...
                                                 'Color', [kk==1 kk==2 kk==3]);
                                         end
                                     catch    %#ok
@@ -6874,20 +6875,20 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                             else
                                 if ~isempty(plotValues{jj,ii,kk})
                                     if customDimScale
-                                        subPlotPlots{jj,ii,kk} = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValues{jj,ii,kk}),...
+                                        subPlotPlots(jj,ii,kk) = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValues{jj,ii,kk}),...
                                             'Color', [kk==1 kk==2 kk==3], 'LineWidth', kk/2,'LineStyle','-');
                                         if withAlpha && ~verLessThan('matlab','9.0')
                                           yyaxis(subPlotHandles(jj,ii),'right')
-                                          subPlotPlotsAlpha{jj,ii,kk} = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValuesAlpha{jj,ii,kk}),...
+                                          subPlotPlotsAlpha(jj,ii,kk) = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValuesAlpha{jj,ii,kk}),...
                                             'Color', [kk==1 kk==2 kk==3], 'LineWidth', kk/2,'LineStyle',':','Marker','none');
                                           yyaxis(subPlotHandles(jj,ii),'left')
                                         end
                                     else
-                                        subPlotPlots{jj,ii,kk} = plot(subPlotHandles(jj,ii), squeeze(plotValues{jj,ii,kk}),...
+                                        subPlotPlots(jj,ii,kk) = plot(subPlotHandles(jj,ii), squeeze(plotValues{jj,ii,kk}),...
                                             'Color', [kk==1 kk==2 kk==3], 'LineWidth', kk/2,'LineStyle','-');
                                           if withAlpha && ~verLessThan('matlab','9.0')
                                             yyaxis(subPlotHandles(jj,ii),'right')
-                                            subPlotPlotsAlpha{jj,ii,kk} = plot(subPlotHandles(jj,ii),squeeze(plotValuesAlpha{jj,ii,kk}),...
+                                            subPlotPlotsAlpha(jj,ii,kk) = plot(subPlotHandles(jj,ii),squeeze(plotValuesAlpha{jj,ii,kk}),...
                                               'Color', [kk==1 kk==2 kk==3], 'LineWidth', kk/2,'LineStyle',':','Marker','none');
                                             yyaxis(subPlotHandles(jj,ii),'left')
                                           end
@@ -6897,32 +6898,27 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                         else
                             if ~(isequal(roiSel,0) || isempty(roiSel))
                                 if customDimScale
-                                    subPlotPlots{jj,ii,kk} = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValues{jj,ii,kk}),...
+                                    subPlotPlots(jj,ii,kk) = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValues{jj,ii,kk}),...
                                       'Color',colorcodePlots(kk,:),'LineStyle','-');
                                     if withAlpha && ~verLessThan('matlab','9.0')
                                       yyaxis(subPlotHandles(jj,ii),'right')
-                                      subPlotPlotsAlpha{jj,ii,kk} = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValuesAlpha{jj,ii,kk}),...
+                                      subPlotPlotsAlpha(jj,ii,kk) = plot(subPlotHandles(jj,ii), linspace(dimScale(plotDim(ii),1),dimScale(plotDim(ii),2),dim(plotDim(ii))),squeeze(plotValuesAlpha{jj,ii,kk}),...
                                         'Color', colorcodePlots(kk,:),'LineStyle',':','Marker','none');%, 'LineWidth', kk/2
                                       yyaxis(subPlotHandles(jj,ii),'left')
                                     end
                                 else
-                                    subPlotPlots{jj,ii,kk} = plot(subPlotHandles(jj,ii), squeeze(plotValues{jj,ii,kk}),'Color',colorcodePlots(kk,:),'LineStyle','-');
+                                    subPlotPlots(jj,ii,kk) = plot(subPlotHandles(jj,ii), squeeze(plotValues{jj,ii,kk}),'Color',colorcodePlots(kk,:),'LineStyle','-');
                                     if withAlpha && ~verLessThan('matlab','9.0')
                                       yyaxis(subPlotHandles(jj,ii),'right')
-                                      subPlotPlotsAlpha{jj,ii,kk} = plot(subPlotHandles(jj,ii), squeeze(plotValuesAlpha{jj,ii,kk}),...
+                                      subPlotPlotsAlpha(jj,ii,kk) = plot(subPlotHandles(jj,ii), squeeze(plotValuesAlpha{jj,ii,kk}),...
                                         'Color', colorcodePlots(kk,:),'LineStyle',':','Marker','none');%, 'LineWidth', kk/2
                                       yyaxis(subPlotHandles(jj,ii),'left')
                                     end
                                 end
-                                l{kk} = roiList(roiSel(kk)).name;  %Legend strings for roi plots
+                                %l{kk} = roiList(roiSel(kk)).name;  %Legend strings for roi plots
+                        set(subPlotPlots(jj,ii,kk),'DisplayName',roiList(roiSel(kk)).name)
                             end
                         end
-                        hold all;
-                    end
-                    if get(tbRoi, 'Value') && ~isempty(subPlotPlots)
-                        legend(l);
-                    else
-                        legend('off');
                     end
                     hold off;
                     if get(tb_plotsXLim, 'Value') == 1 && sum(plotDim(ii) == xySel) > 0
@@ -7000,12 +6996,12 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 for ii = 1 : nPlots                          %Number plot dimensions (subplots)
                     for kk = 1:size(plotValues,3)            %Number of plots in one axes (more than 1 for mean plots and rois)
                         try   %For different number of plots in different plot axes
-                            set(subPlotPlots{jj,ii,kk}, 'YData', squeeze(plotValues{jj,ii,kk}));
+                            set(subPlotPlots(jj,ii,kk), 'YData', squeeze(plotValues{jj,ii,kk}));
                             if withAlpha
-                              set(subPlotPlotsAlpha{jj,ii,kk}, 'YData', squeeze(plotValuesAlpha{jj,ii,kk}));
+                              set(subPlotPlotsAlpha(jj,ii,kk), 'YData', squeeze(plotValuesAlpha{jj,ii,kk}));
                             end
                         catch    %#ok
-                           fprintf('''set(subPlotPlots{jj,ii,kk}, ''YData'', squeeze(plotValues{jj,ii,kk}));'' failed\n')
+                           fprintf('''set(subPlotPlots(jj,ii,kk), ''YData'', squeeze(plotValues{jj,ii,kk}));'' failed\n')
                         end
                         try                                   %for dimensions with less plot entries, e.g. rgbDim for RGB plot mode
                             pV(kk,:) = squeeze(plotValues{jj,ii,kk});  %#ok
@@ -7073,14 +7069,14 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 end
                 if ~isempty(subPlotPlots)
                     if get(tb_marker, 'Value') == 1
-                        set([subPlotPlots{:}], 'Marker', 'd', 'MarkerSize', 3);
+                        set(subPlotPlots(:), 'Marker', 'd', 'MarkerSize', 3);
                         if withAlpha && ~verLessThan('matlab','9.0')
-                          set([subPlotPlotsAlpha{:}], 'Marker', 'd', 'MarkerSize', 3);
+                          set(subPlotPlotsAlpha(:), 'Marker', 'd', 'MarkerSize', 3);
                         end
                     else
-                        set([subPlotPlots{:}],'Marker', 'none');
+                        set(subPlotPlots(:),'Marker', 'none');
                         if withAlpha && ~verLessThan('matlab','9.0')
-                          set([subPlotPlotsAlpha{:}], 'Marker', 'none');
+                          set(subPlotPlotsAlpha(:), 'Marker', 'none');
                         end
                     end
                 end
