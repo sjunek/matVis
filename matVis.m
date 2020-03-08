@@ -640,9 +640,13 @@ else
 end
 %% start debug modus recognition
 fctCount = [];                           %Function Counter for debug mode
-if debugMatVis, debugMatVisFcn(1); end
-
-%Check for 1D data or singular dimensions
+if debugMatVis 
+  debugMatVisFcn(1); 
+  tStart = tic; %Timer start
+  t1 = debugMatVisOutput('Start matVis initialization', whos, toc(tStart), 0);
+end
+%% Check for 1D data or singular dimensions
+if debugMatVis; t1 = debugMatVisOutput('Check for 1D data or singular dimensions', whos, toc(tStart), t1); end
 dim = size(data{1});                     %Dimensions of data set
 nDim = length(dim);                      %Number of dimensions
 if length(data{1})==numel(data{1})
@@ -660,6 +664,7 @@ elseif  any(dim == 1)
     end
 end
 %% Set initial values
+if debugMatVis; t1 = debugMatVisOutput('Set initial values', whos, toc(tStart), t1); end
 dim = size(data{1});                     %Dimensions of data set
 nDim = length(dim);                      %Number of dimensions
 if ~customDimScale, dimScale = zeros(nDim,1); dimScale(:,2) = dim; end
@@ -677,6 +682,7 @@ end
 if ~withDimUnits
     dimUnits = cell(1,nDim);
 end
+if debugMatVis; t1 = debugMatVisOutput('Search for MinMax values', whos, toc(tStart), t1); end
 maxVal = zeros(1,nMat*(1+withAlpha));
 minVal = zeros(1,nMat*(1+withAlpha));
 maxValInd = zeros(1,nMat*(1+withAlpha));
@@ -714,6 +720,7 @@ end
 
 clear d;
 %% Set initial plot limits
+if debugMatVis; t1 = debugMatVisOutput('Set initial plot limits', whos, toc(tStart), t1); end
 for i=1:nDim
     plotXLim(i,:) = [1 dim(i)];
 end
@@ -749,7 +756,7 @@ end
 savedPos = [];                           %Matrix for saved positions using small buttons to the right
 savedZoom = [];                          %Matrix for saved zoom using small buttons to the right
 %% peallocation of handles
-% peallocation of handles
+if debugMatVis; t1 = debugMatVisOutput('Peallocation of handles', whos, toc(tStart), t1); end
 if matlabVer < 8.4 % to differenciate for HG2 
   currIm = [];                             %data of Current Image (compare currImVal)
   imHandle = [];                           %Handle of Figure in Image Window
@@ -1001,6 +1008,7 @@ percVal = [0 1];
 globalPercMinMax = [];
 calcGlobalPercMinMax = [false false]; % indicator if global percentile was already calculated
 %% Configuration of Windows
+if debugMatVis; t1 = debugMatVisOutput('Configuration of Windows', whos, toc(tStart), t1); end
 %Custom configuration from config file
 %Window Properties
 
@@ -1017,6 +1025,7 @@ screenSizeScaling = getScreenSizeScaling;
 % size is not changed when showing/hiding the menu bar unless in debug mode
 
 gui = figure('Menubar','none');
+if debugMatVis; t1 = debugMatVisOutput('Predefenition of Config: defaultConfig', whos, toc(tStart), t1); end
 %Window Visibility
 defaultConfig.winVis.imageWin = 1;       %Default: 1
 defaultConfig.winVis.zoomWin  = 1;       %Default: 1
@@ -1112,6 +1121,7 @@ defaultConfig.tooltips = 1;              %Default: 1 (display tooltips)
 % selection
 defaultConfig.jump2ROIPos = 1;    
 defaultConfig.showROIcenter = 1;    
+if debugMatVis; t1 = debugMatVisOutput('Predefenition of Config: Loading of customConfig', whos, toc(tStart), t1); end
 [matVisPath,f,e] = fileparts(which('matVis.m'));
 compName = strtrim(getenv('Computername'));
 configFile = [];
@@ -1155,6 +1165,7 @@ end
 % currConfig = customConfig; %Not necessary after removing currConfig
 % option
 
+if debugMatVis; t1 = debugMatVisOutput('Predefenition of Config: defining additional start parameters', whos, toc(tStart), t1); end
 % Start values (if specified)
 updateProj = 0;  % Needs to be updated if projection paramter is specified
 updateRGB = 0;  % Needs to be updated if projection paramter is specified
@@ -1253,6 +1264,7 @@ end
 zoomValXY([1,3]) = zoomVal(xySel(2),:);
 zoomValXY([2,4]) = zoomVal(xySel(1),:);
 %% Icons
+if debugMatVis; t1 = debugMatVisOutput('Icons definition', whos, toc(tStart), t1); end
 icon_matVis = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,50,34,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,101,218,252,34,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,151,252,252,0,0; 0,67,252,252,34,168,252,235,101,34,168,252,235,67,0,0,0,0,67,168,218,252,252,185,84,0,252,252,252,252,252,151; 0,118,252,252,235,252,252,252,235,202,252,252,252,218,0,0,0,151,252,252,252,252,252,252,67,50,252,252,252,252,252,118; 0,151,252,252,151,0,185,252,252,168,17,168,252,252,0,0,134,252,252,118,17,118,252,252,17,0,67,252,252,101,0,0; 0,185,252,235,17,0,151,252,252,17,0,118,252,218,0,34,252,252,151,0,0,168,252,218,0,0,118,252,252,50,0,0; 0,252,252,151,0,0,185,252,185,0,0,168,252,185,0,118,252,252,34,0,0,218,252,168,0,0,151,252,252,0,0,0; 34,252,252,101,0,0,252,252,118,0,0,218,252,118,0,185,252,252,0,0,67,252,252,118,0,0,185,252,185,0,0,0; 84,252,252,67,0,50,252,252,84,0,0,252,252,101,0,185,252,252,67,17,202,252,252,101,0,0,252,252,218,67,17,0; 118,252,252,0,0,84,252,252,34,0,67,252,252,50,0,118,252,252,252,252,185,252,252,67,0,0,235,252,252,252,17,0; 168,252,202,0,0,118,252,252,0,0,101,252,252,0,0,0,134,235,235,134,17,252,252,67,0,0,101,218,252,235,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,29,7,0,0,0,0,0,0,0,0,0,0,0,0,0; 58,108,108,108,14,0,0,0,0,0,79,108,108,86,0,0,72,108,101,22,0,0,0,0,0,0,0,0,0,0,0,0; 22,108,108,108,43,0,0,0,0,7,108,108,108,50,0,0,108,108,108,50,0,0,0,0,0,0,0,0,0,0,0,0; 0,101,108,108,72,0,0,0,0,43,108,108,108,14,0,0,50,108,79,7,0,0,0,0,0,0,0,0,0,0,0,0; 0,65,108,108,101,0,0,0,0,65,108,108,86,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,36,108,108,108,29,0,0,0,101,108,108,50,0,0,0,108,108,108,29,0,0,0,0,36,79,108,101,79,43,0,0; 0,0,101,108,108,58,0,0,22,108,108,108,14,0,0,0,108,108,108,29,0,0,0,58,108,108,108,108,108,58,0,0; 0,0,65,108,108,86,0,0,58,108,108,86,0,0,0,0,108,108,108,29,0,0,7,108,108,108,50,36,58,29,0,0; 0,0,36,108,108,108,7,0,86,108,108,50,0,0,0,0,108,108,108,29,0,0,29,108,108,108,22,0,0,0,0,0; 0,0,7,108,108,108,43,7,108,108,108,14,0,0,0,0,108,108,108,29,0,0,7,101,108,108,108,65,14,0,0,0; 0,0,0,72,108,108,58,36,108,108,86,0,0,0,0,0,108,108,108,29,0,0,0,43,101,108,108,108,108,43,0,0; 0,0,0,43,108,108,86,58,108,108,50,0,0,0,0,0,108,108,108,29,0,0,0,0,7,50,101,108,108,101,7,0; 0,0,0,7,108,108,108,86,108,108,14,0,0,0,0,0,108,108,108,29,0,0,0,0,0,0,7,108,108,108,29,0; 0,0,0,0,79,108,108,108,108,86,0,0,0,0,0,0,108,108,108,29,0,0,7,94,58,36,50,108,108,108,14,0; 0,0,0,0,50,108,108,108,108,50,0,0,0,0,0,0,108,108,108,29,0,0,36,108,108,108,108,108,108,58,0,0; 0,0,0,0,14,108,108,108,108,14,0,0,0,0,0,0,108,108,108,29,0,0,14,58,79,108,101,79,43,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 icon_matVis(:,:,2) =    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33,22,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,66,142,164,22,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,98,164,164,0,0; 0,44,164,164,22,109,164,153,66,22,109,164,153,44,0,0,0,0,44,109,142,164,164,120,55,0,164,164,164,164,164,98; 0,77,164,164,153,164,164,164,153,131,164,164,164,142,0,0,0,98,164,164,164,164,164,164,44,33,164,164,164,164,164,77; 0,98,164,164,98,0,120,164,164,109,11,109,164,164,0,0,87,164,164,77,11,77,164,164,11,0,44,164,164,66,0,0; 0,120,164,153,11,0,98,164,164,11,0,77,164,142,0,22,164,164,98,0,0,109,164,142,0,0,77,164,164,33,0,0; 0,164,164,98,0,0,120,164,120,0,0,109,164,120,0,77,164,164,22,0,0,142,164,109,0,0,98,164,164,0,0,0; 22,164,164,66,0,0,164,164,77,0,0,142,164,77,0,120,164,164,0,0,44,164,164,77,0,0,120,164,120,0,0,0; 55,164,164,44,0,33,164,164,55,0,0,164,164,66,0,120,164,164,44,11,131,164,164,66,0,0,164,164,142,44,11,0; 77,164,164,0,0,55,164,164,22,0,44,164,164,33,0,77,164,164,164,164,120,164,164,44,0,0,153,164,164,164,11,0; 109,164,131,0,0,77,164,164,0,0,66,164,164,0,0,0,87,153,153,87,11,164,164,44,0,0,66,142,164,153,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,53,13,0,0,0,0,0,0,0,0,0,0,0,0,0; 106,198,198,198,26,0,0,0,0,0,145,198,198,158,0,0,132,198,185,40,0,0,0,0,0,0,0,0,0,0,0,0; 40,198,198,198,79,0,0,0,0,13,198,198,198,92,0,0,198,198,198,92,0,0,0,0,0,0,0,0,0,0,0,0; 0,185,198,198,132,0,0,0,0,79,198,198,198,26,0,0,92,198,145,13,0,0,0,0,0,0,0,0,0,0,0,0; 0,119,198,198,185,0,0,0,0,119,198,198,158,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,66,198,198,198,53,0,0,0,185,198,198,92,0,0,0,198,198,198,53,0,0,0,0,66,145,198,185,145,79,0,0; 0,0,185,198,198,106,0,0,40,198,198,198,26,0,0,0,198,198,198,53,0,0,0,106,198,198,198,198,198,106,0,0; 0,0,119,198,198,158,0,0,106,198,198,158,0,0,0,0,198,198,198,53,0,0,13,198,198,198,92,66,106,53,0,0; 0,0,66,198,198,198,13,0,158,198,198,92,0,0,0,0,198,198,198,53,0,0,53,198,198,198,40,0,0,0,0,0; 0,0,13,198,198,198,79,13,198,198,198,26,0,0,0,0,198,198,198,53,0,0,13,185,198,198,198,119,26,0,0,0; 0,0,0,132,198,198,106,66,198,198,158,0,0,0,0,0,198,198,198,53,0,0,0,79,185,198,198,198,198,79,0,0; 0,0,0,79,198,198,158,106,198,198,92,0,0,0,0,0,198,198,198,53,0,0,0,0,13,92,185,198,198,185,13,0; 0,0,0,13,198,198,198,158,198,198,26,0,0,0,0,0,198,198,198,53,0,0,0,0,0,0,13,198,198,198,53,0; 0,0,0,0,145,198,198,198,198,158,0,0,0,0,0,0,198,198,198,53,0,0,13,172,106,66,92,198,198,198,26,0; 0,0,0,0,92,198,198,198,198,92,0,0,0,0,0,0,198,198,198,53,0,0,66,198,198,198,198,198,198,106,0,0; 0,0,0,0,26,198,198,198,198,26,0,0,0,0,0,0,198,198,198,53,0,0,26,106,145,198,185,145,79,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 icon_matVis(:,:,3) =    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,2,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,10,12,2,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,12,12,0,0; 0,3,12,12,2,8,12,11,5,2,8,12,11,3,0,0,0,0,3,8,10,12,12,9,4,0,12,12,12,12,12,7; 0,6,12,12,11,12,12,12,11,10,12,12,12,10,0,0,0,7,12,12,12,12,12,12,3,2,12,12,12,12,12,6; 0,7,12,12,7,0,9,12,12,8,1,8,12,12,0,0,6,12,12,6,1,6,12,12,1,0,3,12,12,5,0,0; 0,9,12,11,1,0,7,12,12,1,0,6,12,10,0,2,12,12,7,0,0,8,12,10,0,0,6,12,12,2,0,0; 0,12,12,7,0,0,9,12,9,0,0,8,12,9,0,6,12,12,2,0,0,10,12,8,0,0,7,12,12,0,0,0; 2,12,12,5,0,0,12,12,6,0,0,10,12,6,0,9,12,12,0,0,3,12,12,6,0,0,9,12,9,0,0,0; 4,12,12,3,0,2,12,12,4,0,0,12,12,5,0,9,12,12,3,1,10,12,12,5,0,0,12,12,10,3,1,0; 6,12,12,0,0,4,12,12,2,0,3,12,12,2,0,6,12,12,12,12,9,12,12,3,0,0,11,12,12,12,1,0; 8,12,10,0,0,6,12,12,0,0,5,12,12,0,0,0,6,11,11,6,1,12,12,3,0,0,5,10,12,11,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,50,13,0,0,0,0,0,0,0,0,0,0,0,0,0; 100,188,188,188,25,0,0,0,0,0,138,188,188,150,0,0,125,188,175,38,0,0,0,0,0,0,0,0,0,0,0,0; 38,188,188,188,75,0,0,0,0,13,188,188,188,88,0,0,188,188,188,88,0,0,0,0,0,0,0,0,0,0,0,0; 0,175,188,188,125,0,0,0,0,75,188,188,188,25,0,0,88,188,138,13,0,0,0,0,0,0,0,0,0,0,0,0; 0,113,188,188,175,0,0,0,0,113,188,188,150,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,63,188,188,188,50,0,0,0,175,188,188,88,0,0,0,188,188,188,50,0,0,0,0,63,138,188,175,138,75,0,0; 0,0,175,188,188,100,0,0,38,188,188,188,25,0,0,0,188,188,188,50,0,0,0,100,188,188,188,188,188,100,0,0; 0,0,113,188,188,150,0,0,100,188,188,150,0,0,0,0,188,188,188,50,0,0,13,188,188,188,88,63,100,50,0,0; 0,0,63,188,188,188,13,0,150,188,188,88,0,0,0,0,188,188,188,50,0,0,50,188,188,188,38,0,0,0,0,0; 0,0,13,188,188,188,75,13,188,188,188,25,0,0,0,0,188,188,188,50,0,0,13,175,188,188,188,113,25,0,0,0; 0,0,0,125,188,188,100,63,188,188,150,0,0,0,0,0,188,188,188,50,0,0,0,75,175,188,188,188,188,75,0,0; 0,0,0,75,188,188,150,100,188,188,88,0,0,0,0,0,188,188,188,50,0,0,0,0,13,88,175,188,188,175,13,0; 0,0,0,13,188,188,188,150,188,188,25,0,0,0,0,0,188,188,188,50,0,0,0,0,0,0,13,188,188,188,50,0; 0,0,0,0,138,188,188,188,188,150,0,0,0,0,0,0,188,188,188,50,0,0,13,163,100,63,88,188,188,188,25,0; 0,0,0,0,88,188,188,188,188,88,0,0,0,0,0,0,188,188,188,50,0,0,63,188,188,188,188,188,188,100,0,0; 0,0,0,0,25,188,188,188,188,25,0,0,0,0,0,0,188,188,188,50,0,0,25,100,138,188,175,138,75,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
@@ -2596,7 +2608,11 @@ colorbarIcon = load([matlabroot,'/toolbox/matlab/icons/colorbar.mat']);     %#ok
 colorbarIcon = struct2cell(colorbarIcon);
 colorbarIcon = permute(colorbarIcon{1},[2,1  ,3]);
 %% Gui Properties
-warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+if debugMatVis; t1 = debugMatVisOutput('Prepare main GUI', whos, toc(tStart), t1); end
+if ~debugMatVis
+  warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+  warning('off','MATLAB:ui:javaframe:PropertyToBeRemoved');
+end
 %Gui Figure
 set(gui, 'Units', 'Pixel', 'Position', customConfig.winPos.gui, 'Name', ['matVis: ', allNames],...
     'MenuBar', 'none', 'Resize', 'off', 'NumberTitle', 'off',...
@@ -2611,7 +2627,8 @@ set(gui, 'Renderer',' zbuffer');
 try
     gui_jf = get(gui,'JavaFrame');
     gui_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_matVis))));
-catch    
+    %[msg,msgID] = lastwarn;
+catch  
 end
 panel_positionControls = uipanel(gui, 'units','pixel','Position', [-1 customConfig.winPos.gui(4)-150-(nDim-1)*40 customConfig.winPos.gui(4)+2 130+(nDim-1)*40],...
     'BackgroundColor',get(gui, 'Color'),'BorderType','none');
@@ -3500,6 +3517,7 @@ txt_tooltips = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColo
     'Position', [5 0 customConfig.winPos.gui(3)-10 60], 'String','Enable to show tooltips.', ...
     'HorizontalAlignment', 'left', 'Fontsize',8);
 %% Image, Zoom and Plot Windows
+if debugMatVis; t1 = debugMatVisOutput('Prepare Image, Zoom and Plot Windows', whos, toc(tStart), t1); end
 %Default window positions
 %Image, zoom and plot windows
 for i = 1:nMat
@@ -3510,7 +3528,7 @@ for i = 1:nMat
     try
         im_jf = get(imageWin(i),'JavaFrame');
         im_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_image))));
-    catch    
+    catch
     end
     %winVis{imageWin(i)} =   'on';
     zoomWin(i) = figure('Units', 'Pixel', 'Position', customConfig.winPos.zoomWin(i,:),'Name', ['Zoom (', varName{i},')'], ...
@@ -3521,7 +3539,7 @@ for i = 1:nMat
     try
         zoom_jf = get(zoomWin(i),'JavaFrame');
         zoom_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_zoom))));
-    catch    
+    catch
     end
     %winVis{zoomWin(i)} =   'on';
     plotWin(i) = figure('Units', 'Pixel', 'Position', customConfig.winPos.plotWin(i,:),'Name', ['Plots (', varName{i}, ')'], ...
@@ -3532,7 +3550,7 @@ for i = 1:nMat
         plot_jf = get(plotWin(i),'JavaFrame');
         xx = javax.swing.ImageIcon(im2java(uint8(icon_plot)));
         plot_jf.setFigureIcon(xx);
-    catch    
+    catch
     end
     %winVis{plotWin(i)} =   'on';
 end
@@ -3547,6 +3565,7 @@ try
 catch    
 end
 warning('on','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+warning('on','MATLAB:ui:javaframe:PropertyToBeRemoved');
 %Set Scrollwheel Callback if possible (starting from Matlab 2007a)
 try
     set([imageWin,zoomWin], 'WindowScrollWheelFcn', @scrollWheelCallback);
@@ -3562,6 +3581,7 @@ if withAlpha
     set(zoomWin, 'Color', 'k');
 end
 %% Histogram Window
+if debugMatVis; t1 = debugMatVisOutput('Prepare Histogram Window', whos, toc(tStart), t1); end
 histWin = figure('Units', 'Pixel', 'Name', ['Histogram (',varName{1},') - Click: lin / log'], ...
     'MenuBar', 'none', 'NumberTitle', 'off', 'Visible', 'off', 'HandleVisibility', 'off','WindowStyle','normal', ...
     'WindowButtonDownFcn', {@updateHist,1}, 'CloseRequestFcn', {@showHist,1}, 'UserData', 0);
@@ -3569,12 +3589,19 @@ histAx(1) = axes('Parent',histWin, 'Box', 'on');
 histAx(2) = axes('Parent',histWin ,'Position',get(histAx,'Position'),'Visible','off'); %Axis for contrast lines  ,'Position',get(histAx,'Position')
 hold(histAx(1), 'on');
 hold(histAx(2), 'on');
-warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+if ~debugMatVis
+  warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+  warning('off','MATLAB:ui:javaframe:PropertyToBeRemoved');
+else
+  set([gui imageWin zoomWin plotWin histWin],'HandleVisibility', 'on')
+end
 hist_jf = get(histWin,'JavaFrame');
 histIcon(isnan(histIcon)) = 1;
 hist_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(255*histIcon))));
 warning('on','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+warning('on','MATLAB:ui:javaframe:PropertyToBeRemoved');
 %% Start
+if debugMatVis; t1 = debugMatVisOutput('Start ''matVis''', whos, toc(tStart), t1); end
 s = get(tbWin, 'Value');
 set(tbWin, 'Value', 1); %Draw all windows to initialize all objects and axes
 drawImages;
@@ -3625,6 +3652,8 @@ if nargout == 1
 else
     withOutput = 0;
 end
+if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart), t1); end
+
 % timerHist = timer('TimerFcn',@updateGlobalHist,'StartDelay',.1);
 % start(timerHist);
 %% Callback Functions
@@ -9055,10 +9084,14 @@ end
             profileWin =  figure('Units', 'Pixel', 'Name', 'Profile Manager',...
                 'MenuBar', 'none', 'NumberTitle', 'off','CloseRequestFcn', {@profileGui,0}, 'HandleVisibility', 'off',...
                 'WindowStyle','normal', 'Position', [gp(1) gp(2)-387 130 355]);
-            warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
-            profile_jf = get(profileWin,'JavaFrame');
-            profile_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_profile))));
-            warning('on','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+              if ~debugMatVis
+                warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+                warning('off','MATLAB:ui:javaframe:PropertyToBeRemoved');
+              end
+              profile_jf = get(profileWin,'JavaFrame');
+              profile_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_profile))));
+              warning('on','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+              warning('on','MATLAB:ui:javaframe:PropertyToBeRemoved');
             txt_profileList = uicontrol(profileWin, 'Style', 'Text', 'Position', [10 330 110 15], ...
                 'String','List of profiles','FontWeight', 'bold',...
                 'BackgroundColor', get(profileWin, 'Color'), 'HorizontalAlignment', 'center');
@@ -10097,11 +10130,15 @@ end
             if ismac
                 set(roiWin, 'Resize','off');
             end
-            warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+            if ~debugMatVis
+              warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+              warning('off','MATLAB:ui:javaframe:PropertyToBeRemoved');
+            end
             roi_jf = get(roiWin,'JavaFrame');
             roi_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_roi))));
             warning('on','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
-            txt_roiList = uicontrol(roiWin, 'Style', 'Text', 'Position', [10 315 110 15], ...
+            warning('on','MATLAB:ui:javaframe:PropertyToBeRemoved');
+            roiTxtListbox = uicontrol(roiWin, 'Style', 'Text', 'Position', [10 roiWinPos(4)-15 110 15], ...
                 'String','List of ROIs','FontWeight', 'bold',...
                 'BackgroundColor', get(roiWin, 'Color'), 'HorizontalAlignment', 'center');
             %Listbox for Rois
@@ -11238,7 +11275,7 @@ end
         end
         try
             delete(roiCenterIndicator)
-        catch    
+        catch ME; if debugMatVis, fprintf(2,'%s\n%s',ME.identifier, ME.message); disp(getReport(ME)); end    
         end
         set([imAx(:) zoomAx(:)],'NextPlot','add')
         for iii = 1:numel(data)
@@ -11602,10 +11639,10 @@ end
             end
             if strcmp(q,'To ''base'' workspace') || strcmp(q,'To workspace') 
                 assignin('base', 'matVisRoiExport', roiListExp(roiSel));
-                fprintf('ROIs exported to base workspace!\n');
+                fprintf(2,'ROIs exported to base workspace!\n');
             elseif strcmp(q, 'To ''caller'' workspace')
                 assignin('caller', 'matVisRoiExport', roiListExp(roiSel));
-                fprintf('ROIs exported to caller workspace!\n');
+                fprintf(2,'ROIs exported to caller workspace!\n');
             elseif strcmp(q, 'To File')
                 [f,p] = uiputfile('.mat','Choose folder and filename to save rois!');
                 if f == 0
@@ -11615,9 +11652,9 @@ end
                 matVisRoiExport =  roiListExp(roiSel); %#ok
                 save([p,f],'matVisRoiExport');
                 checkSavedFile([p,f]); % controls, if saving was successfull (due to some unknown issue, rearely the saved file is corrupt and cannot read by matlab)
-                fprintf('ROIs exported to file!\n');
+                fprintf(2, 'ROIs exported to file!\n');
             else
-              fprintf('Roi export CANCELed!\n')
+              fprintf(2, 'Roi export CANCELed!\n')
             end
             clear matVisRoiExport roiListExp
         end
@@ -11637,8 +11674,10 @@ end
           noMatVisROIs = false;
           try
             matVisRoiExport = cell2mat(struct2cell(load([p,f])));
-          catch    %#ok
-            noMatVisROIs = true;
+          catch ME   %#ok
+            warning(ME.identifier,'%s',ME.message)
+            if debugMatVis, disp(getReport(ME)); debugMatVisFcn(2); end
+            return
           end
         end
         if ~isstruct(matVisRoiExport) || ~all(ismember({'corners','cornersPixelDim','index' ,'mask','name','number','rectangle','settings'},fieldnames(matVisRoiExport)))
@@ -13587,6 +13626,34 @@ end
           fprintf('\n')
           assignin('base', 'matVisFunctionCalls', fctCount);  % saves fctCount to matlab workspace when complete function call for later analysis
         end
+    end
+    function t1 = debugMatVisOutput(outputString, wh, t, t1)
+      % this function generates an output to show at which position the executing
+      % script is right now
+
+%       whb=zeros(length(wh),1);
+%       for n=1:length(wh)
+%         whb(n)=wh(n).bytes;
+%       end;
+%       whb = sum(whb)/1024/1024;
+      if t > 1000
+        tstr = [];
+        if t>24*60*60
+          tstr = [datestr(t/24/60/60,'dd') 'd '];
+        end
+        tstr = [tstr datestr(t/24/60/60,'HH:MM:SS')];
+      else
+        tstr = sprintf('%7.1fs', t);
+      end
+      s = dbstack;
+      if length(s)>1
+        fctLineStr = sprintf('%s:<a href="matlab:matlab.desktop.editor.openAndGoToLine(which(''%s''),%d);">line %d</a>',s(2).file(1:end-2),s(2).file,s(2).line, s(2).line);%fctName
+      else
+        fctLineStr = [];%fctName
+      end
+      fprintf('          (%s / %7.3fs) %s %s\n', tstr, t-t1, fctLineStr, outputString);
+      % fprintf('(%s / %7.3fs) %s %s, occupied memory: %4.2fMB\n', tstr, t-t1, fctLineStr, outputString, whb);
+      t1=t;
     end
     if debugMatVis, debugMatVisFcn(2); end
 end
