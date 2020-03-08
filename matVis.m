@@ -4741,12 +4741,21 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         %right-clicks' in main GUI
         if strcmp(get(gui,'SelectionType'),'alt')
             p1 = round(get(gui,'CurrentPoint'));
-            btPosAspectRatio      = get(tbAspRatio,         'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0];
-            btPosPlotsXLim        = get(tb_plotsXLim,       'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
-            btPosPlotsYLim        = get(tb_plotsYLim,       'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
-            btPosMean             = get(bt_mean,            'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
-            btPos_100pct          = get(bt_100pct,          'Position') + get(panel_imageControls, 'Position') .* [1 1 0 0];
-            
+            btPosAspectRatio      = get(tbAspRatio,         'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0]; % set aspect value
+            btPosSldLimMin        = get(sldLimMin,          'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0]; % resets to default
+            btPosSldLimMax        = get(sldLimMax,          'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0]; % resets to default
+            btPosValSldMin        = get(valSldMin,          'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0]; % resets to default
+            btPosValSldMax        = get(valSldMax,          'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0]; % resets to default
+            if withAlpha
+              btPosEdt_alphaMin        = get(edt_alphaMin,          'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0]; % resets to default
+              btPosEdt_alphaMax        = get(edt_alphaMax,          'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0]; % resets to default
+            end
+            btPos_100pct          = get(bt_100pct,          'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0]; % set scaling factor
+            %%
+            btPosPlotsXLim        = get(tb_plotsXLim,       'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0]; % set plot XLim
+            btPosPlotsYLim        = get(tb_plotsYLim,       'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0]; % set plot YLim
+            btPosMean             = get(bt_mean,            'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0]; % Reduce setting mode by 1
+
             btPos_jumpMin         = get(bt_jumpMin,         'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
             btPos_jumpMax         = get(bt_jumpMax,         'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
             btPos_findLocalMinImg = get(bt_findLocalMinImg, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
@@ -4755,7 +4764,6 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             btPos_findLocalMaxZm  = get(bt_findLocalMaxZm,  'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
             btPos_findGlobalMinZm = get(bt_findGlobalMinZm, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
             btPos_findGlobalMaxZm = get(bt_findGlobalMaxZm, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
-            % Right click on play buttons: play backwards
             revPlay = NaN;
             for ii = 1:nDim
                 btPosPlay = get(bt_playAll(ii), 'Position')+ get(panel_positionControls, 'Position') .* [1 1 0 0];
@@ -4766,7 +4774,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     revPlay = -ii;
                 end
             end
+            %%
             if ~isnan(revPlay)
+                %% Right click on play buttons: play backwards
                 if revPlay > 0
                     set(bt_playAll(revPlay), 'Value',1);
                     playCallback(0,0,revPlay,'all',0);
@@ -4774,9 +4784,8 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     set(bt_playZoom(-1*revPlay), 'Value',1);
                     playCallback(0,0,-1*revPlay,'zoom',0);
                 end
-            %Right click on aspect ratio button: set aspect ratio if
-            %button value is 1
             elseif pointInArea(p1,btPosAspectRatio) && get(tbAspRatio, 'Value')
+                %% Right click on aspect ratio button: set aspect ratio if button value is 1
                 gp = get(gui,'Position');
                 set(tempWin, 'HandleVisibility', 'on');
                 if ~isempty(tempWin) && any(get(0,'Children') == tempWin)
@@ -4794,9 +4803,34 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 uicontrol(tempWin, 'Style', 'Edit', 'Position', [40 10 50 15], ...
                     'String',['[',num2str(aspRatio(1)),' ',num2str(aspRatio(2)),']'],'FontWeight', 'bold',...
                     'HorizontalAlignment', 'center', 'Callback', @updateAspRatio);
-                %Right click on XLim button: set plot XLim if
-                %button value is 1
+            elseif pointInArea(p1,btPosSldLimMin)
+                %% Right click: resets to default
+                set(sldLimMin, 'String', num2str(minVal(1)));
+                updateSldLim(sldLimMin);
+            elseif pointInArea(p1,btPosSldLimMax)
+                %% Right click: resets to default
+                set(sldLimMax, 'String', num2str(maxVal(1)));
+                updateSldLim(sldLimMax);
+            elseif pointInArea(p1,btPosValSldMin)
+                %% Right click: resets to default
+                set(valSldMin, 'String', num2str(minVal(1))); % sldLimVal
+                setColormapFromEdit([],[],1);
+            elseif pointInArea(p1,btPosValSldMax)
+                %% Right click: resets to default
+                set(valSldMax, 'String', num2str(maxVal(1)));
+                setColormapFromEdit([],[],2);
+            elseif withAlpha && pointInArea(p1,btPosEdt_alphaMin)
+                %% Right click: resets to default
+                cmMinMax(nMat+1,1) = minVal(nMat+1);
+                set(edt_alphaMin, 'String', num2Str(cmMinMax(nMat+1,1),4));
+                updateAlphaContrast([],[],'etxt',1);
+            elseif withAlpha && pointInArea(p1,btPosEdt_alphaMax)
+                %% Right click: resets to default
+                cmMinMax(nMat+1,2) = maxVal(nMat+1);
+                set(edt_alphaMax, 'String', num2Str(cmMinMax(nMat+1,2),4));
+                updateAlphaContrast([],[],'etxt',2);
             elseif pointInArea(p1,btPosPlotsXLim) && get(tb_plotsXLim, 'Value')
+                %% Right click on XLim button: set plot XLim if button value is 1
                 gp = get(gui,'Position');
                 set(tempWin, 'HandleVisibility', 'on');
                 if ~isempty(tempWin) && any(get(0,'Children') == tempWin)
@@ -4818,9 +4852,8 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                         'String',['[',num2str(plotXLim(ii,1)),' ',num2str(plotXLim(ii,2)),']'],...
                         'HorizontalAlignment', 'center', 'Callback', {@updatePlotLim,'x'});
                 end
-                %Right click on YLim button: set plot YLim if
-                %button value is 1
             elseif pointInArea(p1, btPosPlotsYLim) && get(tb_plotsYLim, 'Value')
+                %% Right click on YLim button: set plot YLim if button value is 1
                 gp = get(gui,'Position');
                 set(tempWin, 'HandleVisibility', 'on');
                 if ~isempty(tempWin) && any(get(0,'Children') == tempWin)
@@ -4843,11 +4876,11 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 end
                 if debugMatVis, debugMatVisFcn(2); end
                 return
-                %Right click on meanPlot button: Reduce setting mode by 1
             elseif pointInArea(p1, btPosMean)
+                %% Right click on meanPlot button: Reduce setting mode by 1
                 meanPlots(-1);
-                %Right click on 100% button: set scaling factor
             elseif pointInArea(p1, btPos_100pct)
+                %% Right click on 100% button: set scaling factor
                 gp = get(gui,'Position');
                 set(tempWin, 'HandleVisibility', 'on');
                 if ~isempty(tempWin) && any(get(0,'Children') == tempWin)
@@ -4873,47 +4906,17 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             elseif pointInArea(p1, btPos_findGlobalMaxZm), findExtremum([],[],'max','globalZoom',0);
             else
                 %% Right click on main gui: Bring all visible windows to front
-                if get(tb_tifPar, 'Value')
-                    figure(tifParFig);
-                end
-                if get(tbHist,'Value') && ~withAlpha
-                    figure(histWin);
-                end
-                if get(tbRoi,'Value')
-                    figure(roiWin);
-                end
-                if get(tbProfile,'Value')
-                    figure(profileWin);
-                    figure(profileTraceWin);
-                end
-                if get(tbWin(1),'Value')
-                    for ii=1:nMat
-                        figure(imageWin(ii));
-                    end
-                end
-                if get(tbWin(2),'Value')
-                    for ii=1:nMat
-                        figure(zoomWin(ii));
-                    end
-                end
-                if get(tbWin(3),'Value')
-                    for ii=1:nMat
-                        figure(plotWin(ii));
-                    end
-                end
-                if get(tbRecord, 'Value')
-                    figure(movdata.gui.hvidgen);
-                    figure(movdata.prev.hprev);
-                end
-                if get(roiName, 'Value')
-                    figure(tempRoiPropWin);
-                end
-                if get(roiBtRename, 'Value')
-                    figure(tempRoiSetWin);
-                end
-                if get(bt_export, 'Value')
-                    figure(exportWin);
-                end
+                if get(tb_tifPar, 'Value');               figure(tifParFig);  end
+                if get(tbHist,'Value') && ~withAlpha;     figure(histWin);    end
+                if get(tbRoi,'Value');                    figure(roiWin);     end
+                if get(tbProfile,'Value');                figure(profileWin); figure(profileTraceWin); end
+                if get(tbWin(1),'Value');  for ii=1:nMat; figure(imageWin(ii)); end; end
+                if get(tbWin(2),'Value');  for ii=1:nMat; figure(zoomWin(ii));  end; end
+                if get(tbWin(3),'Value');  for ii=1:nMat; figure(plotWin(ii));  end; end
+                if get(tbRecord, 'Value');                figure(movdata.gui.hvidgen); figure(movdata.prev.hprev); end
+                if get(roiName, 'Value');                 figure(tempRoiPropWin); end
+                if get(tbRoiRename, 'Value');             figure(tempRoiSetWin);  end
+                if get(bt_export, 'Value');               figure(exportWin);      end
             end
         elseif strcmp(get(gui,'SelectionType'),'extend')  
             %% Move all windows together 
@@ -4925,13 +4928,17 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 startPosWins(1,ii,:) = get(imageWin(ii),'Position');
                 startPosWins(2,ii,:) = get(zoomWin(ii),'Position');
                 startPosWins(3,ii,:) = get(plotWin(ii),'Position');
-                if ~isempty(histWin);         startPosWins(4,ii,:) = get(histWin,'Position');         end
-                if ~isempty(roiWin);          startPosWins(5,ii,:) = get(roiWin,'Position');          end
-                if ~isempty(profileWin);      startPosWins(6,ii,:) = get(profileWin,'Position');      end
-                if ~isempty(profileTraceWin); startPosWins(7,ii,:) = get(profileTraceWin,'Position'); end
-                if ~isempty(tempRoiSetWin);   startPosWins(8,ii,:) = get(tempRoiSetWin,'Position');   end
-                if ~isempty(tempRoiPropWin);  startPosWins(9,ii,:) = get(tempRoiPropWin,'Position');  end
            end
+                if ~isempty(histWin);         startPosWins(4,1,:) = get(histWin,'Position');         end
+                if ~isempty(roiWin);          startPosWins(5,1,:) = get(roiWin,'Position');          end
+                if ~isempty(profileWin);      startPosWins(6,1,:) = get(profileWin,'Position');      end
+                if ~isempty(profileTraceWin); startPosWins(7,1,:) = get(profileTraceWin,'Position'); end
+                if ~isempty(tempRoiSetWin);   startPosWins(8,1,:) = get(tempRoiSetWin,'Position');   end
+                if ~isempty(tempRoiPropWin);  startPosWins(9,1,:) = get(tempRoiPropWin,'Position');  end
+                if get(tbRecord, 'Value')
+                  startPosWins(10,1,:) = get(movdata.gui.hvidgen,'Position');
+                  startPosWins(11,1,:) = get(movdata.prev.hprev ,'Position');
+                end
         end
         if debugMatVis, debugMatVisFcn(2); end
         function moveAllWindows(varargin)
@@ -4942,13 +4949,17 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 set(imageWin(iii),'Position', squeeze(startPosWins(1,iii,:))' + [p2-p1 0 0]);
                 set(zoomWin(iii),'Position', squeeze(startPosWins(2,iii,:))' + [p2-p1 0 0]);
                 set(plotWin(iii),'Position',squeeze(startPosWins(3,iii,:))' + [p2-p1 0 0]);
-                if ~isempty(histWin);         set(histWin,        'Position',squeeze(startPosWins(4,iii,:))' + [p2-p1 0 0]); end
-                if ~isempty(roiWin);          set(roiWin,         'Position',squeeze(startPosWins(5,iii,:))' + [p2-p1 0 0]); end
-                if ~isempty(profileWin);      set(profileWin,     'Position',squeeze(startPosWins(6,iii,:))' + [p2-p1 0 0]); end
-                if ~isempty(profileTraceWin); set(profileTraceWin,'Position',squeeze(startPosWins(7,iii,:))' + [p2-p1 0 0]); end
-                if ~isempty(tempRoiSetWin);   set(tempRoiSetWin,  'Position',squeeze(startPosWins(8,iii,:))' + [p2-p1 0 0]); end
-                if ~isempty(tempRoiPropWin);  set(tempRoiPropWin, 'Position',squeeze(startPosWins(9,iii,:))' + [p2-p1 0 0]); end
            end
+                if ~isempty(histWin);         set(histWin,        'Position',squeeze(startPosWins(4,1,:))' + [p2-p1 0 0]); end
+                if ~isempty(roiWin);          set(roiWin,         'Position',squeeze(startPosWins(5,1,:))' + [p2-p1 0 0]); end
+                if ~isempty(profileWin);      set(profileWin,     'Position',squeeze(startPosWins(6,1,:))' + [p2-p1 0 0]); end
+                if ~isempty(profileTraceWin); set(profileTraceWin,'Position',squeeze(startPosWins(7,1,:))' + [p2-p1 0 0]); end
+                if ~isempty(tempRoiSetWin);   set(tempRoiSetWin,  'Position',squeeze(startPosWins(8,1,:))' + [p2-p1 0 0]); end
+                if ~isempty(tempRoiPropWin);  set(tempRoiPropWin, 'Position',squeeze(startPosWins(9,1,:))' + [p2-p1 0 0]); end
+                if get(tbRecord, 'Value')
+                  set(movdata.gui.hvidgen, 'Position',squeeze(startPosWins(10,1,:))' + [p2-p1 0 0]);
+                  set(movdata.prev.hprev , 'Position',squeeze(startPosWins(11,1,:))' + [p2-p1 0 0]);
+                end
         end
         function releaseMiddleClickGui(varargin)
             set(gui,'WindowButtonMotionFcn',[]);
