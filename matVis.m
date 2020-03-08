@@ -4235,18 +4235,16 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         if get(tbAlphaBW, 'Value')
           %set(tbAlphaBW,'BackgroundColor','k')
           set(tbAlphaBW, 'CData', icon_image_24x24.*icon_AlphaImI_24)
-          for ii = 1:nMat
-            set(imAx(ii), 'Color', 'k');
-            set(zoomAx(ii), 'Color', 'k');
-          end
+          set([imAx zoomAx], 'Color', 'k');
+          roiCol = 'w';
         else
           %set(tbAlphaBW,'BackgroundColor','w')
           set(tbAlphaBW, 'CData', icon_image_24x24+(1-icon_image_24x24).*(1-icon_AlphaImI_24))
-          for ii = 1:nMat
-            set(imAx(ii), 'Color', 'w');
-            set(zoomAx(ii), 'Color', 'w');
-          end
+          set([imAx zoomAx], 'Color', 'w');
+          roiCol = 'k';
         end
+        set([lineHorIm lineVertIm lineHorZoom lineVertZoom], 'Color', roiCol);
+        if get(tbRoi,'Value'); drawRois; end
         if debugMatVis, debugMatVisFcn(2); end
     end
 %Callback for ImageWinBGCol toggle button
