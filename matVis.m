@@ -872,7 +872,7 @@ projMethod = 0;                          %Number indicating method for projectio
 if withAlpha
   projMethodStr = {'none';'max';sprintf('max(%s)',char(945));'min';'mean';'std';'var'; 'tile'};
 else
-  projMethodStr = {'none';'max';'min';'mean';'sum';'std';'var'; 'tile'};
+  projMethodStr = {'none';'max';'min';'mean';'median';'sum';'std';'var'; 'tile'};
 end
 % Tile scan definition
 nRows = 1;
@@ -5807,6 +5807,14 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                   currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')./sum(cA,           3, 'omitnan'); % mean Intensity
                 else
                   currIm{ii} = squeeze(mean(c,  3, 'omitnan')); % used to be nanmean
+                end
+              case 'median'      %median projection
+                if withAlpha
+                  currIm{ii}       = sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'); % weighted mean ratio % wpercentile(c,cA,.5);% 
+                  currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')./sum(cA,           3, 'omitnan'); % mean Intensity
+                  fprintf(2,'Not clear how to calculate, used mean instead!!!\n')
+                else
+                  currIm{ii} = squeeze(median(c,  3, 'omitnan')); % used to be nanmean
                 end
               case 'sum'      %mean projection
                   currIm{ii} = squeeze(sum(c,  3, 'omitnan')); % used to be nanmean
