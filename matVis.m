@@ -1167,7 +1167,7 @@ end
 
 % currConfig = customConfig; %Not necessary after removing currConfig
 % option
-
+%% defining additional start parameters
 if debugMatVis; t1 = debugMatVisOutput('Predefenition of Config: defining additional start parameters', whos, toc(tStart), t1); end
 % Start values (if specified)
 updateProj = 0;  % Needs to be updated if projection paramter is specified
@@ -1218,8 +1218,8 @@ if ~isempty(startPar)
                 rgbDim = propVal;
                 if ~isempty(rgbDim); updateRGB = 1; end
             case 'projDim'   % checked
+                projDim = min(nDim,propVal);
                 updateProj = 1;
-                projDim = propVal;
             case 'projMethod'   % checked
               if ischar(propVal)
                 propVal = find(ismember(projMethodStr, propVal)); 
@@ -3608,7 +3608,7 @@ if debugMatVis; t1 = debugMatVisOutput('Start ''matVis''', whos, toc(tStart), t1
 s = get(tbWin, 'Value');
 set(tbWin, 'Value', 1); %Draw all windows to initialize all objects and axes
 drawImages;
-if updateProj   %Update value of projection dimenions popmenu if projetion dimension is given as start par
+if nDim > 2 && updateProj   %Update value of projection dimenions popmenu if projetion dimension is given as start par
     s = get(projDimPop, 'String');
     set(projDimPop, 'Value',find(strcmp(s, dimNames{projDim})));
     if strcmp(projMethodStr{projMethod+1},'tile')
@@ -8937,12 +8937,17 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         if debugMatVis, debugMatVisFcn(1); end
         ind = [];             % index list of new dataset 
         indC = false(1,nDim); % index of all singular dimensions
-        indCE = indC;         
+        indCE = indC;         % 
         for iii = 1:nDim
           ind{iii}  = eval(get(exportTxt(iii), 'String'));    %#ok
           indC(iii) = length(ind{iii})==1;
         end
-        indCE(end) = indC(end); 
+        % remove the last singular dimensions
+        myInd = 1:nDim; myInd = myInd(cumsum(indC,'reverse') == nDim:-1:1);
+        if ~isempty(myInd)
+          indCE(myInd) = indC(myInd);
+        end
+        %
         for iii = 1:numel(data)
           inputArg{iii} = data{iii}(ind{:});
         end
@@ -8981,7 +8986,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                            'colorMap',customConfig.colormap,...
                            'aspRatio',customConfig.aspectRatio,...
                            'rgbDim',rgbDim,...
-                           'projDim',projDim-sum(indC(1:projDim)),...
+                           'projDim',projDim-sum(indC(1:(projDim-1))),...
                            'projMethod' ,projMethod,...
                            'windowVisibility',[customConfig.winVis.imageWin,customConfig.winVis.zoomWin,customConfig.winVis.plotWin],...
                            'objVisibility',customConfig.lineVis};
