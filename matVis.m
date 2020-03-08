@@ -5939,7 +5939,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 for ii=1:nMat
                     cb = cb_axes(ii);
                     if currGamma(ii) == 1
-                      set(cb, 'YTickLabel', get(cb,'YTick'));
+                      set(cb, 'TickLabelsMode', 'auto'); % set(cb, 'YTickLabel', get(cb,'YTick'));
                     else
                       ytl = applyGamma([cmMinMax(ii,1) get(cb,'YTick') cmMinMax(ii,2)],cmMinMax(ii,:),currGamma(ii),-1);
                       ytlC = {}; for nn=1:length(ytl)-2;ytlC{nn}=num2Str(ytl(nn+1),3);end
