@@ -11742,9 +11742,10 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             elseif strcmp(q, 'To ''caller'' workspace')
                 assignin('caller', 'matVisRoiExport', roiListExp);
                 fprintf(2,'ROIs exported to caller workspace!\n');
-            elseif strcmp(q, 'To File')
+            elseif strcmp(q, 'To file')
                 [f,p] = uiputfile('.mat','Choose folder and filename to save rois!');
                 if f == 0
+                  fprintf(2, 'Roi export CANCELed!\n')
                   if debugMatVis, debugMatVisFcn(2); end
                   return
                 end
