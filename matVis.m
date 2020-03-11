@@ -5097,13 +5097,8 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         % Leave if window is empty (can happen for plotWin in ROI mode)
         if isempty(get(currWin, 'Children'))
           % does this ever happen???
-          stopHere
-          % following code looks very old style
-            %if debugMatVis
-            %    disp([repmat(' ',[1 debugIndent*fctLevel]) num2str(fctCount.(ST)) ': End   buttonDownCallback']);
-            %    fctLevel = fctLevel-1;
-            %end
-            %return
+          % YES, if one klicks to an empty plot win
+          %stopHere
         else
           % "Normal" button clicks
           switch get(currWin,'SelectionType')
@@ -5127,7 +5122,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                   p1 = pixelLocation(p1);
                   p2 = pixelLocation(p2);
                 elseif any(currWin == plotWin)
-                  p1 = pixelLocation(p1(1,1),plotDim(find(subPlotHandles(plotWin==myGcf,:) == myGca)));
+                  p1 = pixelLocation(p1(1,1), plotDim(find(subPlotHandles(plotWin==myGcf,:) == myGca)));
                   p2 = pixelLocation(p2(1,1), plotDim(find(subPlotHandles(plotWin==myGcf,:) == myGca)));
                 end
               end
@@ -11374,11 +11369,11 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         if get(tbRoiShowNames, 'Value')
           if ~isempty(roiText); set([roiText.im roiText.zoom], 'Visible', 'on'); end
           set(tbRoiShowNames, 'BackgroundColor',[168 198 247]/255);
-          legend(subPlotHandles(:),'show')
+          if ~isempty(subPlotHandles), legend(subPlotHandles(:),'show'); end
         else
           if ~isempty(roiText); set([roiText.im roiText.zoom], 'Visible', 'off'); end
           set(tbRoiShowNames, 'BackgroundColor',guiBGCol);
-          legend(subPlotHandles(:),'hide')
+          if ~isempty(subPlotHandles), legend(subPlotHandles(:),'hide'); end
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
