@@ -1200,8 +1200,14 @@ if ~isempty(startPar)
                 % Avoid that the contrast values are outside the min/max
                 % range of each data set.
                 for j = 1:nMat
+                  if cmMinMax(j,1)<maxVal(j) && minVal(j)<cmMinMax(j,2)
                     cmMinMax(j,1) = max(cmMinMax(j,1),minVal(j));
                     cmMinMax(j,2) = min(cmMinMax(j,2),maxVal(j));
+                  else
+                    fprintf(2,'matVis start parameter ''cmMinMax(%d)'' [%s, %s] was rejected because of out of range if dataset [%s, %s]!!!\n',...
+                      j, num2Str(cmMinMax(j,1),3), num2Str(cmMinMax(j,2),3), num2Str(minVal(j),3), num2Str(maxVal(j),3) )
+                    cmMinMax(j,:) = [minVal(j), maxVal(j)]; 
+                  end
                 end
                 customConfig.colormapMode = 'Manual';
                 customConfig.linkContrastSettings = 0;
