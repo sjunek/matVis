@@ -6233,6 +6233,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
     function updateGuiHistVal(varargin)
         if debugMatVis, debugMatVisFcn(1); end
         if rgbCount == 0
+          if min(currImVal{currContrastSel}(:))==max(currImVal{currContrastSel}(:))
+            guiHistVal = zeros(1,length(get(histAxPlot, 'YData')))+.1;
+          else
             if strcmp(get(histAxGui, 'USerData'),'gamma')
               if withAlpha
                 guiHistVal = hist1wf([single(currIm{currContrastSel}(:)),single(currAlphaMap{currContrastSel}(:))],histXData)';
@@ -6246,8 +6249,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 guiHistVal = histcounts(single(currImVal{currContrastSel}(:)),histXData);
               end
             end
-            set(histAxPlot, 'YData', guiHistVal, 'XData',histXDataBin);
-            updateGuiHist(guiHistVal);
+          end
+          set(histAxPlot, 'YData', guiHistVal, 'XData',histXDataBin);
+          updateGuiHist(guiHistVal);
         else
             % For RGB modes, histogram values are determined in updateCurrIm
             % and passed to updateCurrIm as input h
