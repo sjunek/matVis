@@ -5937,14 +5937,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             end
             % Set correct y-ticks in colorbar in image window
             if get(tbColorbar, 'Value') == 1
-                for ii=1:nMat
+                for ii=1:nMat % loop over several Mat not checked
                     cb = cb_axes(ii);
                     if currGamma(ii) == 1
                       set(cb, 'TickLabelsMode', 'auto'); % set(cb, 'YTickLabel', get(cb,'YTick'));
                     else
-                      ytl = applyGamma([cmMinMax(ii,1) get(cb,'YTick') cmMinMax(ii,2)],cmMinMax(ii,:),currGamma(ii),-1);
-                      ytlC = {}; for nn=1:length(ytl)-2;ytlC{nn}=num2Str(ytl(nn+1),3);end
-                      set(cb, 'YTickLabel', ytlC);
+                      ytl = applyGamma(get(cb,'YTick'),cmMinMax(ii,:),currGamma(ii),-1);
+                      set(cb, 'YTickLabel', cellfun(@(x)num2Str(x,2),num2cell(ytl),'UniformOutput',false));
                     end
                 end
             end
@@ -6218,15 +6217,25 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         if debugMatVis, debugMatVisFcn(2); end
     end
     function out = applyGamma(in,contrastMinMax, gammaVal, gammaSign)
-        if debugMatVis, debugMatVisFcn(1); end
+        if debugMatVis > 1, debugMatVisFcn(1); end
         in = double(in);
-        % Stretch data inside the contrast range to the interval [0 1]
-        out = scaleMinMax(in,0, 1, contrastMinMax(1), contrastMinMax(2), 1);
-        % Apply gamma
-        out = out.^(gammaVal^gammaSign);
-        % Stretch to original range
-        out = scaleMinMax(out,contrastMinMax(1), contrastMinMax(2), 0, 1, 1);
-        if debugMatVis, debugMatVisFcn(2); end
+        % check for Zero centered colorbar
+        if isempty(strfind(popLutString{get(popLut, 'Value')},'(0 centered)'))
+          % Stretch data inside the contrast range to the interval [0 1]
+          out = scaleMinMax(in,0, 1, contrastMinMax(1), contrastMinMax(2), 1);
+          % Apply gamma
+          out = out.^(gammaVal^gammaSign);
+          % Stretch to original range
+          out = scaleMinMax(out,contrastMinMax(1), contrastMinMax(2), 0, 1, 1);
+        else
+          % Stretch data inside the contrast range to the interval [-1 1]
+          out = scaleMinMax(in,-1, 1, -max(abs(contrastMinMax)), max(abs(contrastMinMax)), 1);
+          % Apply gamma
+          out = sign(out).*abs(out).^(gammaVal^gammaSign);
+          % Stretch to original range
+          out = scaleMinMax(out,-max(abs(contrastMinMax)), max(abs(contrastMinMax)), -1, 1, 1);
+        end
+        if debugMatVis > 1, debugMatVisFcn(2); end
     end
 
 % Update values for small histogram in Main Gui.
@@ -6291,7 +6300,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         try
             set(histAxGui, 'YLim', [0 1.05*max(h(:))]);
             set(histAxBg, 'Position', [cmMinMax(currContrastSel,1) y0 cmMinMax(currContrastSel,2)-cmMinMax(currContrastSel,1) 1.1*max(max(h(:,2:end-1)))]);  % [cmMinMax(currContrastSel,1) 1 cmMinMax(currContrastSel,2)-cmMinMax(currContrastSel,1) max(max(h(:,2:end-1)))]
-        catch    %#ok
+        catch    
             set(histAxGui, 'YLim', [0 1.05*max(h(:))]);
             if cmMinMax(currContrastSel,1) ~= cmMinMax(currContrastSel,2)
                 set(histAxBg, 'Position', [cmMinMax(currContrastSel,1) y0 cmMinMax(currContrastSel,2)-cmMinMax(currContrastSel,1) 1.1*max(h(:))]);
@@ -7403,8 +7412,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             set(valSldMax, 'String', num2str(cmMinMax(currContrastSel  ,2),'%6.3f'));
         end
         %Set Colortable (Look Up Table)
-        lutStr = get(popLut,'String');
-        switch lutStr{get(popLut, 'Value')}
+        switch popLutString{get(popLut, 'Value')}
             case 'Gray'
                 cmap = gray(255);
             case 'Gray (Range)'
@@ -7450,14 +7458,15 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 cmap(129:255,2:3) = repmat(linspace(0,1,127)',[1,2]);
                 cmap = circshift(cmap,[0 2]);
             case {'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4'}
-                cmap = colorMap(255, str2double(lutStr{get(popLut, 'Value')}(8)));
+                cmap = colorMap(255, str2double(popLutString{get(popLut, 'Value')}(8)));
             case {'Blue-Gray-Red (0 centered)';
                 'Green-Gray-Red (0 centered)';
                 'Blue-Gray-Yellow (0 centered)';
                 'Magenta-Gray-Green (0 centered)'}
-                mn = cmMinMax(currContrastSel,1); %minScale
-                mx = cmMinMax(currContrastSel,2); %maxScale
-                myGV = .85; % GrayValue
+                mnx = applyGamma(cmMinMax(currContrastSel,:),cmMinMax(currContrastSel,:),currGamma(currContrastSel),1);
+                cmMinMaxG = applyGamma(cmMinMax(currContrastSel,:),cmMinMax(currContrastSel,:),currGamma(currContrastSel),1);
+                mn = mnx(1); mx = mnx(2);
+                myGV = .9; % GrayValue
                 if sign(mn)*sign(mx) == 1 % Use as "normal" colormap if all values are either positive or negative
                     cmap(:,1) = [linspace(0,myGV,128) linspace(myGV,1,127)];
                     cmap(:,2) = [linspace(0,myGV,128) linspace(myGV,0,127)];
@@ -7467,7 +7476,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     % The color gradient is identical in  negative and
                     % positive directions, independent of the distance
                     % of mn and mx from zero.
-                    mnLength = round(255*abs(mn)/(mx-mn));
+                    % negative length
+                    mnLength = round(255*abs(cmMinMaxG(1))/(cmMinMaxG(2)-cmMinMaxG(1))); % round(255*abs(mn)/(mx-mn));
+                    % positive length
                     mxLength = 255-mnLength;
                     cmap = myGV * ones(255,3);
                     mxCorrL = 0; mnCorrL = 0;
@@ -7487,8 +7498,8 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     cmap(mnLength+1:end,2) = linspace(myGV,mxCorrL,mxLength);
                     cmap(mnLength+1:end,3) = linspace(myGV,mxCorrL,mxLength);
                 end
-                if ~strcmp(lutStr{get(popLut, 'Value')},'Blue-Gray-Red (0 centered)')
-                  if strcmp(lutStr{get(popLut, 'Value')},'Green-Gray-Red (0 centered)')
+                if ~strcmp(popLutString{get(popLut, 'Value')},'Blue-Gray-Red (0 centered)')
+                  if strcmp(popLutString{get(popLut, 'Value')},'Green-Gray-Red (0 centered)')
                     if get(tb_flip, 'Value')
                       cmap = cmap(:,[3 1 2]);
                     else
@@ -7500,7 +7511,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     else
                       cmap = cmap(:,[1 1 3]); %LUT for 'Blue-Gray-Yellow (0 centered)'
                     end
-                    if ~strcmp(lutStr{get(popLut, 'Value')},'Blue-Gray-Yellow (0 centered)')
+                    if ~strcmp(popLutString{get(popLut, 'Value')},'Blue-Gray-Yellow (0 centered)')
                         cmap(:,1)=cmap(:,3); %LUT for 'Magenta-Gray-Green (0 centered)'
                     end
                   end
@@ -7509,13 +7520,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     cmap = cmap(:,[3 2 1]);
                   end
                 end
-                % set gamma value to 1
-                set([sldGamma(1), valSldGamma(1)], 'Enable', 'off');
-                if any(currGamma(1) ~= 1)
-                    set(sldGamma(1), 'Value',1);
-                    set(valSldGamma(1),'String','1.000');
-                    updateImages;
-                end
+%                 % set gamma value to 1
+%                 set([sldGamma(1), valSldGamma(1)], 'Enable', 'off');
+%                 if any(currGamma(1) ~= 1)
+%                     set(sldGamma(1), 'Value',1);
+%                     set(valSldGamma(1),'String','1.000');
+%                     updateImages;
+%                 end
             case 'customColormap'
               cmap = customColormap;
             otherwise
@@ -7524,25 +7535,6 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     cmMinMax = repmat([0 255], [nMat 1]);
                 end
         end
-        % Old version to apply gamma correction via colormap. Problem: Colormap is always stretched
-        % with equi-distance over data and can not have more than 255 entries. Now by
-        % re-calculating the data (see updateCurrIm).
-        %         if currGamma ~= 1
-        %             interpVal = 1;  % Interpolation value to avoid 'mosaicing'
-        %             if currGamma >= 1
-        %                 cmap_gamma = round(scaleMinMax(brighten(1:255*interpVal, 1/currGamma - 1))*(255*interpVal-1)+1);
-        %             else
-        %                 cmap_gamma = round(scaleMinMax(brighten(1:255*interpVal, 1 - currGamma))*(255*interpVal-1)+1);
-        %             end
-        %             cmap_old = cmap;
-        %             cmap = zeros(interpVal*255,3);
-        %             for ii = 1:3
-        % %                 cmap_tmp = interp(cmap_old(:,ii),interpVal);
-        %                 cmap(:,ii) = cmap_old(cmap_gamma,ii);
-        %             end
-        %             cmap(cmap>1)=1;
-        %             cmap(cmap<0)=0;
-        %         end
 %         if any(currGamma ~= 1)
 %             updateImages;
 %         end
@@ -7550,22 +7542,30 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             cmap = 1 - cmap;
         end
         
-        if get(tb_flip, 'Value') && ~any(strcmp(lutStr{get(popLut, 'Value')},{'Blue-Gray-Red (0 centered)';'Green-Gray-Red (0 centered)';'Blue-Gray-Yellow (0 centered)';'Magenta-Gray-Green (0 centered)'}))
+        if get(tb_flip, 'Value') && ~isempty(strfind(popLutString{get(popLut, 'Value')},'(0 centered)'))
             cmap = flip(cmap,1);
         end
         if get(tbWin(1), 'Value')
             for ii = 1:nMat
                 if cmMinMax(ii,1) ~= cmMinMax(ii,2)
+                  if currGamma(ii) ~= 1 && ~isempty(strfind(popLutString{get(popLut, 'Value')},'(0 centered)'))
+                    set(imAx(ii), 'CLim', applyGamma(cmMinMax(ii,:),cmMinMax(ii,:),currGamma(ii),1) );
+                  else
                     set(imAx(ii), 'CLim', cmMinMax(ii,:));
-                    colormap(imAx(ii), cmap);
+                  end
+                  colormap(imAx(ii), cmap);
                 end
             end
         end
         if get(tbWin(2), 'Value')
             for ii = 1:nMat
                 if cmMinMax(ii,1) ~= cmMinMax(ii,2)
+                  if currGamma(ii) ~= 1 && ~isempty(strfind(popLutString{get(popLut, 'Value')},'(0 centered)'))
+                    set(zoomAx(ii), 'CLim', applyGamma(cmMinMax(ii,:),cmMinMax(ii,:),currGamma(ii),1) );
+                  else
                     set(zoomAx(ii), 'CLim', cmMinMax(ii,:));
-                    colormap(zoomAx(ii), cmap);
+                  end
+                  colormap(zoomAx(ii), cmap);
                 end
             end
         end
@@ -7795,24 +7795,28 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             currGamma((1:nMat)+(idx-1)*nMat) = ones(1,nMat)*currGamma(currContrastSel+(idx-1)*nMat);
         end
         set(valSldGamma(idx), 'String', num2str(currGamma(currContrastSel+(idx-1)*nMat),'%6.3f'));
-        updateImages;
-        if idx == 1
+        if 1
+          updateColormap 
+        else
+          updateImages;
+          if idx == 1
             if ~get(tb_moveHist,'Value') && strcmp(get(histAxGui, 'UserData'),'gamma')
-                updateGuiHistVal;
+              updateGuiHistVal;
             end
             % If currGamma == 1, the colorbar in between the sliders and the
             % yticks of the colorbar in the image window are NOT updated in
             % updateCurrIm, so they have to be updated here.
             if currGamma(currContrastSel) == 1
-                set(contrastSldIm, 'CData',histXDataBin);
-                if get(tbColorbar, 'Value') == 1
-                    for ii=1:nMat
-                        cb = cb_axes(ii);
-                        set(cb, 'YTickLabel', get(cb,'YTick'));
-                    end
+              set(contrastSldIm, 'CData',histXDataBin);
+              if get(tbColorbar, 'Value') == 1
+                for ii=1:nMat
+                  cb = cb_axes(ii);
+                  set(cb, 'YTickLabel', get(cb,'YTick'));
                 end
+              end
             end
             updateHistObjects;
+          end
         end
         if get(tbRoi,'Value') && nRois
           updateRoiSelection;
@@ -8362,9 +8366,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         if get(tbHist, 'Value') && ~withAlpha
             set(histObj(1), 'XData', [cmMinMax(currContrastSel  ,1) cmMinMax(currContrastSel  ,1)]);
             set(histObj(3), 'XData', [cmMinMax(currContrastSel  ,2) cmMinMax(currContrastSel  ,2)]);
-            transferVal(1  ,:) = linspace(single(cmMinMax(currContrastSel,1)),single(cmMinMax(currContrastSel,2)),255);
-            transferVal(2,:) = ((transferVal(1  ,:)-single(cmMinMax(currContrastSel,1)))/(single(cmMinMax(currContrastSel,2)-cmMinMax(currContrastSel,1)))).^currGamma(currContrastSel);
-            set(histObj(2), 'XData', transferVal(1  ,:), 'YData', transferVal(2,:)/max(transferVal(2,:))*max(histVal(:)));
+            transferVal(1,:) = linspace(single(cmMinMax(currContrastSel,1)),single(cmMinMax(currContrastSel,2)),255);
+            transferVal(2,:) = scaleMinMax(applyGamma(transferVal(1  ,:),cmMinMax(currContrastSel,:),currGamma(currContrastSel),1),0,max(histVal(:)));
+            set(histObj(2), 'XData', transferVal(1,:), 'YData', transferVal(2,:) );
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
@@ -13704,7 +13708,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           end
           % stores calling subfunction name
           if fctLevel > 1
-            callFctName = strrep(strrep(ST(3).name,'matVis/',''),'/','_');  
+            callFctName = strrep(strrep(strrep(strrep(strrep(ST(3).name,'matVis/',''),'/','_'),'@(',''),'(','_'),')','_');
+            myPos = regexp(callFctName,',');
+            if ~isempty(myPos); callFctName = callFctName(1:myPos(1)-1); end
             if isfield(fctCount.(fctName).callFct,callFctName)
               fctCount.(fctName).callFct.(callFctName).count    = fctCount.(fctName).callFct.(callFctName).count + 1;
               %fctCount.(fctName).callFct.(callFctName).countTot = fctCount.(fctName).callFct.(callFctName).countTot + 1;
