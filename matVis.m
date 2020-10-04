@@ -11802,7 +11802,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 matVisRoiExport =  roiListExp; %#ok
                 save([p,f],'matVisRoiExport');
                 checkSavedFile([p,f]); % controls, if saving was successfull (due to some unknown issue, rearely the saved file is corrupt and cannot read by matlab)
-                fprintf(2, 'ROIs exported to file!\n');
+                fprintf(2, sprintf('ROIs exported to file ''%s''!\n',strrep([p,f],'\','\\')));
             else
               fprintf(2, 'Roi export CANCELed!\n')
             end
@@ -11824,7 +11824,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           noMatVisROIs = false;
           try
             matVisRoiExport = cell2mat(struct2cell(load([p,f])));
-          catch ME   %#ok
+          catch ME   
             warning(ME.identifier,'%s',ME.message)
             if debugMatVis, disp(getReport(ME)); debugMatVisFcn(2); end
             return
@@ -11838,15 +11838,26 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           if debugMatVis, debugMatVisFcn(2); end
           return
         end
-        if ~all(size(matVisRoiExport(1).mask)==dim([matVisRoiExport(1).settings.xySel]))
+        szROI = size(matVisRoiExport(1).mask);
+        szSel = dim([matVisRoiExport(1).settings.xySel]);
+        if ~all(szROI==szSel)
           warning(sprintf('Size dimension missmatch\nROI dim: %d x %d\n',size(matVisRoiExport(1).mask)))
+          szComb = min([szROI;szSel]);
+          for ii=1:numel(matVisRoiExport)
+            % .mask
+            MM = false(szSel); MM(1:szComb(1),1:szComb(2)) = matVisRoiExport(ii).mask(1:szComb(1),1:szComb(2));
+            matVisRoiExport(ii).mask = MM;
+            % .index
+            matVisRoiExport(ii).index.x=min(matVisRoiExport(ii).index.x,szComb(1));
+            matVisRoiExport(ii).index.y=min(matVisRoiExport(ii).index.y,szComb(2));
+          end
         end
         if matVisRoiExport(1).settings.xySel==xySel([2 1])
           matVisRoiExport = flipROIdims(matVisRoiExport);
         end
         %updateCenterOfGravity
         for ii=1:length(matVisRoiExport)
-          if ~isfield(matVisRoiExport(ii),'centerOfGravity') || ~all(size(matVisRoiExport(ii).centerOfGravity)==[2 2])
+          if ~isfield(matVisRoiExport(ii),'centerOfGravity') || ~all(size(matVisRoiExport(ii).centerOfGravity)==[2 2]) || ~all(szROI==szSel)
             matVisRoiExport(ii).centerOfGravity = calcCenterOfGravity(matVisRoiExport(ii).mask, matVisRoiExport(ii).settings.position);
             warning(sprintf('Recalculated CenterOfGravity for ROI%d', ii))
           end
