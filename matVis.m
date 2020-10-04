@@ -5131,7 +5131,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
               p1 = get(myGca,'CurrentPoint');
               p1 = p1(1,1:2);
               set(myGcf, 'WindowButtonMotionFcn',''); % Remove callback during zoom region selection (if the new zoom region enters the old one, an error would be thrown otherwise when in the image window)
-              rbbox
+              rbbox;
               set(myGcf, 'WindowButtonMotionFcn',@mouseMotion);
               % In more recent Matlab version (since 2016?) the mouse
               % position is not updated immediately after the rbbox, so we
@@ -8074,7 +8074,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             if winPos2(2)+winPos2(4) > scnSize(4) || winPos2(2) < 0 
                 winPos2(2) = scnSize(4)-winPos2(4)-30;
             end
-            set(zoomWin(ii), 'Position', winPos2);
+            set(zoomWin(ii), 'Position', round(winPos2));
             % Note:   The Windows operating system enforces a minimum window width and a maximum window size. 
             %         If you specify a figure size outside of those limits, the displayed figure will conform to the limits instead of the size you specified.
             drawnow; % workaround to find operating system's maximum window size
@@ -13772,9 +13772,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           if isempty(fctNameHLp), fctNameHL=fctName; else fctNameHL=fctName(fctNameHLp(end)+1:end); end
           fctCount.(fctName).time  = tic;
           timeStr = [];
-          fctNameStr = sprintf('<a href="matlab:matlab.desktop.editor.openAndGoToFunction(which(''matVis.m''),''%s'');">%s</a>',fctNameHL, fctName);%fctName
+          fctNameStr = sprintf('<a href="matlab:matlab.desktop.editor.openAndGoToFunction(which(''matVis.m''),''%s'');">%s</a>', fctNameHL, fctName);%fctName
           if fctLevel > 1
-            fctNameStr = sprintf('%s/<a href="matlab:matlab.desktop.editor.openAndGoToLine(which(''matVis.m''),%d);">line%d</a>',fctNameStr,ST(3).line,ST(3).line);
+            fctNameStr = sprintf('%s/<a href="matlab:matlab.desktop.editor.openAndGoToLine(which(''%s''),%d);">line%d</a>', fctNameStr, ST(3).file,ST(3).line,ST(3).line);
           end
         else
           timeStr = sprintf('(execution time: %.3f s)',toc(fctCount.(fctName).time));
