@@ -194,11 +194,13 @@ macScaleFactor = [1.05 1.05]; % Scaling factor to adjust width and height of GUI
 optionalArgIdentifier = [];                 % variable declaration
 %popup for colormap (look up table)
 popLutString = {'Gray';'Gray (Range)';'4 x Gray';...
-  'Parula'; 'Jet'; 'HSV'; 'Hot'; 'Cool';...
+  'Turbo';'Parula'; 'Jet'; 'HSV'; 'Hot'; 'Cool';...
   'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2';...
   'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';...
   'Blue-Gray-Yellow (0 centered)';'Blue-Gray-Red (0 centered)';...
   'Green-Gray-Red (0 centered)';'Magenta-Gray-Green (0 centered)'};
+if ~exist('parula', 'file'); popLutString(strcmp(popLutString,'Parula'))=[];end
+if ~exist('turbo', 'file'); popLutString(strcmp(popLutString,'Turbo'))=[];end
 customColormap = [];
 if nargin == 0 || ischar(varargin{1})
     debugMatVis = 0;
@@ -7419,6 +7421,8 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 cmap = colorMap(255, 5);
             case '4 x Gray'
                 cmap = repmat(gray(64),[4 1]);
+            case 'Turbo'
+                cmap = turbo(255);
             case 'Parula'
                 cmap = parula(255);
             case 'Jet'
@@ -7542,7 +7546,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             cmap = 1 - cmap;
         end
         
-        if get(tb_flip, 'Value') && ~isempty(strfind(popLutString{get(popLut, 'Value')},'(0 centered)'))
+        if get(tb_flip, 'Value') && isempty(strfind(popLutString{get(popLut, 'Value')},'(0 centered)'))
             cmap = flip(cmap,1);
         end
         if get(tbWin(1), 'Value')
