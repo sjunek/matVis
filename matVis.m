@@ -783,6 +783,7 @@ if matlabVer < 8.4 % to differenciate for HG2
   roiHistAxesLine = [];                    %Handle to Line displaying 1D histogram of current Roi
   roiHistAxesLinePerc = [];                %Handle to Line displaying Percentile borders of 2D histogram of current Roi
   roiToolTipTxt = [];                      %Handle to ToolTip text
+  roiPropWinTxt = [];
   roiPropWinTab = [];
   profileWin = [];                         %Handle to Profile Manager Window
   profileImage = [];                           %Handle to image displaying current profile
@@ -827,6 +828,7 @@ else
   roiHistAxesLine = matlab.graphics.chart.primitive.Line.empty;             %Handle to axes displaying 1D histogram of current Roi
   roiHistAxesLinePerc = matlab.graphics.chart.primitive.Line.empty;         %Handle to Line displaying Percentile borders of 2D histogram of current Roi
   roiToolTipTxt = matlab.graphics.primitive.Text;                           %Handle to ToolTip text
+  roiPropWinTxt = matlab.graphics.primitive.Text;                           %Handle to ROI property label text
   roiPropWinTab = matlab.ui.control.Table;
   profileWin = matlab.ui.Figure.empty;                                      %Handle to Roi Manager Window
   profileImage = matlab.graphics.primitive.Image;                           %Handle to image displaying current profile
@@ -1240,7 +1242,7 @@ if ~isempty(startPar)
                 propVal = find(ismember(projMethodStr, propVal)); 
               end
               if isscalar(propVal) && any(propVal==0:8)
-                projMethod = propVal;
+                projMethod = propVal-1;
               end
             case 'windowVisibility'
                 customConfig.winVis.imageWin = propVal(1);
@@ -6971,7 +6973,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     else, ylabel('Value (-)')
                     end
                     if get(tbRoi, 'Value') && ~isempty(subPlotPlots)
-                        legend(subPlotPlots(jj,ii,:));
+                        legend(squeeze(subPlotPlots(jj,ii,:)));
                         if ~get(tbRoiShowNames, 'Value');legend('hide');end
                     else
                         legend('hide'); %stopHere;
@@ -8999,6 +9001,15 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           inputArg{end+1} = colorBarLabelString;
         end
         % 'startPar', {'cmMinMax',[par.rLims; par.iLims],'colormap','Rainbow3'}
+        % projectionHandling
+        if length(indC)<projDim || indC(projDim) % actual projDim gets removed
+          myProjMethod = 0;
+          myProjDim = 3;
+        else
+          myProjMethod = projMethod;
+          myProjDim = projDim-sum(indC(1:(projDim-1)));
+        end
+        
         inputArg{end+1} = 'startPar';
         inputArg{end+1} = {'xySel', xySel,...
                            'plotDim',logical(plotSel(~indC)),...
@@ -9007,8 +9018,8 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                            'colorMap',customConfig.colormap,...
                            'aspRatio',customConfig.aspectRatio,...
                            'rgbDim',rgbDim,...
-                           'projDim',projDim-sum(indC(1:(projDim-1))),...
-                           'projMethod' ,projMethod,...
+                           'projDim',myProjDim,...
+                           'projMethod' ,myProjMethod+1,...
                            'windowVisibility',[customConfig.winVis.imageWin,customConfig.winVis.zoomWin,customConfig.winVis.plotWin],...
                            'objVisibility',customConfig.lineVis};
         if debugMatVis
@@ -10996,16 +11007,17 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           %% create figure
           gp = get(gui,'Position');
           tempRoiPropWin = figure('MenuBar', 'none','NumberTitle', 'off', 'Name', 'ROI Properties!', 'CloseRequestFcn', {@showRoiProperties,0});%
-          uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [12 125 110 18],'String','Percentile Data','FontSize',10);
+          roiPropWinTxt = uicontrol(tempRoiPropWin,'Style', 'Text', 'Position', [10 178 125, 20],'String',sprintf('%s Statistics',roiName.String),'FontSize',14,'HorizontalAlignment','left');
           roiPropWinTab = uitable(tempRoiPropWin);
+          myRowNames = {'1%','25%','50%','75%','99%','Mean','STD','SEM'};
           if withAlpha
-            set(roiPropWinTab,'ColumnName',{'Data','Data(w)','Weight'},'RowName',{'1%','25%','50%','75%','99%'},...
-              'Data',roiToolTipCell','Position',[10, 10, 271, 112]);
-            set(tempRoiPropWin,'Position', [gp(1)+320, max(50,gp(2)-444-100), 291, 145])
+            set(roiPropWinTab,'ColumnName',{'Data','Data(w)','Weight'},'RowName',myRowNames,...
+              'Data',roiToolTipCell','Position',[5, 5, 282, 166]);
+            set(tempRoiPropWin,'Position', [gp(1)+321, max(50,gp(2)-382), 292, 197]) % gp(2)-382  -444-100
            else
-            set(roiPropWinTab,'ColumnName',{'Data'},'RowName',{'1%','25%','50%','75%','99%'},...
-              'Data',roiToolTipCell','Position',[10, 10, 121, 112]);
-            set(tempRoiPropWin,'Position', [gp(1)+320, max(50,gp(2)-444-100), 141, 145])
+            set(roiPropWinTab,'ColumnName',{'Data'},'RowName',myRowNames,...
+              'Data',roiToolTipCell','Position',[5, 5, 132, 166]); %%
+            set(tempRoiPropWin,'Position', [gp(1)+321, max(50,gp(2)-382), 139, 197])%, 145
           end
         else
           set(roiPropWinTab,'Data',roiToolTipCell')
@@ -11238,9 +11250,10 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 hhl(hhl==0)=.9; hhl = log10(hhl);
               end
               set(roiHistAxesIm,'XData',x,'YData',y,'CData',hhl)
-              pfV = prctile(currRoi(:),[1 25 50 75 99]);
-              pfAV = prctile(currRoiAlpha(:),[1 25 50 75 99]);
-              wpfVAV = wpercentile(currRoi(:),currRoiAlpha(:),[1 25 50 75 99]/100);
+              pfV = [prctile(currRoi(:),[1 25 50 75 99]), mean(currRoi(:)), std(currRoi(:)), std(currRoi(:))/sqrt(numel(currRoi))];
+              pfAV = [prctile(currRoiAlpha(:),[1 25 50 75 99]), mean(currRoiAlpha(:)), std(currRoiAlpha(:)), std(currRoiAlpha(:))/sqrt(numel(currRoiAlpha))];
+              [tmp1, tmp2, tmp3] = wmean(currRoi(:), currRoiAlpha(:));
+              wpfVAV = [wpercentile(currRoi(:),currRoiAlpha(:),[1 25 50 75 99]/100),tmp1, tmp2, tmp3];
               roiToolTipVal = [pfV;wpfVAV;pfAV]';
               roiToolTipCell = cellfun(@(x) num2Str(x,4),num2cell(roiToolTipVal'),'UniformOutput',false);
               roiToolTip = sprintf('Percentile\n\t\t\t\t\tData\tData(w)\t\tWeight\n1%% \t\t %s\t %s\t %s\n25%% \t\t %s\t %s\t %s\n\n50%% \t\t %s\t %s\t %s\n\n75%% \t\t %s\t %s\t %s\n99%% \t\t %s\t %s\t %s',...
@@ -11262,12 +11275,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
               hh = histcounts(currRoi(:),x);
               x = x(2:end)-diff(x(1:2))/2;
               set(roiHistAxesLine,'XData',x,'YData',hh)
-              roiToolTipVal =  prctile(currRoi(:),[1 25 50 75 99]);
+              roiToolTipVal =  [prctile(single(currRoi(:)),[1 25 50 75 99]), mean(single(currRoi(:))), std(single(currRoi(:))), std(single(currRoi(:)))/sqrt(numel(currRoi))];
               roiToolTipCell = cellfun(@(x) num2Str(x,4),num2cell(roiToolTipVal),'UniformOutput',false);
               roiToolTip = sprintf('Percentile\n\t\t\t\t\tData\n1%% \t\t %s\n25%% \t\t %s\n\n50%% \t\t %s\n\n75%% \t\t %s\n99%% \t\t %s',roiToolTipCell{:} );
             end
             set(roiName,'Tooltip',roiToolTip)
             if get(roiName,'Value')
+              set(roiPropWinTxt,'String',sprintf('%s Statistics',roiName.String));
               set(roiPropWinTab,'Data',roiToolTipCell'); 
               updateRoiHistAxesLinePerc
             end
@@ -12294,6 +12308,18 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         end
       end
       if debugMatVis, debugMatVisFcn(2); end
+    end
+    function [wMean, wMeanStd, wMeanError] = wmean(d, de)
+      wMean = sum(d./de, 'omitnan')./sum(1./de, 'omitnan');%mean in first dimension
+      nout = max(nargout,1)-1;
+      if nout > 0
+        szt = size(d); lsz = length(szt);
+        wMeanStd = sqrt(sum( (d - repmat(wMean,[size(d,1) ones(1,lsz-1)])).^2 ./ de, 'omitnan')./sum(1./ de, 'omitnan'));% std EfD
+        if nout>1
+          n = szt(szt>1);
+          wMeanError = wMeanStd / sqrt(n(1));
+        end
+      end
     end
     function myGcf = myGcf
       if debugMatVis > 2, debugMatVisFcn(1); end
