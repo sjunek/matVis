@@ -883,6 +883,7 @@ nCols = 1;
 %projection, 2 - mean projection,...
 projDim = 3;
 currWinScale = 100;                      %Window-pixel scale for 100% button
+gammaChanged = false;                    % indicator to update image for gamma correction
 if withAlpha
     currGamma = ones(1,2*nMat);
 else
@@ -1087,7 +1088,8 @@ defaultConfig.colorbar = 0;              %Default: 0
 %Colormaps available
 defaultConfig.colormap = 1;              %Default: 1 (gray)
 %Gamma
-defaultConfig.gamma = ones(1,nMat);
+defaultConfig.gamma      = ones(1,nMat);
+defaultConfig.gammaAlpha = ones(1,2*nMat);
 %RGB Mode
 defaultConfig.RGB = 0;
 %Colormap Mode (Global, Local or Manual)
@@ -1159,6 +1161,11 @@ if ~isempty(configFile)
     end
     if  customConfig.plotMean == 5 && withAlpha
       customConfig.plotMean = 0;              %Default: 0 (no averaging)
+    end
+    currGamma(1,1:nMat) = customConfig.gamma(1);
+    if withAlpha
+      currGamma(1,1:nMat) = customConfig.gammaAlpha(1);
+      currGamma(1,(1:nMat)+nMat) = customConfig.gammaAlpha(2);
     end
 else
     customConfig = defaultConfig;
@@ -3292,11 +3299,11 @@ ttt = sprintf('Gamma value to provide non-linear colormaps.');
 if debugMatVis, ttt1 = sprintf('Handle: ''sldGamma''\nCallback: ''updateGamma(''sld'',''data'')'''); else,  ttt1 = ttt; end
 sldGamma = uicontrol('Parent', panel_imageControls, 'Style', 'Slider', 'Callback', {@updateGamma,'sld','data'}, 'Units', 'Pixel', ...
     'Position', [56 55 208 10], 'Min', 0, 'Max', 5, 'SliderStep', [0.01 .05], ...
-    'Value',customConfig.gamma(1),'Tooltip',ttt1,'Tag',ttt);
+    'Value',currGamma(1),'Tooltip',ttt1,'Tag',ttt);
 ttt = sprintf('Gamma value to provide non-linear colormaps.\nThis value is linked to the slider to the left.');
 if debugMatVis, ttt1 = sprintf('Handle: ''valSldGamma''\nCallback: ''updateGamma(''etxt'',''data'')'''); else,  ttt1 = ttt; end
 valSldGamma = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', ...
-    'Position', [268 53 45 12], 'String', num2str(customConfig.gamma(1),'%6.3f'), 'Callback', {@updateGamma,'etxt','data'},...
+    'Position', [268 53 45 12], 'String', num2str(currGamma(1),'%6.3f'), 'Callback', {@updateGamma,'etxt','data'},...
     'HorizontalAlignment', 'right','Tooltip',ttt1,'Tag',ttt);
 ttt = sprintf('Gamma value to provide non-linear colormaps.\nThis value is linked to the edit box to the right.');
 if debugMatVis, ttt1 = sprintf('Handle: ''strGamma''\nCallback: ''none''\n%s',ttt); else,  ttt1 = ttt; end
@@ -3327,11 +3334,11 @@ if withAlpha
     if debugMatVis, ttt1 = sprintf('Handle: ''sldGamma(2)''\nCallback: ''updateGamma(''sld'',''alpha'')'''); else,  ttt1 = ttt; end
     sldGamma(2) = uicontrol('Parent', panel_imageControls, 'Style', 'Slider', 'Units', 'Pixel', 'Position', [86 42 178 10], ...
         'Min', 0, 'Max', 5, 'SliderStep', [0.01 .05], 'Callback', {@updateGamma,'sld','alpha'}, ...
-        'Value',customConfig.gamma(min(nMat+1,numel(customConfig.gamma))),'Tooltip',ttt1,'Tag',ttt);
+        'Value',currGamma(nMat+1),'Tooltip',ttt1,'Tag',ttt);
     ttt = sprintf('Gamma value to provide non-linear colormaps.\nThis value is linked to the slider to the left.');
     if debugMatVis, ttt1 = sprintf('Handle: ''valSldGamma(2)''\nCallback: ''updateGamma(''etxt'',''alpha'')'''); else,  ttt1 = ttt; end
     valSldGamma(2) = uicontrol('Parent', panel_imageControls, 'Style', 'Edit', 'Units', 'Pixel', 'Position', [268 42 45 12], ...
-        'String', num2str(customConfig.gamma(min(nMat+1,numel(customConfig.gamma))),'%6.3f'), 'Callback', {@updateGamma,'etxt','alpha'},...
+        'String', num2str(currGamma(nMat+1),'%6.3f'), 'Callback', {@updateGamma,'etxt','alpha'},...
         'HorizontalAlignment', 'right','Tooltip',ttt1,'Tag',ttt);
     ttt = sprintf('Gamma value to provide non-linear colormaps.\nThis value is linked to the edit box to the right.');
     if debugMatVis, ttt1 = sprintf('Handle: ''strGamma(2)''\nCallback: ''none''\n%s', ttt); else,  ttt1 = ttt; end
@@ -7588,8 +7595,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         if get(tbColorbar, 'Value') == 1 && all(currGamma == 1)
             showColorbar;
         end
-        if any(currGamma ~= 1)
+        if any(currGamma ~= 1) ||  gammaChanged
             updateImages;
+            gammaChanged = false;
         end
         updateHistObjects;
         if rgbCount
@@ -7781,10 +7789,11 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
     end
     function updateGamma(h,e,source,type)    %#ok
         if debugMatVis, debugMatVisFcn(1); end
+        gammaChanged = true;
         if strcmp(type,'data')
-            idx = 1;
+            idx = 1; % 'type' == 'data'
         else
-            idx = 2;
+            idx = 2; % 'type' == 'alpha'
         end
         switch source
             case 'etxt'
@@ -8628,7 +8637,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         %Colormap
         currConfig.colormap = get(popLut, 'Value');              %Default: 1 (gray)
         %Gamma
-        currConfig.gamma  = currGamma;
+        if withAlpha
+          currConfig.gamma      = customConfig.gamma;
+          currConfig.gammaAlpha = currGamma(1,[1 nMat+1]);
+        else
+          currConfig.gamma      = currGamma;
+          currConfig.gammaAlpha = customConfig.gammaAlpha;
+        end
         %RGB Mode
         currConfig.RGB = logical(rgbCount);
         currConfig.rgbCount = rgbCount;
@@ -8744,13 +8759,10 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         %Colormap
         set(popLut, 'Value', config.colormap);              %Default: 1 (gray)
         %Gamma
-        currGamma = config.gamma(1);
-        if nMat > numel(currGamma) ||withAlpha
-            if withAlpha
-                currGamma = currGamma*ones(1,2*nMat);
-            else
-                currGamma = currGamma(1)*ones(1,nMat);
-            end
+        currGamma(1,1:nMat) = customConfig.gamma(1);
+        if withAlpha
+          currGamma(1,1:nMat) = customConfig.gammaAlpha(1);
+          currGamma(1,(1:nMat)+nMat) = customConfig.gammaAlpha(2);
         end
         %RGB Mode
         if config.RGB && ~withAlpha && nDim>2
