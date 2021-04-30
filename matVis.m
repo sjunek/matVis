@@ -3040,7 +3040,8 @@ projDimPop  = uicontrol('Parent', panel_imageControls,  'Style', 'popupmenu','Ca
 if nDim < 3
     set([projMethodPop projText projDimText projDimPop], 'Enable', 'off');
 else
-    set(projDimPop, 'String', dimNames(3:end));  % ToDo: Adjust so it can be used with start parameter
+    s = 1:nDim; s(xySel)=[];
+    set(projDimPop, 'String', dimNames(s));
 end
 ttt = sprintf('Only data inside zoom interval of the respective dimension are included in the projection.'); 
 if debugMatVis, ttt1 = sprintf('Handle: ''bt_zoomProj''\nCallback: ''zoomProj'''); else,  ttt1 = ttt; end
