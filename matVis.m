@@ -5742,7 +5742,11 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             end
         elseif rgbCount
             if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value'))
-                imIndex{rgbDim} = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;  
+              if dim(rgbDim)<3
+                imIndex{rgbDim} = mod((currPos(rgbDim):currPos(rgbDim)+1), dim(rgbDim))+1;
+              else
+                imIndex{rgbDim} = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;
+              end
             else
               if get(tb_lockPlots2Zoom(rgbDim), 'Value')
                 imIndex{rgbDim} = zoomVal(rgbDim,1):sum(zoomVal(rgbDim,:))-1;
