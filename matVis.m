@@ -6899,6 +6899,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     for kk = 1:size(plotValues,3)
                         if ~get(tbRoi, 'Value')
                             if get(bt_mean, 'UserData') == 5  %RGB plot mode
+                              if kk <= dim(rgbDim)
                                 if get(cmStretchRGBMean,'Value') || get(cmStretchRGBMax, 'Value')  %RGB stretch mode
                                     try   %for dimensions with less plots, e.g. rgbDim in RGB plot mode
                                         if customDimScale
@@ -6923,6 +6924,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                                     catch    %#ok
                                     end
                                 end
+                              end  
                             else
                                 if ~isempty(plotValues{jj,ii,kk})
                                     if customDimScale
@@ -10378,8 +10380,6 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             roiEdtAutoRoiSz = uicontrol(roiWin, 'Style', 'Edit', 'Units', 'Pixel', 'Position', [287 roiWinPos(4)-340 20 12], ...
               'String', num2str(newRoiSize), ...
               'HorizontalAlignment', 'right','Callback',@updateRoiSize);%,'Tooltip',ttt1,'Tag',ttt
-            
-
             %% Fill Roi Axes with current image
             if ~debugMatVis, set(roiWin, 'HandleVisibility', 'off'); end
             %% final tuning
