@@ -5797,14 +5797,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             % Sort dimension to [xySel(1) xySel(2) projDim]
             if rgbCount
               c = squeeze(permute(squeeze(data{ii}(imIndex{:})),[xx yy p rgb]));
-              sz1 = size(c);
             else
               c = squeeze(permute(squeeze(data{ii}(imIndex{:})),[xx yy p]));
               if withAlpha
                 cA = squeeze(permute(squeeze(alphaMap{ii}(imIndex{:})),[xx yy p]));
-                sz1 = size(cA);
               end
             end
+            sz1 = size(c);
             switch projMethodStr{projMethod+1}
               case 'max'      %maximum projection
                 if withAlpha
@@ -5889,8 +5888,8 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                   currIm{ii} = var(double(c), [], 3, 'omitnan');
                 end
               case 'tile'    %Tile images ('montage')
-                nCols = max(1,round(sqrt(dim(xySel(1))/dim(xySel(2))*size(c,3)/aspRatio(2) * aspRatio(1))));
-                nRows = ceil(size(c,3) / nCols);
+                nRows = max(1,round(sqrt(dim(xySel(1))/dim(xySel(2))*size(c,3)/aspRatio(2) * aspRatio(1))));
+                nCols = ceil(size(c,3) / nRows);
                 if nRows > 1 && nCols > 1
                   nBlack = nRows*nCols - size(c,3);
                 else
@@ -5902,24 +5901,35 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                   end
                 end
                 if nBlack > 0
-                  szc3 = size(c,3);
-                  c(:,:,szc3+1:nRows*nCols) = minVal(1);
+                  clear imIndex; for n1 = 1:length(sz1); imIndex{n1} = ':'; end
+                  imIndex{3} = size(c,3)+1:nRows*nCols;
+                  c(imIndex{:}) = minVal(1);
+                  sz1 = size(c);
                   if withAlpha
-                    cA(:,:,szc3+1:nRows*nCols) = 0;
+                    cA(imIndex{:}) = 0;
                   end
                 end
                 if islogical(c)
                   currIm{ii} = false(dim(xySel(1))*nRows, dim(xySel(2))*nCols);
+                elseif rgbCount
+                  currIm{ii} = ones([dim(xySel(1))*nRows, dim(xySel(2))*nCols, 3], class(c));
                 else
-                  currIm{ii} = ones(dim(xySel(1))*nRows, dim(xySel(2))*nCols, class(c));
+                  currIm{ii} = ones([dim(xySel(1))*nRows, dim(xySel(2))*nCols], class(c));
                 end
                 if withAlpha
                   currAlphaMap{ii} = zeros(dim(xySel(1))*nRows, dim(xySel(2))*nCols, class(c));
                 end
-                for r=1:nRows
-                  currIm{ii}((r-1)*dim(xySel(1))+1:r*dim(xySel(1)),:) = c(:,(r-1)*nCols*dim(xySel(2))+1:r*nCols*dim(xySel(2)));
-                  if withAlpha
-                    currAlphaMap{ii}((r-1)*dim(xySel(1))+1:r*dim(xySel(1)),:) = cA(:,(r-1)*nCols*dim(xySel(2))+1:r*nCols*dim(xySel(2)));
+                if length(sz1)==4
+                  c = reshape(c, [sz1(1) prod(sz1(2:3)) sz1(4)]);
+                  for r=1:nRows
+                    currIm{ii}((r-1)*dim(xySel(1))+1:r*dim(xySel(1)),:,1:sz1(4)) = c(:,(r-1)*nCols*dim(xySel(2))+1:r*nCols*dim(xySel(2)),:);
+                  end
+                else
+                  for r=1:nRows
+                    currIm{ii}((r-1)*dim(xySel(1))+1:r*dim(xySel(1)),:) = c(:,(r-1)*nCols*dim(xySel(2))+1:r*nCols*dim(xySel(2)));
+                    if withAlpha
+                      currAlphaMap{ii}((r-1)*dim(xySel(1))+1:r*dim(xySel(1)),:) = cA(:,(r-1)*nCols*dim(xySel(2))+1:r*nCols*dim(xySel(2)));
+                    end
                   end
                 end
             end
