@@ -10554,6 +10554,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 addNewRoi(roi,nRois,'new');
                 if ~get(tb_newRoi(1), 'UserData')
                     set(tb_newRoi(1), 'Value',0, 'BackgroundColor',guiBGCol);
+                    set([zoomWin imageWin],'WindowButtonMotionFcn',@mouseMotion,'WindowButtonDownFcn',@buttonDownCallback,'WindowButtonUpFcn','');
                 end
                 if debugMatVis, debugMatVisFcn(2); end
             end
@@ -10583,6 +10584,10 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     roi(:,end+1) = roi(:,1);
                     nRois = nRois + 1;
                     addNewRoi(roi,nRois,'new');
+                    if ~get(tb_newRoi(2), 'UserData')
+                        set(tb_newRoi(2), 'Value',0, 'BackgroundColor',guiBGCol);
+                        set([zoomWin imageWin],'WindowButtonMotionFcn',@mouseMotion,'WindowButtonDownFcn',@buttonDownCallback,'WindowButtonUpFcn','');
+                    end
                 else % Otherwise select ellipse
                     set(myGcf,'WindowButtonUpFcn',@finishEllipse);
                     set(myGcf, 'HandleVisibility', 'on');
@@ -10634,6 +10639,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     addNewRoi(roi,nRois,'new');
                     if ~get(tb_newRoi(2), 'UserData')
                         set(tb_newRoi(2), 'Value',0, 'BackgroundColor',guiBGCol);
+                        set([zoomWin imageWin],'WindowButtonMotionFcn',@mouseMotion,'WindowButtonDownFcn',@buttonDownCallback,'WindowButtonUpFcn','');
                     end
                     if debugMatVis, debugMatVisFcn(2); end
                 end
@@ -10731,6 +10737,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     addNewRoi(roi,nRois,'new');
                     if ~get(tb_newRoi(3), 'UserData')
                         set(tb_newRoi(3), 'Value',0, 'BackgroundColor',guiBGCol);
+                        set([zoomWin imageWin],'WindowButtonMotionFcn',@mouseMotion,'WindowButtonDownFcn',@buttonDownCallback,'WindowButtonUpFcn','');
                     end
                     roi = [];           %Clear old roi position
                 end
