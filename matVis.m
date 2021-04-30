@@ -6722,7 +6722,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         for ii = 1:nDim
             imIndex{ii} = currPos(ii);   %#ok
         end
-        %plotValues = [];
+        plotValues = [];
         for jj = 1:nMat
             for ii = 1:nPlots
                 plotIndex = imIndex;
@@ -6800,17 +6800,22 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                             end
                             % Plot along any other direction
                         elseif get(bt_mean, 'UserData')==5 && rgbDim ~= plotDim(ii)  %RGB plot - not possible if plot dimension and RGB dimension are identical
-                            if rgbCount && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMean, 'Value'))% Stretch RGB mode
-                                for ll = 1:dim(rgbDim)
-                                    plotIndex{rgbDim} = ll;
-                                    plotValues{jj,ii,ll} = data{jj}(plotIndex{:});
-                                end
-                            else
-                                for ll = -1:1      %Normal RGB mode
-                                    plotIndex{rgbDim} = min(max(1,currPos(rgbDim)-ll),dim(rgbDim));
-                                    plotValues{jj,ii,ll+2} = data{jj}(plotIndex{:});
-                                end
+                          if rgbCount && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMean, 'Value'))% Stretch RGB mode
+                            for ll = 1:dim(rgbDim)
+                              plotIndex{rgbDim} = ll;
+                              plotValues{jj,ii,ll} = data{jj}(plotIndex{:});
                             end
+                          else
+                            if dim(rgbDim)<3
+                              LL = mod((currPos(rgbDim):currPos(rgbDim)+1), dim(rgbDim))+1;
+                            else
+                              LL = mod((currPos(rgbDim)-2:currPos(rgbDim)), dim(rgbDim))+1;
+                            end
+                            for ll = 1:length(LL)      %Normal RGB mode
+                              plotIndex{rgbDim} = LL(ll);
+                              plotValues{jj,ii,ll} = data{jj}(plotIndex{:});
+                            end
+                          end
                         else  % plot along potential RGB dimension
                           if withAlpha
                             %sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'); % weighted mean ratio
