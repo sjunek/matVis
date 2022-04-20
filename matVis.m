@@ -5698,7 +5698,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                         case 'none'
                             out = in;
                         case 'gauss'
-                            h = fspecial('gaussian', filtSz(1:2)*5, filtSz(1));
+                            h = fspecial('gaussian', ceil(filtSz(1:2)*5), filtSz(1));
                             out = imfilter(in, h, 'replicate');
                         case 'median'
                             out = medfilt2(in, filtSz(1:2));
