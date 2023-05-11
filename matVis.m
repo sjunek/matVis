@@ -196,6 +196,7 @@ optionalArgIdentifier = [];                 % variable declaration
 popLutString = {'Gray';'Gray (Range)';'4 x Gray';...
   'Turbo';'Parula'; 'Jet'; 'HSV'; 'Hot'; 'Cool';...
   'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2';...
+  'Cyan 1';'Cyan 2';'Magenta 1';'Magenta 2';'Yellow 1';'Yellow 2';...
   'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';...
   'Blue-Gray-Yellow (0 centered)';'Blue-Gray-Red (0 centered)';...
   'Green-Gray-Red (0 centered)';'Magenta-Gray-Green (0 centered)'};
@@ -7498,6 +7499,36 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 cmap(:,2:3) = 0;
                 cmap(129:255,2:3) = repmat(linspace(0,1,127)',[1,2]);
                 cmap = circshift(cmap,[0 2]);
+            case 'Cyan 1'
+                cmap = repmat(linspace(0,1,255)',[1 3]);
+                cmap(:,1) = 0;
+            case 'Cyan 2'
+                ramp128 = linspace(0,1,128)';
+                cmap = zeros(256,3);
+                cmap(1:128,2) = ramp128;
+                cmap(1:128,3) = ramp128;
+                cmap(129:end,[2 3]) = 1;
+                cmap(129:end,1) = ramp128;
+            case 'Magenta 1'
+                cmap = repmat(linspace(0,1,255)',[1 3]);
+                cmap(:,2) = 0;
+            case 'Magenta 2'
+                ramp128 = linspace(0,1,128)';
+                cmap = zeros(256,3);
+                cmap(1:128,1) = ramp128;
+                cmap(1:128,3) = ramp128;
+                cmap(129:end,[1 3]) = 1;
+                cmap(129:end,2) = ramp128;
+            case 'Yellow 1'
+                cmap = repmat(linspace(0,1,255)',[1 3]);
+                cmap(:,3) = 0;
+            case 'Yellow 2'
+                ramp128 = linspace(0,1,128)';
+                cmap = zeros(256,3);
+                cmap(1:128,1) = ramp128;
+                cmap(1:128,2) = ramp128;
+                cmap(129:end,[1 2]) = 1;
+                cmap(129:end,3) = ramp128;
             case {'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4'}
                 cmap = colorMap(255, str2double(popLutString{get(popLut, 'Value')}(8)));
             case {'Blue-Gray-Red (0 centered)';
