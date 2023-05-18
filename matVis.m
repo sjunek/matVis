@@ -64,6 +64,7 @@ function varargout = matVis(varargin)
 %                               be set to black.
 %       'matVisROIs'            ROI structure 'matVisRoiExport' generated
 %                               by matVis, will be automatically imported.
+%       'matVisROIsName'        Default name for ROI export.
 %       'colorMap'              a matrix by N x 3 which defines a custom
 %                               colormap according to Matlabs 'colormap'
 %                               specifications.
@@ -189,6 +190,7 @@ colorBarLabelString = {}; % Cell Array of String of the colorBar YLabel
 withDimUnits = 0;    % Dimension units
 fromFile = 0;        % Flag indicating whether data are loaded from file
 withMatVisROIs = false; % Flag for RoiData as start parameter
+matVisROIsName = '.mat';
 os = computer;       % Operating system
 macScaleFactor = [1.05 1.05]; % Scaling factor to adjust width and height of GUI and uicontrols for Mac OS-X
 %% Read Data ...
@@ -596,6 +598,10 @@ else
             case 'matVisROIs'
               withMatVisROIs = true;
               matVisRoiExport = val;
+            case 'matVisROIsName'
+              if ischar(val{1}) || isstring(val{1})
+                matVisROIsName = val;
+              end
             case 'dimNames'
               if length(val) ~= ndims(varargin{1})
                 error(sprintf('Dimension of matrix and number of ''dimNames'' have to be equal!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
@@ -11944,7 +11950,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 assignin('caller', 'matVisRoiExport', roiListExp);
                 fprintf(2,'ROIs exported to caller workspace!\n');
             elseif strcmp(q, 'To file')
-                [f,p] = uiputfile('.mat','Choose folder and filename to save rois!');
+                [f,p] = uiputfile(matVisROIsName,'Choose folder and filename to save rois!');
                 if f == 0
                   fprintf(2, 'Roi export CANCELed!\n')
                   if debugMatVis, debugMatVisFcn(2); end
@@ -11953,7 +11959,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 matVisRoiExport =  roiListExp; %#ok
                 save([p,f],'matVisRoiExport');
                 checkSavedFile([p,f]); % controls, if saving was successfull (due to some unknown issue, rearely the saved file is corrupt and cannot read by matlab)
-                fprintf(2, sprintf('ROIs exported to file ''%s''!\n',strrep([p,f],'\','\\')));
+                fprintf(2, sprintf('%d ROIs exported to file ''%s''!\n', length(matVisRoiExport), strrep([p,f],'\','\\')));
             else
               fprintf(2, 'Roi export CANCELed!\n')
             end
