@@ -2649,7 +2649,9 @@ set(gui, 'Renderer',' zbuffer');
 % image and zoom windows
 try
     gui_jf = get(gui,'JavaFrame');
+    if ~debugMatVis; warning('off','MATLAB:im2java:functionToBeRemoved'); end
     gui_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_matVis))));
+    warning('on','MATLAB:im2java:functionToBeRemoved')
     %[msg,msgID] = lastwarn;
 catch  
 end
@@ -3588,7 +3590,9 @@ for i = 1:nMat
         'Visible', 'off', 'HandleVisibility', 'off', 'WindowStyle','normal', 'PaperPositionMode','auto');   %#ok
     try
         im_jf = get(imageWin(i),'JavaFrame');
+        if ~debugMatVis; warning('off','MATLAB:im2java:functionToBeRemoved'); end
         im_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_image))));
+        warning('on','MATLAB:im2java:functionToBeRemoved')
     catch
     end
     %winVis{imageWin(i)} =   'on';
@@ -3599,7 +3603,9 @@ for i = 1:nMat
         'KeyReleaseFcn',@zoomKeyReleaseFcn, 'WindowStyle','normal', 'PaperPositionMode','auto');    %#ok
     try
         zoom_jf = get(zoomWin(i),'JavaFrame');
+        if ~debugMatVis; warning('off','MATLAB:im2java:functionToBeRemoved'); end
         zoom_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_zoom))));
+        warning('on','MATLAB:im2java:functionToBeRemoved')
     catch
     end
     %winVis{zoomWin(i)} =   'on';
@@ -3609,7 +3615,9 @@ for i = 1:nMat
         'Visible', 'off', 'HandleVisibility', 'off', 'WindowStyle','normal', 'PaperPositionMode','auto');    %#ok
     try
         plot_jf = get(plotWin(i),'JavaFrame');
+        if ~debugMatVis; warning('off','MATLAB:im2java:functionToBeRemoved'); end
         xx = javax.swing.ImageIcon(im2java(uint8(icon_plot)));
+        warning('on','MATLAB:im2java:functionToBeRemoved')
         plot_jf.setFigureIcon(xx);
     catch
     end
@@ -3653,6 +3661,7 @@ hold(histAx(2), 'on');
 if ~debugMatVis
   warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
   warning('off','MATLAB:ui:javaframe:PropertyToBeRemoved');
+  warning('off','MATLAB:im2java:functionToBeRemoved')
 else
   set([gui imageWin zoomWin plotWin histWin],'HandleVisibility', 'on')
 end
@@ -3661,6 +3670,7 @@ histIcon(isnan(histIcon)) = 1;
 hist_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(255*histIcon))));
 warning('on','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
 warning('on','MATLAB:ui:javaframe:PropertyToBeRemoved');
+warning('on','MATLAB:im2java:functionToBeRemoved')
 %% Start
 if debugMatVis; t1 = debugMatVisOutput('Start ''matVis''', whos, toc(tStart), t1); end
 s = get(tbWin, 'Value');
@@ -9291,11 +9301,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
               if ~debugMatVis
                 warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
                 warning('off','MATLAB:ui:javaframe:PropertyToBeRemoved');
+                warning('off','MATLAB:im2java:functionToBeRemoved')
               end
               profile_jf = get(profileWin,'JavaFrame');
               profile_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_profile))));
               warning('on','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
               warning('on','MATLAB:ui:javaframe:PropertyToBeRemoved');
+              warning('on','MATLAB:im2java:functionToBeRemoved')
             txt_profileList = uicontrol(profileWin, 'Style', 'Text', 'Position', [10 330 110 15], ...
                 'String','List of profiles','FontWeight', 'bold',...
                 'BackgroundColor', get(profileWin, 'Color'), 'HorizontalAlignment', 'center');
@@ -10339,11 +10351,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             if ~debugMatVis
               warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
               warning('off','MATLAB:ui:javaframe:PropertyToBeRemoved');
+              warning('off','MATLAB:im2java:functionToBeRemoved')
             end
             roi_jf = get(roiWin,'JavaFrame');
             roi_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(icon_roi))));
             warning('on','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
             warning('on','MATLAB:ui:javaframe:PropertyToBeRemoved');
+            warning('on','MATLAB:im2java:functionToBeRemoved')
             roiTxtListbox = uicontrol(roiWin, 'Style', 'Text', 'Position', [10 roiWinPos(4)-15 110 15], ...
                 'String','List of ROIs','FontWeight', 'bold',...
                 'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'center');
