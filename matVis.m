@@ -80,7 +80,9 @@ function varargout = matVis(varargin)
 %                               currPos           Vector indicating starting position
 %                               cmMinMax          Matrix of size 2 x number of data sets for colormap limits
 %                               cmap              Number of colormap from list of available colormaps:  {'Gray';'Gray (Range)'; 'Jet'; 'HSV'; 'Hot'; 'Cool';
-%                                                   'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2'; 'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';
+%                                                   'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2';
+%                                                   'Cyan 1';'Cyan 2';'Magenta 1';'Magenta 2';'Yellow 1';'Yellow 2';
+%                                                   'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';'Rainbow5';'Rainbow6';
 %                                                   'Blue-Gray-Yellow (0 centered)';'Magenta-Gray-Green (0 centered)'}
 %                               aspRatio          Two element vector
 %                               rgbDim            Number of RGB dimensions
@@ -197,7 +199,7 @@ popLutString = {'Gray';'Gray (Range)';'4 x Gray';...
   'Turbo';'Parula'; 'Jet'; 'HSV'; 'Hot'; 'Cool';...
   'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2';...
   'Cyan 1';'Cyan 2';'Magenta 1';'Magenta 2';'Yellow 1';'Yellow 2';...
-  'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';...
+  'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';'Rainbow5';'Rainbow6';...
   'Blue-Gray-Yellow (0 centered)';'Blue-Gray-Red (0 centered)';...
   'Green-Gray-Red (0 centered)';'Magenta-Gray-Green (0 centered)'};
 if ~exist('parula', 'file'); popLutString(strcmp(popLutString,'Parula'))=[];end
@@ -631,7 +633,7 @@ else
               colorBarLabelString = val;
             case 'colorMap'
               if ismatrix(val)&& size(val,2)==3
-                popLutString{23} = 'customColormap';
+                popLutString{end+1} = 'customColormap';
                 customColormap = val;
               end
             case 'debug'
@@ -3356,7 +3358,38 @@ if withAlpha
         'Position', [-2 -5 1], 'String', '$\gamma_{\alpha}$','Interpreter','Latex','Tag', ttt1);
 end
 
-ttt = sprintf('Choose colormap.');
+ttt = sprintf(['Choose colormap.\n'...
+'''Gray'' 			    black - white\n'...
+'''Gray (Range)'' blue - black - white - red\n'...
+'''4 x Gray'' 		 4x black - white\n'...
+'''Turbo''\n'...
+'''Parula''\n'...
+'''Jet''\n'...
+'''HSV''\n'...
+'''Hot''\n'...
+'''Cool''\n'...
+'''Red 1''   black - red\n'...
+'''Red 2''   black - red   - white\n'...
+'''Green 1'' black - green\n'...
+'''Green 2'' black - green - white\n'...
+'''Blue 1''  black - blue\n'...
+'''Blue 2''  black - blue  - white\n'...
+'''Cyan 1''  black - cyan\n'...
+'''Cyan 2''  black - cyan - white\n'...
+'''Magenta 1'' black - magenta\n'...
+'''Magenta 2'' black - magenta - white\n'...
+'''Yellow 1''  black - yellow\n'...
+'''Yellow 2''  black - yellow - white\n'...
+'''Rainbow1'' black-blue-cyan-green-yellow-red-        white\n'...
+'''Rainbow2'' black-blue-cyan-green-yellow-red-magenta-white\n'...
+'''Rainbow3''       blue-cyan-green-yellow-red\n'...
+'''Rainbow4''       blue-cyan-green-yellow-red-magenta\n'...
+'''Rainbow5'' white-blue-cyan-green-yellow-red-magenta-white\n'...
+'''Rainbow6'' white-blue-cyan-green-yellow-red-magenta-black\n'...
+'''Blue-Gray-Yellow (0 centered)''\n'...
+'''Blue-Gray-Red (0 centered)''\n'...
+'''Green-Gray-Red (0 centered)''\n'...
+'''Magenta-Gray-Green (0 centered)''']);
 if debugMatVis, ttt1 = sprintf('Handle: ''popLut''\nCallback: ''updateColormap'''); else,  ttt1 = ttt; end
 popLut = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', @updateColormap, 'Units', 'Pixel', ...
     'Position', [7 14 80 15], 'String', popLutString,...
@@ -7529,7 +7562,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 cmap(1:128,2) = ramp128;
                 cmap(129:end,[1 2]) = 1;
                 cmap(129:end,3) = ramp128;
-            case {'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4'}
+            case {'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';'Rainbow5';'Rainbow6'}
                 cmap = colorMap(255, str2double(popLutString{get(popLut, 'Value')}(8)));
             case {'Blue-Gray-Red (0 centered)';
                 'Green-Gray-Red (0 centered)';
@@ -7755,6 +7788,8 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             exp=1;
         end
         switch fun_type
+            case 0
+                fun=@RGB_value0;
             case 1
                 fun=@RGB_value1;
             case 2
@@ -7765,6 +7800,8 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 fun=@RGB_value4;
             case 5
                 fun=@RGB_value5;
+            case 6
+                fun=@RGB_value6;
         end
         if map_size>1
             ms=ceil(map_size);
@@ -7773,6 +7810,17 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             end
         else
             res=fun(map_size, exp);
+        end
+        % range indicator with 0: blue, 1: red
+        function rgb_val=RGB_value0(col, exp)
+            if col==0
+                rgb_val=[0 0 1];
+            elseif col==1
+                rgb_val=[1 0 0];
+            else
+                rgb=col^exp;
+                rgb_val=[rgb rgb rgb];
+            end
         end
         % black, blue, cyan, green, yellow, red, white
         function rgb_val=RGB_value1(col, exp)
@@ -7835,15 +7883,40 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 rgb_val=[1 0 (col*5-4)^exp];
             end
         end
-        % range indicator with 0: blue, 1: red
+        % white, blue, cyan, green, yellow, red, magenta, white
         function rgb_val=RGB_value5(col, exp)
-            if col==0
-                rgb_val=[0 0 1];
-            elseif col==1
-                rgb_val=[1 0 0];
+            if col<1/7
+                rgb_val=[ [1 1]*(1-col*7)^exp 1];
+            elseif col<2/7
+                rgb_val=[ 0 (col*7-1)^exp 1];
+            elseif col<3/7
+                rgb_val=[ 0 1 (3-col*7)^exp];
+            elseif col<4/7
+                rgb_val=[(col*7-3)^exp 1 0];
+            elseif col<5/7
+                rgb_val=[1 (5-col*7)^exp 0];
+            elseif col<6/7
+                rgb_val=[1 0 (col*7-5)^exp];
             else
-                rgb=col^exp;
-                rgb_val=[rgb rgb rgb];
+                rgb_val=[1 (col*7-6)^exp 1];
+            end
+        end
+        % white, blue, cyan, green, yellow, red, magenta, black
+        function rgb_val=RGB_value6(col, exp)
+            if col<1/7
+                rgb_val=[ [1 1]*(1-col*7)^exp 1];
+            elseif col<2/7
+                rgb_val=[ 0 (col*7-1)^exp 1];
+            elseif col<3/7
+                rgb_val=[ 0 1 (3-col*7)^exp];
+            elseif col<4/7
+                rgb_val=[(col*7-3)^exp 1 0];
+            elseif col<5/7
+                rgb_val=[1 (5-col*7)^exp 0];
+            elseif col<6/7
+                rgb_val=[1 0 (col*7-5)^exp];
+            else
+                rgb_val=((7-col*7)^exp)*[1 0 1];
             end
         end
         if debugMatVis, debugMatVisFcn(2); end
