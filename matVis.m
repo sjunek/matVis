@@ -7505,7 +7505,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             case 'Gray'
                 cmap = gray(255);
             case 'Gray (Range)'
-                cmap = colorMap(255, 5);
+                cmap = colorMap(255, 0);
             case '4 x Gray'
                 cmap = repmat(gray(64),[4 1]);
             case 'Turbo'
