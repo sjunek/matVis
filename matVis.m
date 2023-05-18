@@ -4234,7 +4234,11 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             end
             for hh = [histWin profileTraceWin]
               if ~isempty(hh)
-                set(hh, 'Position', get(hh, 'Position') + [0 0 0 winWidthMenuBar], 'MenuBar', 'none');
+                if get(tb_menuBars, 'Value')
+                  set(hh, 'Position', get(hh, 'Position') + [0 0 0 winWidthMenuBar], 'MenuBar', 'figure');
+                else
+                  set(hh, 'Position', get(hh, 'Position') + [0 0 0 winWidthMenuBar], 'MenuBar', 'none');
+                end
               end
             end
         end
@@ -5756,7 +5760,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                         case 'none'
                             out = in;
                         case 'gauss'
-                            h = fspecial('gaussian', ceil(filtSz(1:2)*5), filtSz(1));
+                            h = fspecial('gaussian', filtSz(1:2)*5, filtSz(1)); %ceil(filtSz(1:2)*5), filtSz(1))
                             out = imfilter(in, h, 'replicate');
                         case 'median'
                             out = medfilt2(in, filtSz(1:2));
@@ -6858,7 +6862,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                             end
                             % Plot along any other direction
                         elseif get(bt_mean, 'UserData')==5 && rgbDim ~= plotDim(ii)  %RGB plot - not possible if plot dimension and RGB dimension are identical
-                          if rgbCount && (get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMean, 'Value'))% Stretch RGB mode
+                          if rgbCount && (get(cmStretchRGBMean, 'Value') %|| get(cmStretchRGBMean, 'Value'))% Stretch RGB mode
                             for ll = 1:dim(rgbDim)
                               plotIndex{rgbDim} = ll;
                               plotValues{jj,ii,ll} = data{jj}(plotIndex{:});
@@ -7708,10 +7712,12 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             end
         end
         if get(tbRoi, 'Value')
+          for ii = 1:nMat
             if cmMinMax(ii,1) ~= cmMinMax(ii,2)
-                set(roiAxes, 'CLim', cmMinMax(ii,:));
-                colormap(roiAxes, cmap);
+              set(roiAxes, 'CLim', cmMinMax(ii,:));
+              colormap(roiAxes, cmap);
             end
+          end
         end
         if get(tbColorbar, 'Value') == 1 && all(currGamma == 1)
             showColorbar;
@@ -10495,11 +10501,11 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             jump2ROIPos_cb = uicontrol(roiWin, 'Style', 'checkbox','Position', [10,roiWinPos(4)-328,90  ,22],...
               'Callback', @listboxCallback,'Value',customConfig.jump2ROIPos,'String','Jump to ROI',...
               'Tooltip', 'Jump to position in data set at which ROI was defined.');
-            showROIcenter_cb = uicontrol(roiWin, 'Style', 'checkbox','Position', [110,roiWinPos(4)-328,90  ,22],...
-              'Callback', @updateCenterOfGravity,'Value',customConfig.showROIcenter,...
-              'String','Show center', 'Tooltip', 'Show ROI center.'); 
-            roiFixHistScale = uicontrol(roiWin, 'Style', 'checkbox','Position', [200,roiWinPos(4)-328,90  ,22],...
-              'Callback', @updateRoiProperties,'Value',0,...
+            showROIcenter_cb = uicontrol(roiWin, 'Style', 'checkbox','Position', [90,roiWinPos(4)-328,90  ,22],...
+              'Callback', @updateCenterOfGravity, 'Value',customConfig.showROIcenter,...
+              'String','Show cent.', 'Tooltip', 'Show ROI center.'); 
+            roiFixHistScale = uicontrol(roiWin, 'Style', 'checkbox','Position', [170,roiWinPos(4)-328,90  ,22],...
+              'Callback', @updateRoiProperties, 'Value',0,...
               'String','Global Hist.', 'Tooltip', 'Use global histogram scaling'); 
             roiNormPlots = uicontrol(roiWin, 'Style', 'checkbox','Position', [245,roiWinPos(4)-328,90  ,22],...
               'Callback', @updatePlots, 'Value',0,...
@@ -11433,7 +11439,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
               [tmp1, tmp2, tmp3] = wmean(currRoi(:), currRoiAlpha(:));
               wpfVAV = [wpercentile(currRoi(:),currRoiAlpha(:),[1 25 50 75 99]/100),tmp1, tmp2, tmp3];
               roiToolTipVal = [pfV;wpfVAV;pfAV]';
-              roiToolTipCell = cellfun(@(x) num2Str(x,4),num2cell(roiToolTipVal'),'UniformOutput',false);
+              roiToolTipCell = cellfun(@(x) num2Str(x,6),num2cell(roiToolTipVal'),'UniformOutput',false);
               roiToolTip = sprintf('Percentile\n\t\t\t\t\tData\tData(w)\t\tWeight\n1%% \t\t %s\t %s\t %s\n25%% \t\t %s\t %s\t %s\n\n50%% \t\t %s\t %s\t %s\n\n75%% \t\t %s\t %s\t %s\n99%% \t\t %s\t %s\t %s',...
                 roiToolTipCell{:} );
               %                 set(roiMin, 'Position', [185 60 140 15], 'String',sprintf('%7.3f (without weight)',min(currRoi(:))), 'HorizontalAlignment', 'left');% Used to be nanmin
@@ -12003,7 +12009,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           end
           matVisROIsName = f;
         end
-        if ~isstruct(matVisRoiExport) || ~all(ismember({'corners','cornersPixelDim','index' ,'mask','name','number','rectangle','settings'},fieldnames(matVisRoiExport)))
+        if ~isstruct(matVisRoiExport) || ~all(ismember({'corners','index' ,'mask','name','number','rectangle','settings'},fieldnames(matVisRoiExport))) %,'cornersPixelDim'
           noMatVisROIs = true;
         end
         if noMatVisROIs
