@@ -6862,7 +6862,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                             end
                             % Plot along any other direction
                         elseif get(bt_mean, 'UserData')==5 && rgbDim ~= plotDim(ii)  %RGB plot - not possible if plot dimension and RGB dimension are identical
-                          if rgbCount && (get(cmStretchRGBMean, 'Value') %|| get(cmStretchRGBMean, 'Value'))% Stretch RGB mode
+                          if rgbCount && (get(cmStretchRGBMean, 'Value')) %|| get(cmStretchRGBMean, 'Value'))% Stretch RGB mode
                             for ll = 1:dim(rgbDim)
                               plotIndex{rgbDim} = ll;
                               plotValues{jj,ii,ll} = data{jj}(plotIndex{:});
