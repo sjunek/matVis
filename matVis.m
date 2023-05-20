@@ -5048,7 +5048,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         end
       end
       function releaseMiddleClickGui(varargin)
-        set(gui,'WindowButtonMotionFcn',[]);
+        set(gui,'WindowButtonMotionFcn',@mouseMotion);
       end
     end
 % resize function for image, zoom, plot windows to apply position
