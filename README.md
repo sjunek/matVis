@@ -59,6 +59,13 @@ General purpose Matlab data viewer
         'alphaMap'              Alphamap, has to be of same size as data
                                 matrix. Useful for masking images. Background color will
                                 be set to black.
+        'matVisROIs'            ROI structure 'matVisRoiExport' generated
+                                by matVis, will be automatically imported.
+        'matVisROIsName'        Default name for ROI export.
+        'colorMap'              a matrix by N x 3 which defines a custom
+                                colormap according to Matlabs 'colormap'
+                                specifications.
+        'colorBarLabel'         String of the colorBar YLabel
         'startPar'              List of configuration settings. These
                                 settings 'override' the custom settings saved in a customConfig
                                 file (if available). The list should be a cell array with the
@@ -83,6 +90,7 @@ General purpose Matlab data viewer
                                                     the values of the fields are four element vectors [x0, y0, width, height], in case there are nMat data sets, 
                                                     the values are matrices of size nMat x 4.
                                                     WARNING: gui Position includs TooltipDisplay!!!
+        'debug'                 Set to 1, 2, ... to enable matVis debug mode, Default is FALSE.  
  
 ### Output Argument (optional)
      Structure containing the following fields:
