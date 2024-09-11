@@ -2807,12 +2807,18 @@ if customDimScale
 else
     set(panel_positionControls, 'Children',[tb_lockPlots2Zoom cb_plots txt_zoomWidth bt_playZoom bt_playZoomRange bt_playAll sld_up sld_down sld txt_dimName dimSize flipdim(reshape((cat(1,etxt_down,etxt_up)),[1 2*nDim]),2) etxt(nDim:-1:1)]);
 end
-ttt = sprintf('Speed of playback. Current value 0\nMoving up: slower speed by introducing pauses.\nMoving down: faster speed by skipping images.');
-if debugMatVis, ttt1 = sprintf('Handle: ''sld_playSpeed''\nCallback: ''playSpeedCallback'''); 
-else, ttt1 = sprintf('<html>Speed of playback. Current value 0.<br /><b>Moving up:</b> slower speed by introducing pauses.<br /><b>Moving down:</b> faster speed by skipping images.</html>'); end
-sld_playSpeed = uicontrol('Parent',panel_positionControls, 'Style', 'Slider', 'Units', 'Pixel', ...
-    'Position', [185 88 10 nDim*dimHeight-10], 'Min', -10, 'Max', 10, ...
-    'SliderStep', [0.05 0.2],'Value',0, ...
+ttt = sprintf('Speed of playback. See top of GUI for current speed during playback. Current value 0\nNegative values: slower speed by introducing pauses.\nPositive values: faster speed by skipping images.');
+if debugMatVis, ttt1 = sprintf('Handle: ''etxt_playSpeed''\nCallback: ''playSpeedCallback'''); 
+else, ttt1 = sprintf('<html>Speed of playback. Current value 0.<br /><b>Negative values:</b> slower speed by introducing pauses.<br /><b>Positive values:</b> faster speed by skipping images.</html>'); end
+% Previous version: Playback speed set with slider, now replaced by edit
+% tex
+% sld_playSpeed = uicontrol('Parent',panel_positionControls, 'Style', 'Slider', 'Units', 'Pixel', ...
+%     'Position', [185 88 10 nDim*dimHeight-10], 'Min', -10, 'Max', 10, ...
+%     'SliderStep', [0.05 0.2],'Value',0, ...
+%     'Callback', @playSpeedCallback,'Tooltip',ttt1,'Tag',ttt);
+etxt_playSpeed = uicontrol('Parent',panel_positionControls, 'Style', 'edit', 'Units', 'Pixel', ...
+    'Position', [150 75 30 13], ...
+    'String',0, ...
     'Callback', @playSpeedCallback,'Tooltip',ttt1,'Tag',ttt);
 
 % Find Min/Max Buttons
@@ -4108,7 +4114,8 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         playTime = nan(1,10);
         playCt = 0;
         while isPlaying == 1 
-            v = get(sld_playSpeed, 'Value');
+            % v = get(sld_playSpeed, 'Value');
+            v = -1*str2num(get(etxt_playSpeed, 'String'));
             if round(v) < 0 % faster playback: frame skipping
                 inc = ((-1*round(v))+1)*(-1)^(increase+1);
                 ps = 0;
@@ -4217,12 +4224,17 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
 %Callback for play speed slider
     function playSpeedCallback(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        set(sld_playSpeed, 'Value', round(get(sld_playSpeed, 'Value')));
-        if debugMatVis, ttt1 = sprintf('Handle: ''sld_playSpeed = %d''\nCallback: ''playSpeedCallback''\n',get(sld_playSpeed, 'Value'));
-        else,           ttt = sprintf('<html>Speed of playback. Current value %d.<br /><b>Moving up:</b> slower speed by introducing pauses.<br /><b>Moving down:</b> faster speed by skipping images.</html>',get(sld_playSpeed, 'Value'));
+        % set(sld_playSpeed, 'Value', round(get(sld_playSpeed, 'Value')));
+        if isempty(str2num(get(etxt_playSpeed,'String')))
+            get(etxt_playSpeed,'String','0')
+        else
+            set(etxt_playSpeed, 'String', round(str2num(get(etxt_playSpeed,'String'))));
         end
-        ttt1 = sprintf('Speed of playback. Current value %d\nMoving up: slower speed by introducing pauses.\nMoving down: faster speed by skipping images.',get(sld_playSpeed, 'Value'));
-        set(sld_playSpeed,'Tooltip',ttt,'Tag',ttt1);
+        if debugMatVis, ttt1 = sprintf('Handle: ''etxt_playSpeed = %d''\nCallback: ''playSpeedCallback''\n',num2str(get(etxt_playSpeed, 'String')));
+        else,           ttt = sprintf('<html>Speed of playback. Current value %d.<br /><b>Moving up:</b> slower speed by introducing pauses.<br /><b>Moving down:</b> faster speed by skipping images.</html>',str2num(get(etxt_playSpeed, 'String')));
+        end
+        ttt1 = sprintf('Speed of playback. Current value %d\nMoving up: slower speed by introducing pauses.\nMoving down: faster speed by skipping images.',str2num(get(etxt_playSpeed, 'String')));
+        set(etxt_playSpeed,'Tooltip',ttt,'Tag',ttt1);
         updateTooltips;
         if debugMatVis, debugMatVisFcn(2); end
     end
