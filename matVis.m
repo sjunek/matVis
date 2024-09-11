@@ -2752,6 +2752,11 @@ for i = 1:nDim
     bt_playZoom(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Callback', {@playCallback,i,'zoom',1}, ...
         'Units', 'Pixel','Position', [150 (nDim-i+2)*40+8 30 15], 'Value',0  , 'CData', arrowZoom,...
         'BackgroundColor', guiBGCol,'Tooltip',ttt1,'Tag',ttt);  %#ok
+    ttt = sprintf('Play by moving zoom range of dimension %s\nRight click for reverse play.',dimNames{i});
+    if debugMatVis, ttt1 = sprintf('Handle: ''bt_playZoomRange(%d)''\nCallback: ''playCallback(%d,''zoomRange'',1)''',i,i);else,  ttt1 = ttt; end
+    bt_playZoomRange(i) = uicontrol('Parent',panel_positionControls, 'Style', 'Togglebutton', 'Callback', {@playCallback,i,'zoomRange',1}, ...
+        'Units', 'Pixel','Position', [75 (nDim-i+2)*40-2 50 10], 'Value',0  , 'CData', arrowZoom,...
+        'BackgroundColor', guiBGCol,'Tooltip',ttt1,'Tag',ttt);  %#ok
     % Zoom Width
     ttt = sprintf('Width of zoom range of %s',dimNames{i}); 
     if debugMatVis, ttt1 = sprintf('Handle: ''txt_zoomWidth(%d)''',i); else,  ttt1 = ttt; end
@@ -2798,9 +2803,9 @@ if usejava('awt')  % java enabled -> use it to update while dragging
   setappdata(gui,'sliderListeners', [hListeners hListenersD hListenersU]); % -> hListeners can be list of handles
 end
 if customDimScale
-    set(panel_positionControls, 'Children',[tb_lockPlots2Zoom cb_plots txt_zoomWidthScale txt_zoomDownScaled txt_zoomUpScaled txt_pxScale txt_zoomWidth bt_playZoom bt_playAll sld_up sld_down sld txt_dimName dimSize flipdim(reshape((cat(1,etxt_down,etxt_up)),[1 2*nDim]),2) etxt(nDim:-1:1)]);
+    set(panel_positionControls, 'Children',[tb_lockPlots2Zoom cb_plots txt_zoomWidthScale txt_zoomDownScaled txt_zoomUpScaled txt_pxScale txt_zoomWidth bt_playZoom bt_playZoomRange bt_playAll sld_up sld_down sld txt_dimName dimSize flipdim(reshape((cat(1,etxt_down,etxt_up)),[1 2*nDim]),2) etxt(nDim:-1:1)]);
 else
-    set(panel_positionControls, 'Children',[tb_lockPlots2Zoom cb_plots txt_zoomWidth bt_playZoom bt_playAll sld_up sld_down sld txt_dimName dimSize flipdim(reshape((cat(1,etxt_down,etxt_up)),[1 2*nDim]),2) etxt(nDim:-1:1)]);
+    set(panel_positionControls, 'Children',[tb_lockPlots2Zoom cb_plots txt_zoomWidth bt_playZoom bt_playZoomRange bt_playAll sld_up sld_down sld txt_dimName dimSize flipdim(reshape((cat(1,etxt_down,etxt_up)),[1 2*nDim]),2) etxt(nDim:-1:1)]);
 end
 ttt = sprintf('Speed of playback. Current value 0\nMoving up: slower speed by introducing pauses.\nMoving down: faster speed by skipping images.');
 if debugMatVis, ttt1 = sprintf('Handle: ''sld_playSpeed''\nCallback: ''playSpeedCallback'''); 
@@ -4070,7 +4075,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
     function playCallback(hObject, event, pD, allZoom, increase)  %#ok
         if debugMatVis, debugMatVisFcn(1); end
         playDim = pD;
-        set([bt_playAll bt_playZoom], 'Enable', 'off');
+        set([bt_playAll bt_playZoom bt_playZoomRange], 'Enable', 'off');
         switch allZoom
             case 'zoom'
                 startZoom = zoomVal(playDim,1);
@@ -4083,6 +4088,10 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 startZoom = 1;
                 stopZoom = dim(playDim);
                 set(bt_playAll(playDim), 'Enable', 'on', 'CData', pausebt, 'Callback', @pauseCallback);
+            case 'zoomRange'
+                startZoom = zoomVal(playDim,1);
+                stopZoom = zoomVal(playDim,1) + zoomVal(playDim,2) - 1;
+                set(bt_playZoomRange(playDim), 'Enable', 'on', 'CData', pausebt, 'Callback', @pauseCallback);
         end
         isPlaying = 1;
         if movdata.rec
@@ -4120,16 +4129,28 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     set(gui,'Name',['fps: ' num2str(1/mean(playTimeDiff,'omitnan'),'%6.2f') ' (' num2str(ps) ' s pause)']);  % Used to be nanmesn
                 end
             end
-            currPos(playDim) = currPos(playDim)+inc;
-            if currPos(playDim) > stopZoom
-                currPos(playDim) = startZoom;
-            end
-            if currPos(playDim) < startZoom
-                currPos(playDim) = stopZoom;
-            end
-            updateSelection(playDim);
-            if ~any(xySel == playDim) && any([cmImage cmZoom] == get(bg_colormap, 'SelectedObject'))
-                updateColormap;
+            switch allZoom
+                case 'zoomRange'
+                    if zoomVal(playDim,1)+zoomVal(playDim,2)-1+inc > dim(playDim)
+                        zoomVal(playDim,1) = 1;
+                    elseif zoomVal(playDim,1)+inc < 1                        
+                        zoomVal(playDim,1) = dim(playDim) - zoomVal(playDim,2);
+                    else
+                        zoomVal(playDim,1) = zoomVal(playDim,1) + inc;
+                    end
+                    updateZoom(1, 1, playDim, '')
+                otherwise
+                    currPos(playDim) = currPos(playDim)+inc;
+                    if currPos(playDim) > stopZoom
+                        currPos(playDim) = startZoom;
+                    end
+                    if currPos(playDim) < startZoom
+                        currPos(playDim) = stopZoom;
+                    end
+                    updateSelection(playDim);
+                    if ~any(xySel == playDim) && any([cmImage cmZoom] == get(bg_colormap, 'SelectedObject'))
+                        updateColormap;
+                    end
             end
             drawnow;
             pause(ps);
@@ -4149,10 +4170,12 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         for ii = 1:nDim
             set(bt_playAll(ii), 'Enable', 'on', 'Callback', {@playCallback,ii,'all',1}, 'CData', arrowAll);
             set(bt_playZoom(ii), 'Enable', 'on', 'Callback', {@playCallback,ii,'zoom',1}, 'CData', arrowZoom);
+            set(bt_playZoomRange(ii), 'Enable', 'on', 'Callback', {@playCallback,ii,'zoomRange',1}, 'CData', arrowZoom);
         end
         if movdata.rec
             set(bt_playAll,'CData',icon_RecordAll);
             set(bt_playZoom,'CData',icon_RecordZoom);
+            set(bt_playZoomRange,'CData',icon_RecordZoom);
         end
         % Update GUI hist
         if ~get(tb_playHist,'Value')
@@ -4850,26 +4873,41 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         btPos_findLocalMaxZm  = get(bt_findLocalMaxZm,  'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
         btPos_findGlobalMinZm = get(bt_findGlobalMinZm, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
         btPos_findGlobalMaxZm = get(bt_findGlobalMaxZm, 'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
-        revPlay = NaN;
+        revPlay = [NaN NaN];
         for ii = 1:nDim
           btPosPlay         = get(bt_playAll(ii),     'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
           btPosPlayZoom     = get(bt_playZoom(ii),    'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
+          btPosPlayZoomRange= get(bt_playZoomRange(ii),    'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0];
           if pointInArea(p1,btPosPlay)
-            revPlay = ii;
+            revPlay = [1 ii];
           elseif pointInArea(p1,btPosPlayZoom)
-            revPlay = -ii;
+            revPlay = [2 ii];
+          elseif pointInArea(p1,btPosPlayZoomRange)
+              revPlay = [3 ii];
           end
         end
         %%
         if ~isnan(revPlay)
           %% Right click on play buttons: play backwards
-          if revPlay > 0
-            set(bt_playAll(revPlay), 'Value',1);
-            playCallback(0,0,revPlay,'all',0);
-          else
-            set(bt_playZoom(-1*revPlay), 'Value',1);
-            playCallback(0,0,-1*revPlay,'zoom',0);
+          rpType = revPlay(1);
+          switch rpType
+              case 1
+                  set(bt_playAll(revPlay(2)), 'Value',1);
+                  playCallback(0,0,revPlay(2),'all',0);
+              case 2
+                  set(bt_playZoom(revPlay(2)), 'Value',1);
+                  playCallback(0,0,revPlay(2),'zoom',0);
+              case 3
+                  set(bt_playZoomRange(revPlay(2)), 'Value',1);
+                  playCallback(0,0,revPlay(2),'zoomRange',0);
           end
+          % if revPlay > 0
+          %     set(bt_playAll(revPlay), 'Value',1);
+          %     playCallback(0,0,revPlay,'all',0);
+          % else        
+          %     set(bt_playZoom(-1*revPlay), 'Value',1);
+          %     playCallback(0,0,-1*revPlay,'zoom',0);
+          % end
         elseif pointInArea(p1,btPosAspectRatio) && get(tbAspRatio, 'Value')
           %% Right click on aspect ratio button: set aspect ratio if button value is 1
           gp = get(gui,'Position');
@@ -8050,9 +8088,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                             plotXLimScale(dimNum,:) = dimScale(dimNum,:);
                         end
                     end
-              case 'ROIupdate'
-                zoomValXY([1,3]) = zoomVal(xySel(2),:);
-                zoomValXY([2,4]) = zoomVal(xySel(1),:);
+                case 'ROIupdate'
+                    zoomValXY([1,3]) = zoomVal(xySel(2),:);
+                    zoomValXY([2,4]) = zoomVal(xySel(1),:);
             end
             for ii = dimNum
               set(txt_zoomWidth(ii), 'String', [' = ' num2str(zoomVal(ii,2))]);
