@@ -5264,8 +5264,10 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
               end
               % Make sure no point is outside the range of the current
               % dimension
-              p1(1) = min(max(1,p1(1)),dim(plotDim(find(subPlotHandles(plotWin==myGcf,:) == myGca))));
-              p2(1) = min(max(1,p2(1)),dim(plotDim(find(subPlotHandles(plotWin==myGcf,:) == myGca))));
+              if any(currWin == plotWin)
+                  p1(1) = min(max(1,p1(1)),dim(plotDim(find(subPlotHandles(plotWin==myGcf,:) == myGca))));
+                  p2(1) = min(max(1,p2(1)),dim(plotDim(find(subPlotHandles(plotWin==myGcf,:) == myGca))));
+              end
               p1 = ceil(p1);
               p2 = ceil(p2);
               set(myGcf, 'HandleVisibility', 'off');
