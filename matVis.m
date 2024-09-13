@@ -5250,7 +5250,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
               % position is not updated immediately after the rbbox, so we
               % introduce a small pause to read out the correct new
               % position.
-              pause(0.001)
+              % pause(0.001)
               p2 = get(myGca,'CurrentPoint');
               p2 = p2(1,1:2);
               if customDimScale
@@ -5262,6 +5262,10 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                   p2 = pixelLocation(p2(1,1), plotDim(find(subPlotHandles(plotWin==myGcf,:) == myGca)));
                 end
               end
+              % Make sure no point is outside the range of the current
+              % dimension
+              p1(1) = min(max(1,p1(1)),dim(plotDim(find(subPlotHandles(plotWin==myGcf,:) == myGca))));
+              p2(1) = min(max(1,p2(1)),dim(plotDim(find(subPlotHandles(plotWin==myGcf,:) == myGca))));
               p1 = ceil(p1);
               p2 = ceil(p2);
               set(myGcf, 'HandleVisibility', 'off');
