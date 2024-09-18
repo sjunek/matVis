@@ -6100,7 +6100,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                   currIm{ii} = var(double(c), [], 3, 'omitnan');
                 end
               case 'tile'    %Tile images ('montage')
-                nRows = max(1,round(sqrt(dim(xySel(1))/dim(xySel(2))*size(c,3)/aspRatio(2) * aspRatio(1))));
+                nRows = max(1,round(1/1.5*sqrt(dim(xySel(1))/dim(xySel(2))*size(c,3)/aspRatio(2) * aspRatio(1))));
                 nCols = ceil(size(c,3) / nRows);
                 if nRows > 1 && nCols > 1
                   nBlack = nRows*nCols - size(c,3);
