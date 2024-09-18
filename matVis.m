@@ -1014,26 +1014,27 @@ movdata.set.movname = 'movie_file_name'; % preset name for movie output
 movdata.set.movdir = pwd; % preset dir for movie output
 movdata.set.movcodec = 'MPEG-4'; % presetting for movie output
 movdata.set.movFrameRate = 10; % presetting for movie FrameRate
-movdata.set.movquality = 75; % presetting for movie quality (only for MPEG-4 and Motion JPEG AVI)
+movdata.set.movquality = 100; % presetting for movie quality (only for MPEG-4 and Motion JPEG AVI)
 movdata.set.movcompress = 10; % presetting for compression rate (only Archival and Motion JPEG 2000)
 movdata.set.movsize = [800 380]; % presetting for movie frame size
 if ~withAlpha
-    movdata.set.movbg = [0.99 0.92 0.8]; % presetting for movie background color
-    movdata.set.movPartsbg = [0.73 0.83 0.96]; % presetting for movie parts color
+    movdata.set.movbg = [1 1 1]; % presetting for movie background color
+    movdata.set.movPartsbg = [1 1 1]; % presetting for movie parts color
     movdata.set.movTitleColor = [0 0 0]; % presetting for movie title color
     movdata.set.movLabelColor = [0 0 0]; % presetting for movie label color
 else
-    movdata.set.movbg = [0 0 0]; % presetting for movie background color
-    movdata.set.movPartsbg = [0 0 0]; % presetting for movie parts color
-    movdata.set.movTitleColor = [0.8 0 0]; % presetting for movie title color
-    movdata.set.movLabelColor = [1 1 1 ]; % presetting for movie label color
+    movdata.set.movbg = [1 1 1]; % presetting for movie background color
+    movdata.set.movPartsbg = [1 1 1]; % presetting for movie parts color
+    movdata.set.movTitleColor = [0 0 0]; % presetting for movie title color
+    movdata.set.movLabelColor = [0 0 0]; % presetting for movie label color
 end
 movdata.set.prevscale = 1; % presetting for preview scaling (value of popup; 1:100%, 2:75%, 3:50%)
 movdata.set.partunits = 1; % presetting for Movie Part Units (value of popup; 1:normalized, 2:pixels)
 movdata.set.title = 'Movie Title'; % presetting for Movie Title
 movdata.set.titlepos = [.5 .92]; % presetting for Movie Title Position
 movdata.set.titlesize = 12; % presetting fot Movie Title FontSize in pt
-movdata.set.titlestatus = 1; % presetting fot Movie Title FontSize in pt
+movdata.set.titlestatus = 0; % presetting fot Movie Title FontSize in pt
+defaultVidGenConfig = movdata.set;
 movdata.rec = 0; % status of recordbutton
 movdata.fastCaptureMode = true; %false; % use 'hardcopy' instead of 'export_fig'
 
@@ -13024,18 +13025,20 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
 
         % Set movdata.FilterSpecs
         movdata.FilterSpec = [];
-        if any(strcmp(movdata.codecs,'Archival'));movdata.FilterSpec{end+1,1}='*.mj2';movdata.FilterSpec{end,2}='Archival (*.mj2)';end
+        if any(strcmp(movdata.codecs,'Archival'));        movdata.FilterSpec{end+1,1}='*.mj2';movdata.FilterSpec{end,2}='Archival (*.mj2)';end
+        if any(strcmp(movdata.codecs,'Grayscale AVI'));   movdata.FilterSpec{end+1,1}='*.avi';movdata.FilterSpec{end,2}='Grayscale AVI (*.avi)';end
+        if any(strcmp(movdata.codecs,'Indexed AVI'));     movdata.FilterSpec{end+1,1}='*.avi';movdata.FilterSpec{end,2}='Indexed AVI (*.avi)';end
         if any(strcmp(movdata.codecs,'Motion JPEG 2000'));movdata.FilterSpec{end+1,1}='*.mj2';movdata.FilterSpec{end,2}='Motion JPEG 2000 (*.mj2)';end
+        if any(strcmp(movdata.codecs,'Motion JPEG AVI')); movdata.FilterSpec{end+1,1}='*.avi';movdata.FilterSpec{end,2}='Motion JPEG AVI (*.avi)';end
+        if any(strcmp(movdata.codecs,'MPEG-4'));          movdata.FilterSpec{end+1,1}='*.mp4';movdata.FilterSpec{end,2}='MPEG-4 (*.mp4)';end
         if any(strcmp(movdata.codecs,'Uncompressed AVI'));movdata.FilterSpec{end+1,1}='*.avi';movdata.FilterSpec{end,2}='Uncompressed AVI (*.avi)';end
-        if any(strcmp(movdata.codecs,'Motion JPEG AVI'));movdata.FilterSpec{end+1,1}='*.avi';movdata.FilterSpec{end,2}='Motion JPEG AVI (*.avi)';end
-        if any(strcmp(movdata.codecs,'MPEG-4'));movdata.FilterSpec{end+1,1}='*.mp4';movdata.FilterSpec{end,2}='MPEG-4 (*.mp4)';end
-        if any(strcmp(movdata.codecs,'FFMPEG > MPEG-4'));movdata.FilterSpec{end+1,1}='*.mp4';movdata.FilterSpec{end,2}='MPEG-4 (*.mp4)';end
-        if any(strcmp(movdata.codecs,'FFMPEG > Theora'));movdata.FilterSpec{end+1,1}='*.ogg';movdata.FilterSpec{end,2}='Theora (*.ogg)';end
+        if any(strcmp(movdata.codecs,'FFMPEG > Theora')); movdata.FilterSpec{end+1,1}='*.ogg';movdata.FilterSpec{end,2}='Theora (*.ogg)';end
+        if any(strcmp(movdata.codecs,'FFMPEG > MPEG-4')); movdata.FilterSpec{end+1,1}='*.mp4';movdata.FilterSpec{end,2}='MPEG-4 (*.mp4)';end
 
         % Set File Name from presettings
-        if ~isfield(movdata,'set.movname'); movdata.set.movname = 'movie_file_name';end
-        if ~isfield(movdata,'set.movdir'); movdata.set.movdir = pwd;end
-        if ~isfield(movdata,'set.movcodec'); movdata.set.movcodec = 'Uncompressed AVI';end
+        if ~isfield(movdata.set,'movname'); movdata.set.movname = 'movie_file_name';end
+        if ~isfield(movdata.set,'movdir'); movdata.set.movdir = pwd;end
+        if ~isfield(movdata.set,'movcodec'); movdata.set.movcodec = 'Uncompressed AVI';end
         movdata.set.fileext = [];
         for iii=1:length(movdata.FilterSpec);
           if regexp(movdata.FilterSpec{iii,2},movdata.set.movcodec,'ONCE')==1;
@@ -13046,7 +13049,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         movdata.set.movstring=[movdata.set.movdir '\' movdata.set.movname movdata.set.fileext];
 
         % Set used codec from presettings
-        if ~isfield(movdata,'set.codecval');
+        if ~isfield(movdata.set,'codecval');
           for iii=1:length(movdata.codecs);
             if ~isempty(regexp(movdata.codecs{iii},movdata.set.movcodec,'ONCE'));
               movdata.set.codecval = iii;
@@ -13065,6 +13068,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           movdata.set.qualval = movdata.set.movquality;
         end
         vidGeneratorGenerateGUI;
+        defaultVidGenConfig = movdata.set;
         if debugMatVis, debugMatVisFcn(2); end
       end
       function vidGeneratorGenerateGUI(varargin)
@@ -13307,13 +13311,121 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         %             movdata.gui.hvidgen2 = uicontrol('Parent',movdata.gui.hvidgen,'Units','pixels','Callback',@vidGeneratorShowHide,...
         %                 'Position',[60 10 50 22],'String','Hide','Style','pushbutton','tag','movdata.gui.hvidgen2');
         movdata.gui.hvidgen3 = uicontrol('Parent',movdata.gui.hvidgen,'Units','pixels','HorizontalAlignment','left',...
-          'Position',[35 12 500 15],'String','Adjust settings, then press button to activate recording.',...
+          'Position',[35 12 300 15],'String','Adjust settings, then press button to activate recording.',...
           'Style','text','tag','movdata.gui.hvidgen3');
+        % Recall saved config
+        ttt = sprintf('Switches VidGen configuration between default and custom configuration.\nSeparat configurations are saved for single and multiple datasets.\nThe matVis configuration includes many but not all parameters.');
+        if debugMatVis, ttt1 = sprintf('Handle: ''btConfig''\nCallback: ''switchConfig'''); else,  ttt1 = ttt; end
+        movdata.gui.hvidgen4 = uicontrol('Parent',movdata.gui.hvidgen, 'Style', 'Pushbutton', 'Units', 'Pixel',...
+          'Position', [416 19 55 15], 'String', 'DefConf','Callback',@vidGeneratorSwitchConfig, 'FontSize',7,...
+          'UserData', 1,'Tooltip',ttt1,'Tag',ttt);
+        % btSaveConfig
+        ttt = sprintf('Saves the current VidGen configuration as the custom configuration.\nThe config file (''matVisVidGenConfig_%s.mat'') is saved in the same directory as the matVis.m file.',strtrim(getenv('Computername')));
+        if debugMatVis, ttt1 = sprintf('Handle: ''none''\nCallback: ''saveVidGenConfig'''); else,  ttt1 = ttt; end
+        uicontrol('Parent',movdata.gui.hvidgen, 'Style', 'Pushbutton', 'Units', 'Pixel', 'Position', [416 5 55 15], ...
+          'FontSize',7, 'String','SaveConf', 'Callback',@vidGeneratorSaveConfig, 'Tooltip',ttt1,'Tag',ttt);
+
         % %                 end
         %             else
         %                 vidGenerator_hide
         adjustGuiSize(movdata.gui.hvidgen);
         vidGeneratorPreview;
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+      function vidGeneratorSaveConfig(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        compName = strtrim(getenv('Computername'));
+        customVidGenConfig = movdata.set;
+        [p,f,e] = fileparts(which('matVis.m'));    %#ok
+        try
+          save(fullfile(p,['matVisVidGenConfig_' compName '.mat']), 'customVidGenConfig');
+          checkSavedFile(fullfile(p,['matVisVidGenConfig_' compName '.mat']));  % controls, if saving was successfull (due to some unknown issue, rearely the saved file is corrupt and cannot read by matlab)
+        catch
+          save(fullfile(p,'matVisVidGenConfig.mat'), 'customVidGenConfig');
+          checkSavedFile(fullfile(p,'matVisVidGenConfig.mat'));                 % controls, if saving was successfull (due to some unknown issue, rearely the saved file is corrupt and cannot read by matlab)
+        end
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+      function vidGeneratorSwitchConfig(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        set(movdata.gui.hvidgen4, 'UserData', mod(get(movdata.gui.hvidgen4, 'UserData')+1  ,2));
+        switch get(movdata.gui.hvidgen4, 'UserData')
+          % Never used the "current config" option, thus disabled
+          % (also made problems with the gui size when switching between tooltip and compact mode)
+          %             case 0
+          %                 setConfig(currConfig);
+          %                 set(btConfig, 'String', 'CurrConf');
+          case 0 % customConfig
+            % currConfig = getCurrConfig;
+            compName = strtrim(getenv('Computername'));
+            [p,f,e] = fileparts(which('matVis.m'));    %#ok
+            try
+              load(fullfile(p,['matVisVidGenConfig_' compName '.mat']), 'customVidGenConfig');
+              %movdata.set = customVidGenConfig;
+              vidGeneratorSetConfig(customVidGenConfig);
+              set(movdata.gui.hvidgen4, 'String', 'CustConf');
+              vidGeneratorGenerateGUI;
+            catch
+              set(movdata.gui.hvidgen4, 'UserData', mod(get(movdata.gui.hvidgen4, 'UserData')+1  ,2));
+            end
+          case 1
+            %movdata.set = defaultVidGenConfig;
+            vidGeneratorSetConfig(defaultVidGenConfig);
+            set(movdata.gui.hvidgen4, 'String', 'DefConf');
+            vidGeneratorGenerateGUI;
+        end
+        if debugMatVis, debugMatVisFcn(2); end
+      end
+      function vidGeneratorSetConfig(myConf)
+        if debugMatVis, debugMatVisFcn(1); end
+        % save parts handles
+        for iii=1:length(movdata.set.parts)
+          myPartsHandle{iii} = movdata.set.parts{iii}.handle;
+        end
+        % copy structure
+        fName = fieldnames(myConf);
+        for nn=1:length(fName)
+          if strcmp(fName{nn},'parts')
+            for iii=1:length(myConf.parts)
+              movdata.set.parts{iii} = myConf.parts{iii};   
+            end
+          elseif isfield(movdata.set,fName{nn})
+            movdata.set.(fName{nn}) = myConf.(fName{nn});
+          else
+            stopHere
+          end
+        end
+        %restore parts handles
+        for iii=1:length(movdata.set.parts)
+          movdata.set.parts{iii}.handle = myPartsHandle{iii};
+        end
+        movdata.gui.hinput2.String = movdata.set.movsize(1);
+        movdata.gui.hinput4.String = movdata.set.movsize(2);
+        movdata.gui.hinput13.BackgroundColor = movdata.set.movPartsbg;
+        movdata.gui.hinput6.BackgroundColor = movdata.set.movbg;
+        movdata.gui.hinput15.BackgroundColor = movdata.set.movTitleColor;
+        movdata.gui.hinput17.BackgroundColor = movdata.set.movLabelColor;
+        movdata.gui.hinput9.Value = movdata.set.prevscale; % Scaling
+        movdata.gui.hinput11.Value = movdata.set.partunits;
+        % input: title
+        movdata.gui.hparts1.Value = movdata.set.titlestatus;
+        movdata.gui.hparts4.String = movdata.set.titlepos(1);
+        movdata.gui.hparts5.String = movdata.set.titlepos(1);
+        movdata.gui.hparts7.String = movdata.set.titlesize;
+        % Loop over image inputs
+        for iii=1:min([length(movdata.gui.hpartsim1) length(movdata.set.parts)]);
+          movdata.gui.hpartsim1{iii}.Value  = movdata.set.parts{iii}.status;
+          movdata.gui.hpartsim4{iii}.String = movdata.set.parts{iii}.pos(1);
+          movdata.gui.hpartsim5{iii}.String = movdata.set.parts{iii}.pos(2);
+          movdata.gui.hpartsim6{iii}.String = movdata.set.parts{iii}.pos(3);
+          movdata.gui.hpartsim7{iii}.String = movdata.set.parts{iii}.pos(4);
+        end
+        % Movie Output Panel
+        movdata.gui.houtput1.String = [movdata.set.movdir '\' movdata.set.movname movdata.set.fileext];
+        movdata.gui.houtput4.Value = movdata.set.codecval;
+        movdata.gui.houtput6.String = movdata.set.movFrameRate;
+        movdata.gui.houtput8.String = movdata.set.qualval;
+        if strcmp(movdata.set.movcodec,'Uncompressed AVI');set([movdata.gui.houtput7 movdata.gui.houtput8],'String',num2str(100),'Enable','off');end
         if debugMatVis, debugMatVisFcn(2); end
       end
       %% Draw Preview
@@ -13572,7 +13684,8 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
       %% Choose File to write
       function vidGeneratorSaveFile(varargin)
         if debugMatVis, debugMatVisFcn(1); end
-        [movname,movdir,movtype]=uiputfile(movdata.FilterSpec,'Choose File for Movie Output',get(movdata.gui.houtput1,'String'));
+        myCodecs = circshift(movdata.FilterSpec,-movdata.gui.houtput4.Value+1);
+        [movname,movdir,movtype]=uiputfile(myCodecs,'Choose File for Movie Output',get(movdata.gui.houtput1,'String'));
         movdata.set.movname = movname(1:end-4);
         movdata.set.movdir = movdir(1:end-1);
         movdata.set.fileext = movdata.FilterSpec{movtype,1}(2:end);
@@ -13582,7 +13695,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         scalestring = scalestring{get(movdata.gui.hinput9,'Value')};
         set(movdata.prev.hprev,'name',[movdata.set.movname ' - (' num2str(movdata.set.movsize(1)) 'x' num2str(movdata.set.movsize(2)) ') - PREVIEW (' scalestring ')']);
 
-        movdata.set.movcodec = movdata.FilterSpec{movtype,2}(1:end-8);
+        movdata.set.movcodec = myCodecs{movtype,2}(1:end-8);
         codecpopup = get(movdata.gui.houtput4,'String');
         for iii = 1:length(codecpopup);
           if strcmp(codecpopup{iii},movdata.set.movcodec) || strcmp(codecpopup{iii},['FFMPEG > ' movdata.set.movcodec]);
@@ -13603,7 +13716,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             set(movdata.gui.houtput8,'String',num2str(100),'Enable','off');
           otherwise
             set(movdata.gui.houtput7,'String','Quality [%]:','Enable','on');
-            set(movdata.gui.houtput8,'String',num2str(75),'Enable','on');
+            set(movdata.gui.houtput8,'Enable','on');%,'String',num2str(75)
         end
         clear codecpopup setpopupvalue movname movdir movtype;
         figure(movdata.gui.hvidgen);
