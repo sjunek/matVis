@@ -7748,7 +7748,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 cmap(129:end,[1 2]) = 1;
                 cmap(129:end,3) = ramp128;
             case {'Rainbow1';'Rainbow2';'Rainbow3';'Rainbow4';'Rainbow5';'Rainbow6'}
-                cmap = colorMap(255, str2double(popLutString{get(popLut, 'Value')}(8)));
+                cmap = colorMap(255, str2double(popLutString{get(popLut, 'Value')}(8)),.5);
             case {'Blue-Gray-Red (0 centered)';
                 'Green-Gray-Red (0 centered)';
                 'Blue-Gray-Yellow (0 centered)';
