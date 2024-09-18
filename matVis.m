@@ -1258,7 +1258,7 @@ if ~isempty(startPar)
               if ischar(propVal)
                 propVal = find(ismember(popLutString, propVal)); 
               end
-              if isscalar(propVal) && any(propVal==1:22)
+              if isscalar(propVal) && any(propVal==1:31)
                 customConfig.colormap = propVal;
               end
             case 'aspRatio'   % checked
@@ -3148,13 +3148,13 @@ ttt = sprintf('Select contrast adjustment.\nImage: min/max of currently displaye
 ttt2 = sprintf('<html>Select contrast adjustment.<br /><b>Image:</b> min/max of currently displayed image.</html>');
 if debugMatVis, ttt1 = sprintf('Handle: ''cmImage''\nSelectionChangeFcn: ''updateColormap'''); else,  ttt1 = ttt2; end
 cmImage = uicontrol('Style', 'Radio', 'String', 'Image', 'Parent', bg_colormap, ...
-    'Units', 'pixel', 'Position', [65 3 60 20], 'Value', strcmp(customConfig.colormapMode,'Local'), ...  %'Tag', 'yScaleLocal'
+    'Units', 'pixel', 'Position', [65 3 60 20], 'Value', strcmp(customConfig.colormapMode,'Image'), ...  %'Tag', 'yScaleLocal'
     'BackgroundColor', guiBGCol, 'HorizontalAlignment', 'left','Tooltip',ttt1,'Tag',ttt);
 ttt = sprintf('Select contrast adjustment.\nnZoom: min /max of current zoom in displayed image.'); 
 ttt2 = sprintf('<html>Select contrast adjustment.<br /><b>Zoom:</b> min /max of current zoom in displayed image.</html>');
 if debugMatVis, ttt1 = sprintf('Handle: ''cmZoom''\nSelectionChangeFcn: ''updateColormap'''); else,  ttt1 = ttt2; end
 cmZoom = uicontrol('Style', 'Radio', 'String', 'Zoom', 'Parent', bg_colormap, ...
-    'Units', 'pixel', 'Position', [120 3 60 20], 'Value', strcmp(customConfig.colormapMode,'Local'), ...  %'Tag', 'yScaleLocal'
+    'Units', 'pixel', 'Position', [120 3 60 20], 'Value', strcmp(customConfig.colormapMode,'Zoom'), ...  %'Tag', 'yScaleLocal'
     'BackgroundColor', guiBGCol, 'HorizontalAlignment', 'left','Tooltip',ttt1,'Tag',ttt);
 ttt = sprintf('Select contrast adjustment.\nManual: Select min/max using slider or edit control below.'); 
 ttt2 = sprintf('<html>Select contrast adjustment.<br /><b>Manual:</b> Select min/max using slider or edit control below.</html>');
@@ -11260,7 +11260,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
               plotIndex = reshape(plotIndex,[size(roiList(numberRoi).index.x,1) dim(projDim) dim(rgbDim)]);
               pV = mean(sum(data{1}(plotIndex),3, 'omitnan'),1, 'omitnan');
             else
-              if withAlpha
+              if withAlpha && projMethod==2
                 pV = mean(alphaMap{1}(plotIndex),    1, 'omitnan');
               else
                 pV = mean(data{1}(plotIndex),1, 'omitnan');
