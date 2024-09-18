@@ -4306,15 +4306,23 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
 %Callback for menu-display toggle button
     function toggleMenuBars(varargin)
         if debugMatVis, debugMatVisFcn(1); end
+        if strcmp(get(gui,'SelectionType'),'alt'); set(tb_menuBars, 'Value',~get(tb_menuBars, 'Value')); end
         if get(tb_menuBars, 'Value') && strcmp(get(imageWin(1), 'MenuBar'), 'none')
             for ii=1:nMat
+              if strcmp(get(gui,'SelectionType'),'alt')
+                set(imageWin(ii), 'Position', get(imageWin(ii), 'Position') + [0 -winWidthMenuBar 0 0], 'MenuBar', 'figure', 'WindowButtonMotionFcn', '');
+                set(zoomWin(ii), 'Position', get(zoomWin(ii), 'Position')   + [0 -winWidthMenuBar 0 0], 'MenuBar', 'figure', 'WindowButtonMotionFcn', '');
+                set(plotWin(ii), 'Position', get(plotWin(ii), 'Position')   + [0 -winWidthMenuBar 0 0], 'MenuBar', 'figure', 'WindowButtonMotionFcn', '');
+              else
                 set(imageWin(ii), 'Position', get(imageWin(ii), 'Position') + [0 0 0 -winWidthMenuBar], 'MenuBar', 'figure', 'WindowButtonMotionFcn', '');
-                set(zoomWin(ii), 'Position', get(zoomWin(ii), 'Position') + [0 0 0 -winWidthMenuBar], 'MenuBar', 'figure', 'WindowButtonMotionFcn', '');
-                set(plotWin(ii), 'Position', get(plotWin(ii), 'Position') + [0 0 0 -winWidthMenuBar], 'MenuBar', 'figure', 'WindowButtonMotionFcn', '');
+                set(zoomWin(ii), 'Position', get(zoomWin(ii), 'Position')   + [0 0 0 -winWidthMenuBar], 'MenuBar', 'figure', 'WindowButtonMotionFcn', '');
+                set(plotWin(ii), 'Position', get(plotWin(ii), 'Position')   + [0 0 0 -winWidthMenuBar], 'MenuBar', 'figure', 'WindowButtonMotionFcn', '');
+              end
                 if matlabVer > 9.4
-                  imAx.Toolbar.Visible = 'on';
-                  zoomAx.Toolbar.Visible = 'on';
-                  if ~isempty(subPlotHandles); subPlotHandles.Toolbar.Visible = 'on'; end
+                  set([imageWin zoomWin plotWin],'Toolbar','auto')
+                  % imAx.Toolbar.Visible = 'on';
+                  % zoomAx.Toolbar.Visible = 'on';
+                  % if ~isempty(subPlotHandles); subPlotHandles.Toolbar.Visible = 'on'; end
                 end
             end
             for hh = [histWin profileTraceWin]
@@ -4324,12 +4332,19 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             end
         elseif ~get(tb_menuBars, 'Value') && strcmp(get(imageWin(1), 'MenuBar'), 'figure')
             for ii=1:nMat
+              if strcmp(get(gui,'SelectionType'),'alt')
+                set(imageWin(ii), 'Position', get(imageWin(ii), 'Position') + [0 winWidthMenuBar 0 0], 'MenuBar', 'none', 'WindowButtonMotionFcn', @mouseMotion);
+                set(zoomWin(ii), 'Position', get(zoomWin(ii), 'Position')   + [0 winWidthMenuBar 0 0], 'MenuBar', 'none', 'WindowButtonMotionFcn', @mouseMotion);
+                set(plotWin(ii), 'Position', get(plotWin(ii), 'Position')   + [0 winWidthMenuBar 0 0], 'MenuBar', 'none', 'WindowButtonMotionFcn', @mouseMotion);
+              else
                 set(imageWin(ii), 'Position', get(imageWin(ii), 'Position') + [0 0 0 winWidthMenuBar], 'MenuBar', 'none', 'WindowButtonMotionFcn', @mouseMotion);
-                set(zoomWin(ii), 'Position', get(zoomWin(ii), 'Position') + [0 0 0 winWidthMenuBar], 'MenuBar', 'none', 'WindowButtonMotionFcn', @mouseMotion);
-                set(plotWin(ii), 'Position', get(plotWin(ii), 'Position') + [0 0 0 winWidthMenuBar], 'MenuBar', 'none', 'WindowButtonMotionFcn', @mouseMotion);
+                set(zoomWin(ii), 'Position', get(zoomWin(ii), 'Position')   + [0 0 0 winWidthMenuBar], 'MenuBar', 'none', 'WindowButtonMotionFcn', @mouseMotion);
+                set(plotWin(ii), 'Position', get(plotWin(ii), 'Position')     + [0 0 0 winWidthMenuBar], 'MenuBar', 'none', 'WindowButtonMotionFcn', @mouseMotion);
+              end
                 if matlabVer > 9.4
-                  imAx.Toolbar.Visible = 'off';
-                  zoomAx.Toolbar.Visible = 'off';
+                  set([imageWin zoomWin plotWin],'Toolbar','none')
+                  % imAx.Toolbar.Visible = 'off';
+                  % zoomAx.Toolbar.Visible = 'off';
                 end
             end
             for hh = [histWin profileTraceWin]
@@ -5117,6 +5132,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         elseif pointInArea(p1, btPos_findLocalMaxZm),  findExtremum([],[],'max','zoom',0);
         elseif pointInArea(p1, btPos_findGlobalMinZm), findExtremum([],[],'min','globalZoom',0);
         elseif pointInArea(p1, btPos_findGlobalMaxZm), findExtremum([],[],'max','globalZoom',0);
+        elseif pointInArea(p1, btPos_menuBars),        toggleMenuBars;
         else
           %% Right click on main gui: Bring all visible windows to front
           if get(tb_tifPar, 'Value');               figure(tifParFig);  end
