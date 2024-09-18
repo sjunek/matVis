@@ -80,6 +80,8 @@ function varargout = matVis(varargin)
 %                               plotDim           Dimensions along which plots will be displayed
 %                               plotMean          Number indicating status of plot-average-mode: 0: 1x1, 1: 3x3, 2: 5x5, 3: [1x1,3x3,5x5], 4: zoom area, 5: RGB
 %                               currPos           Vector indicating starting position
+%                               gamma             Vector (or scalar) for gamma 
+%                               cmMode            data scaling mode 1:Global 2:Image 3:Zoom 
 %                               cmMinMax          Matrix of size 2 x number of data sets for colormap limits
 %                               cmap              Number of colormap from list of available colormaps:  {'Gray';'Gray (Range)'; 'Jet'; 'HSV'; 'Hot'; 'Cool';
 %                                                   'Red 1';'Red 2';'Green 1';'Green 2';'Blue 1';'Blue 2';
@@ -89,7 +91,7 @@ function varargout = matVis(varargin)
 %                               aspRatio          Two element vector
 %                               rgbDim            Number of RGB dimensions
 %                               projDim           Number of projection dimensions
-%                               projMethod        Number or string: {'None';'Max';'Min';'Mean';'Std';'Var'; 'Tile'}
+%                               projMethod        Number or string: {'none';'max';'min';'mean';'std';'sar'; 'tile'}
 %                               windowVisibility  Binary vector indicating visibility of [imageWin zoomWin plotWin]
 %                               windowPositions   Structure s containing the fields s.gui, s.imageWin, s.zoomWin and s.plotWin. In case there is one data set, 
 %                                                   the values of the fields are four element vectors [x0, y0, width, height], in case there are nMat data sets, 
@@ -1174,11 +1176,6 @@ if ~isempty(configFile)
     if  customConfig.plotMean == 5 && withAlpha
       customConfig.plotMean = 0;              %Default: 0 (no averaging)
     end
-    currGamma(1,1:nMat) = customConfig.gamma(1);
-    if withAlpha
-      currGamma(1,1:nMat) = customConfig.gammaAlpha(1);
-      currGamma(1,(1:nMat)+nMat) = customConfig.gammaAlpha(2);
-    end
 else
     customConfig = defaultConfig;
 end
@@ -1216,6 +1213,14 @@ if ~isempty(startPar)
                 else
                     currPos = propVal;
                 end
+            case 'gamma'  % checked
+              if withAlpha; customConfig.gammaAlpha(1:2) = propVal(1:min([2 numel(propVal)]));
+              else;         customConfig.gamma(1)   = propVal(1);
+              end
+            case 'cmMode'
+              cmMode = propVal;
+              myColormapModes = {'Global','Image','Zoom'};
+              customConfig.colormapMode = myColormapModes{cmMode};
             case 'cmMinMax'   % checked
                 cmMinMax = propVal;
                 % Avoid that the contrast values are outside the min/max
@@ -1227,7 +1232,7 @@ if ~isempty(startPar)
                   else
                     fprintf(2,'matVis start parameter ''cmMinMax(%d)'' [%s, %s] was rejected because of out of range if dataset [%s, %s]!!!\n',...
                       j, num2Str(cmMinMax(j,1),3), num2Str(cmMinMax(j,2),3), num2Str(minVal(j),3), num2Str(maxVal(j),3) )
-                    cmMinMax(j,:) = [minVal(j), maxVal(j)]; 
+                    cmMinMax(j,:) = [minVal(j), maxVal(j)];
                   end
                 end
                 customConfig.colormapMode = 'Manual';
@@ -1293,6 +1298,11 @@ if ~isempty(startPar)
 end
 zoomValXY([1,3]) = zoomVal(xySel(2),:);
 zoomValXY([2,4]) = zoomVal(xySel(1),:);
+currGamma(1,1:nMat) = customConfig.gamma(1);
+if withAlpha
+  currGamma(1,1:nMat) = customConfig.gammaAlpha(1);
+  currGamma(1,(1:nMat)+nMat) = customConfig.gammaAlpha(2);
+end
 %% Icons
 if debugMatVis; t1 = debugMatVisOutput('Icons definition', whos, toc(tStart), t1); end
 icon_matVis = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,50,34,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,101,218,252,34,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,151,252,252,0,0; 0,67,252,252,34,168,252,235,101,34,168,252,235,67,0,0,0,0,67,168,218,252,252,185,84,0,252,252,252,252,252,151; 0,118,252,252,235,252,252,252,235,202,252,252,252,218,0,0,0,151,252,252,252,252,252,252,67,50,252,252,252,252,252,118; 0,151,252,252,151,0,185,252,252,168,17,168,252,252,0,0,134,252,252,118,17,118,252,252,17,0,67,252,252,101,0,0; 0,185,252,235,17,0,151,252,252,17,0,118,252,218,0,34,252,252,151,0,0,168,252,218,0,0,118,252,252,50,0,0; 0,252,252,151,0,0,185,252,185,0,0,168,252,185,0,118,252,252,34,0,0,218,252,168,0,0,151,252,252,0,0,0; 34,252,252,101,0,0,252,252,118,0,0,218,252,118,0,185,252,252,0,0,67,252,252,118,0,0,185,252,185,0,0,0; 84,252,252,67,0,50,252,252,84,0,0,252,252,101,0,185,252,252,67,17,202,252,252,101,0,0,252,252,218,67,17,0; 118,252,252,0,0,84,252,252,34,0,67,252,252,50,0,118,252,252,252,252,185,252,252,67,0,0,235,252,252,252,17,0; 168,252,202,0,0,118,252,252,0,0,101,252,252,0,0,0,134,235,235,134,17,252,252,67,0,0,101,218,252,235,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,29,7,0,0,0,0,0,0,0,0,0,0,0,0,0; 58,108,108,108,14,0,0,0,0,0,79,108,108,86,0,0,72,108,101,22,0,0,0,0,0,0,0,0,0,0,0,0; 22,108,108,108,43,0,0,0,0,7,108,108,108,50,0,0,108,108,108,50,0,0,0,0,0,0,0,0,0,0,0,0; 0,101,108,108,72,0,0,0,0,43,108,108,108,14,0,0,50,108,79,7,0,0,0,0,0,0,0,0,0,0,0,0; 0,65,108,108,101,0,0,0,0,65,108,108,86,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,36,108,108,108,29,0,0,0,101,108,108,50,0,0,0,108,108,108,29,0,0,0,0,36,79,108,101,79,43,0,0; 0,0,101,108,108,58,0,0,22,108,108,108,14,0,0,0,108,108,108,29,0,0,0,58,108,108,108,108,108,58,0,0; 0,0,65,108,108,86,0,0,58,108,108,86,0,0,0,0,108,108,108,29,0,0,7,108,108,108,50,36,58,29,0,0; 0,0,36,108,108,108,7,0,86,108,108,50,0,0,0,0,108,108,108,29,0,0,29,108,108,108,22,0,0,0,0,0; 0,0,7,108,108,108,43,7,108,108,108,14,0,0,0,0,108,108,108,29,0,0,7,101,108,108,108,65,14,0,0,0; 0,0,0,72,108,108,58,36,108,108,86,0,0,0,0,0,108,108,108,29,0,0,0,43,101,108,108,108,108,43,0,0; 0,0,0,43,108,108,86,58,108,108,50,0,0,0,0,0,108,108,108,29,0,0,0,0,7,50,101,108,108,101,7,0; 0,0,0,7,108,108,108,86,108,108,14,0,0,0,0,0,108,108,108,29,0,0,0,0,0,0,7,108,108,108,29,0; 0,0,0,0,79,108,108,108,108,86,0,0,0,0,0,0,108,108,108,29,0,0,7,94,58,36,50,108,108,108,14,0; 0,0,0,0,50,108,108,108,108,50,0,0,0,0,0,0,108,108,108,29,0,0,36,108,108,108,108,108,108,58,0,0; 0,0,0,0,14,108,108,108,108,14,0,0,0,0,0,0,108,108,108,29,0,0,14,58,79,108,101,79,43,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
@@ -9019,6 +9029,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         set(tb_plotsXLim, 'Value', config.plotZoom);              %Default: 0
         %Scale Plot
         set(tb_plotsYLim, 'Value', config.plotScale);       %Default: 0
+        %Gamma Val
+        if withAlpha
+        else
+          idx = 1;
+          set(sldGamma(idx),'Value',config.gamma)
+          set(valSldGamma(idx), 'String', num2str(currGamma(currContrastSel+(idx-1)*nMat),'%6.3f'));
+        end
         %Marker
         set(tb_marker, 'Value', config.marker);                %Default: 0
         %Average
