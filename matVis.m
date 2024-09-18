@@ -185,6 +185,7 @@ matlabVer = str2double(matlabVer(1).Version);
 % oldMATLAB = verLessThan('MATLAB','8.4'); % to differenciate for HG2 
 mlVer = ver;
 withDipimage = any(strfind([mlVer.Name],'DIPimage'));
+if withDipimage; withDipimage = ver('DIPimage');  withDipimage = str2double(withDipimage.Version(1:3)); end
 withImageProcessingTB = any(strfind([mlVer.Name],'Image Processing Toolbox'));
 withStatisticsTB = any(strfind([mlVer.Name],'Statistics Toolbox'));  %#ok
 % Parameters that might be overwritten by optional arguments
@@ -7322,7 +7323,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
               if percVal(1)>0
                 if ~calcGlobalPercMinMax(1)
                   set(percMin, 'Enable', 'off'); drawnow; % calculation might take long
-                  if withDipimage
+                  if withDipimage>=3
+                    for ii = 1:nMat; cmMinMax(ii,1) = percentile(dip_image(data{ii}),100*percVal(1)); end
+                  elseif withDipimage
                     for ii = 1:nMat; cmMinMax(ii,1) = double(dip_percentile(data{ii}(:),[],100*percVal(1),[])); end
                   else
                     for ii = 1:nMat; cmMinMax(ii,1) = prctile(data{ii}(:),100*percVal(1)); end
@@ -7339,7 +7342,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
               if percVal(2)<1
                 if ~calcGlobalPercMinMax(2)
                   set(percMax, 'Enable', 'off'); drawnow; % calculation might take long
-                  if withDipimage
+                  if withDipimage>=3
+                    for ii = 1:nMat; cmMinMax(ii,2) = percentile(dip_image(data{ii}),100*percVal(2)); end
+                  elseif withDipimage
                     for ii = 1:nMat; cmMinMax(ii,2) = double(dip_percentile(data{ii}(:),[],100*percVal(2),[])); end
                   else
                     for ii = 1:nMat; cmMinMax(ii,2) = prctile(data{ii}(:),100*percVal(2)); end
