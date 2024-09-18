@@ -1574,6 +1574,27 @@ menuBarIcon(:,:,3) = [0  ,0  ,0  ,0  ,0  ,NaN,0  ,NaN,0  ,NaN,NaN,NaN,NaN,NaN,Na
     0.42,1  ,1  ,1  ,1  ,1  ,1  ,0.42,NaN,0  ,NaN,0  ,0  ,0  ,0  ,0;
     0.42,1  ,1  ,1  ,1  ,1  ,1  ,0.42,NaN,0  ,0  ,0  ,0  ,0  ,0  ,0;
     0.42,0.42,0.42,0.42,0.42,0.42,0.42,0.42,NaN,0  ,0  ,0  ,0  ,0  ,0  ,0;];
+AA =...   
+  [NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN     1   NaN   NaN     1     1   NaN   NaN     1   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN     1     1   NaN     1     1   NaN     1     1   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN     1   NaN   NaN   NaN   NaN     1   NaN   NaN   NaN   NaN   NaN;
+   NaN     1     1   NaN   NaN   NaN     1     1     1     1   NaN   NaN   NaN     1     1   NaN;
+   NaN   NaN     1     1   NaN     1     1   NaN   NaN     1     1   NaN     1     1   NaN   NaN;
+   NaN   NaN   NaN   NaN     1     1   NaN   NaN   NaN   NaN     1     1   NaN   NaN   NaN   NaN;
+   NaN     1     1   NaN     1   NaN   NaN   NaN   NaN   NaN   NaN     1   NaN     1     1   NaN;
+   NaN     1     1   NaN     1   NaN   NaN   NaN   NaN   NaN   NaN     1   NaN     1     1   NaN;
+   NaN   NaN   NaN   NaN     1     1   NaN   NaN   NaN   NaN     1     1   NaN   NaN   NaN   NaN;
+   NaN   NaN     1     1   NaN     1     1   NaN   NaN     1     1   NaN     1     1   NaN   NaN;
+   NaN     1     1   NaN   NaN   NaN     1     1     1     1   NaN   NaN   NaN     1     1   NaN;
+   NaN   NaN   NaN   NaN   NaN     1   NaN   NaN   NaN   NaN     1   NaN   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN     1     1   NaN     1     1   NaN     1     1   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN     1   NaN   NaN     1     1   NaN   NaN     1   NaN   NaN   NaN   NaN;
+   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN   NaN];
+
+hideVisIcon0 = repmat(.5*AA,[1 1 3]);
+hideVisIcon1 = repmat(.7*AA,[1 1 2]);hideVisIcon1(:,:,3)= 0*AA;
+clear AA
 RGB1 =    [NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN;
     1  ,1  ,1  ,NaN,NaN,NaN,NaN,1  ,1  ,NaN,NaN,1  ,1  ,1  ,NaN,NaN;
     1  ,NaN,NaN,1  ,NaN,NaN,1  ,NaN,NaN,1  ,NaN,1  ,NaN,NaN,1  ,NaN;
@@ -2970,6 +2991,12 @@ if debugMatVis, ttt1 = sprintf('Handle: ''tb_menuBars''\nCallback: ''toggleMenuB
 tb_menuBars = uicontrol('Parent', panel_positionControls, 'Style', 'Togglebutton', 'Value', customConfig.menuBarVis, ...
     'Units', 'Pixel', 'Position', [190 10 24 24], 'CData', menuBarIcon, 'Callback', @toggleMenuBars, ...
     'Tooltip',ttt1,'Tag',ttt);
+%Toggle button for managing figure handle visibility for all windows (excpet gui)
+ttt = sprintf('Toggle figure handle visibility in Image/Zoom/Plot windows'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''tb_HandleVisibility''\nCallback: ''toggleHandleVisibility'''); else,  ttt1 = ttt; end
+tb_HandleVisibility = uicontrol('Parent', panel_positionControls, 'Style', 'Togglebutton', 'Value', 0, ...
+    'Units', 'Pixel', 'Position', [220 10 24 24], 'CData', hideVisIcon0, 'Callback', @toggleHandleVisibility, ...
+    'Tooltip',ttt1,'Tag',ttt);
 
 %Button to link/unlink window position/size
 ttt = sprintf('Link window positions and sizes'); 
@@ -4314,6 +4341,18 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 end
               end
             end
+        end
+        if debugMatVis, debugMatVisFcn(2); end
+    end
+%Callback for HandleVisibility toggle button
+    function toggleHandleVisibility(varargin)
+        if debugMatVis, debugMatVisFcn(1); end
+        if get(tb_HandleVisibility, 'Value')
+          set([imageWin zoomWin plotWin histWin],'HandleVisibility', 'on')
+          set(tb_HandleVisibility,'CData', hideVisIcon1)
+        else
+          set([imageWin zoomWin plotWin histWin],'HandleVisibility', 'off')
+          set(tb_HandleVisibility,'CData', hideVisIcon0)
         end
         if debugMatVis, debugMatVisFcn(2); end
     end
