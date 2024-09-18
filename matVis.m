@@ -97,6 +97,7 @@ function varargout = matVis(varargin)
 %                                                   the values of the fields are four element vectors [x0, y0, width, height], in case there are nMat data sets, 
 %                                                   the values are matrices of size nMat x 4.
 %                                                   WARNING: gui Position includs TooltipDisplay!!!
+%       'debug'              Set to 1, 2, ... to enable matVis debug mode, Default is FALSE.  
 %
 %
 % Output Argument (optional)
@@ -166,6 +167,7 @@ function varargout = matVis(varargin)
 %   'dimNames',{'x';'y';'t'},'dimScale',[0 200;0 200;0 15],...
 %   'dimUnits',{'um','um','min'});
 % matVis('debug',1)
+% hh = matVis(...); stopHere; close(hh.figHandles.gui)
 %**************************************************************************
 % Copyright Stephan Junek <stephan.junek@brain.mpg.de>
 %           Andre Zeug    <zeug.andre@mh-hannover.de>
