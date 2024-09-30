@@ -4330,6 +4330,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 set(hh, 'Position', get(hh, 'Position') + [0 0 0 -winWidthMenuBar], 'MenuBar', 'figure');
               end
             end
+            if debugMatVis
+              set(gui, 'Position', get(gui, 'Position') + [0 -winWidthMenuBar 0 0], 'MenuBar', 'figure', 'WindowButtonMotionFcn', '');
+            end
         elseif ~get(tb_menuBars, 'Value') && strcmp(get(imageWin(1), 'MenuBar'), 'figure')
             for ii=1:nMat
               if strcmp(get(gui,'SelectionType'),'alt')
@@ -4355,6 +4358,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                   set(hh, 'Position', get(hh, 'Position') + [0 0 0 winWidthMenuBar], 'MenuBar', 'none');
                 end
               end
+            end
+            if debugMatVis
+              set(gui, 'Position', get(gui, 'Position') + [0 winWidthMenuBar 0 0], 'MenuBar', 'none', 'WindowButtonMotionFcn', @mouseMotion);
             end
         end
         if debugMatVis, debugMatVisFcn(2); end
