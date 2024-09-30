@@ -901,6 +901,7 @@ end
 % Tile scan definition
 nRows = 1;
 nCols = 1;
+tileAutoMode = true; 
 %0 - no projection, 1 - maximum
 %projection, 2 - mean projection,...
 projDim = 3;
@@ -1467,6 +1468,18 @@ lockClosed = [NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN;
     NaN,0  ,0  ,0  ,0  ,0  ,0  ,NaN;
     NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN;];
 lockClosed = repmat(lockClosed,[1 1 3]);
+settingsIcon = ...
+    [NaN,NaN,NaN,NaN,NaN,NaN,NaN,  0;
+     NaN,NaN,NaN,NaN,NaN,NaN,  0,NaN;
+     NaN,NaN,NaN,  0,  0,NaN,  0,NaN;
+     NaN,NaN,  0,NaN,NaN,  0,NaN,NaN;
+     NaN,NaN,  0,NaN,NaN,NaN,NaN,NaN;
+     NaN,NaN,NaN,  0,NaN,NaN,NaN,  0;
+     NaN,  0,  0,NaN,NaN,NaN,  0,NaN;
+       0,NaN,NaN,NaN,NaN,  0,NaN,NaN];
+settingsIcon = cat(1,settingsIcon,flip(settingsIcon));
+settingsIcon = cat(2,settingsIcon,flip(settingsIcon,2));
+settingsIcon = repmat(settingsIcon,[1 1 3]);
 arrows =   [NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN;
     0  ,0  ,0  ,0  ,0  ,0  ,0  ,0  ,0  ;
     NaN,NaN,NaN,NaN,0  ,NaN,NaN,NaN,NaN;
@@ -3105,8 +3118,9 @@ projText = uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'P
 if debugMatVis, ttt1 = sprintf('Handle: ''projDimText''\nCallback: ''none'''); else,  ttt1 = ttt; end
 projDimText = uicontrol('Parent', panel_imageControls, 'Style', 'Text', 'Units', 'Pixel', 'Position', [255 173 50 20], ...
     'BackgroundColor', guiBGCol, 'String', 'Proj. dim', 'HorizontalAlignment', 'left', 'Tooltip',ttt1,'Tag',ttt);
-ttt = sprintf('Select type of projection.'); 
-if debugMatVis, ttt1 = sprintf('Handle: ''projMethodPop''\nCallback: ''projCallback(''method'')'''); else,  ttt1 = ttt; end
+ttt = sprintf('Select type of projection.\nLeft click: Choose projection method.\nRight click: In ''tile mode'' enables option for Row & Column.' ); 
+if debugMatVis, ttt1 = sprintf('Handle: ''projMethodPop''\nCallback: ''projCallback(''method'')'''); 
+else, ttt1 = sprintf('<html>Select type of projection.<br /><b>Left click:</b> Choose projection method.<br /><b>Right click:</b> In ''tile mode'' enables option for Row & Column.' );  end
 projMethodPop  = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', {@projCallback,'method'}, 'FontSize',7, ...
     'Units', 'Pixel','Position', [200 160 50 20], 'String', projMethodStr, 'Value',projMethod+1,...
     'Tooltip',ttt1,'Tag',ttt);
@@ -3120,6 +3134,11 @@ else
     s = 1:nDim; s(xySel)=[];
     set(projDimPop, 'String', dimNames(s));
 end
+ttt = sprintf('Settings for tile projection.'); 
+if debugMatVis, ttt1 = sprintf('Handle: ''bt_zoomProj''\nCallback: ''zoomProj'''); else,  ttt1 = ttt; end
+bt_tileProjSettings = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Callback', @tileProjSettings,...
+    'Units', 'Pixel', 'Position', [303 177 14 14], 'Value', 0, 'Visible','off', 'CData', settingsIcon,...
+    'BackgroundColor', guiBGCol,'Tooltip',ttt1,'Tag',ttt);
 ttt = sprintf('Only data inside zoom interval of the respective dimension are included in the projection.'); 
 if debugMatVis, ttt1 = sprintf('Handle: ''bt_zoomProj''\nCallback: ''zoomProj'''); else,  ttt1 = ttt; end
 bt_zoomProj = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Callback', @zoomProj,...
@@ -4080,7 +4099,18 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             set(bt_mean, 'Enable', 'off', 'CData', squeeze(meanBt{1}));
             %Update projection dimension
             notXY = setdiff(1:nDim, xySel);
-            projDim = notXY(get(projDimPop, 'Value'));
+            if projDim~=notXY(get(projDimPop, 'Value')) 
+              projDim = notXY(get(projDimPop, 'Value'));
+              if strcmp(projMethodStr{projMethod+1},'tile')
+                nRows = max(1,round(1/2*sqrt(dim(xySel(1))/dim(xySel(2))*dim(projDim)/aspRatio(2) * aspRatio(1))));
+                nCols = ceil(dim(projDim) / nRows);
+                if ~isempty(tempWin) && strcmp(tempWin.Name, 'Tile Projection')
+                  %updateTileAspRatio
+                  set(tempWin.UserData(1),'String',num2str(nRows))
+                  set(tempWin.UserData(2),'String',num2str(nCols))
+                end
+              end
+            end
             set([sld(projDim) etxt(projDim) bt_playAll(projDim) bt_playZoom(projDim) tb_lockPlots2Zoom(projDim)], 'Enable', 'off');
             %Allow no plots other than xy dimension (plot dimensions)
             set(cb_plots(notXY),  'Value', 0 ,'Enable', 'off'); %necessary when call from WindowCloseRequestFcn
@@ -4097,7 +4127,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             set(plotWin, 'Visible', 'off');
             set([tbWin(3) cb_plots tbShowObjects], 'Enable', 'off');
             set(cb_plots, 'Value', 0);
-            set(zoomReg, 'Visible', 'on');
+            set([zoomReg, bt_tileProjSettings], 'Visible', 'on');
             set([sld(xySel) etxt(xySel) bt_playAll(xySel) bt_playZoom(xySel)],'Enable','off');
             set([sld_up(xySel(1)) sld_down(xySel(1))], 'Max', size(currIm{1},1));
             set([sld_up(xySel(2)) sld_down(xySel(2))], 'Max', size(currIm{1},2));
@@ -4128,6 +4158,10 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                   set(imAx, 'XLim', dimScale(xySel(2),:), 'YLim',dimScale(xySel(1),:) );
                 else
                     set(imAx, 'XLim', .5+[0 size(currIm{1},2)], 'YLim', .5+[0 size(currIm{1},1)]);
+                end
+                set(bt_tileProjSettings, 'Visible', 'off');
+                if ~isempty(tempWin) && strcmp(tempWin.Name, 'Tile Projection')
+                  close(tempWin)
                 end
             end
             updateObjects;
@@ -4970,6 +5004,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           btPosEdt_alphaMax   = get(edt_alphaMax,       'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0]; % resets to default
         end
         btPos_100pct          = get(bt_100pct,          'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0]; % set scaling factor
+        btPos_projMethodPop   = get(projMethodPop,      'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0];
         %%
         btPosPlotsXLim        = get(tb_plotsXLim,       'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0]; % set plot XLim
         btPosPlotsYLim        = get(tb_plotsYLim,       'Position') + get(panel_positionControls, 'Position') .* [1 1 0 0]; % set plot YLim
@@ -5140,6 +5175,28 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         elseif pointInArea(p1, btPos_findGlobalMinZm), findExtremum([],[],'min','globalZoom',0);
         elseif pointInArea(p1, btPos_findGlobalMaxZm), findExtremum([],[],'max','globalZoom',0);
         elseif pointInArea(p1, btPos_menuBars),        toggleMenuBars;
+        elseif pointInArea(p1, btPos_projMethodPop) && strcmp(projMethodStr{projMethod+1},'tile')
+          %% Right click on aspect ratio button: set aspect ratio if button value is 1
+          gp = get(gui,'Position');
+          set(tempWin, 'HandleVisibility', 'on');
+          if ~isempty(tempWin) && any(get(0,'Children') == tempWin)
+            set(tempWin, 'HandleVisibility', 'on');
+            close(tempWin);
+            tempWin = [];
+          end
+          tempWin = figure('Position',[gp(1) gp(2)-92 150 50],...
+            'Name', 'Tile Projection','MenuBar', 'none', 'WindowStyle','normal', ...
+            'Resize', 'off', 'NumberTitle','off', 'HandleVisibility', 'off', 'CloseRequestFcn',@closeTempWin);
+          uicontrol(tempWin, 'Style', 'Text', 'Position', [10 30 130 15], ...
+            'String','Rows x Columns','FontWeight', 'bold',...
+            'BackgroundColor', get(tempWin, 'Color'), 'HorizontalAlignment', 'left');
+          % strAspRatio:
+          tempWin.UserData(1) = uicontrol(tempWin, 'Style', 'Edit', 'Position', [10 10 30 15], ...
+            'String',num2str(nRows),'FontWeight', 'bold','UserData',1,...
+            'HorizontalAlignment', 'center', 'Callback', @updateTileAspRatio);
+          tempWin.UserData(2) = uicontrol(tempWin, 'Style', 'Edit', 'Position', [40 10 30 15], ...
+            'String',num2str(nCols),'FontWeight', 'bold','UserData',2,...
+            'HorizontalAlignment', 'center', 'Callback', @updateTileAspRatio);
         else
           %% Right click on main gui: Bring all visible windows to front
           if get(tb_tifPar, 'Value');               figure(tifParFig);  end
@@ -6108,8 +6165,10 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                   currIm{ii} = var(double(c), [], 3, 'omitnan');
                 end
               case 'tile'    %Tile images ('montage')
-                nRows = max(1,round(1/1.5*sqrt(dim(xySel(1))/dim(xySel(2))*size(c,3)/aspRatio(2) * aspRatio(1))));
-                nCols = ceil(size(c,3) / nRows);
+                if tileAutoMode
+                  nRows = max(1,round(1/2*sqrt(dim(xySel(1))/dim(xySel(2))*size(c,3)/aspRatio(2) * aspRatio(1))));
+                  nCols = ceil(size(c,3) / nRows);
+                end
                 if nRows > 1 && nCols > 1
                   nBlack = nRows*nCols - size(c,3);
                 else
@@ -6428,6 +6487,32 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         if ~isempty(imAx); updateImAxPosition; end
         if debugMatVis, debugMatVisFcn(2); end
     end
+    function updateTileAspRatio(hObject, event)
+      if debugMatVis, debugMatVisFcn(1); end
+      if myGcf == tempWin  %Called from aspect ratio window
+        myVal = round(str2double(hObject.String));
+        myVal = max([1 min([myVal dim(projDim)]) ]);
+        switch hObject.UserData
+          case 1 % Row
+            nRows = myVal;
+            nCols = ceil(dim(projDim) / nRows);
+          case 2 % Column
+            nCols = myVal;
+            nRows = ceil(dim(projDim) / nCols);
+        end
+        set(tempWin.UserData(1),'String',num2str(nRows))
+        set(tempWin.UserData(2),'String',num2str(nCols))
+        tileAutoMode = false;
+        projCallback;
+      else
+      end
+      if debugMatVis, debugMatVisFcn(2); end
+    end
+  function tileProjSettings(varargin)
+    if debugMatVis, debugMatVisFcn(1); end
+    fprintf(2,'Button is not used, please use "Right Click" in Projection dropdown uicontrol!\n')
+    if debugMatVis, debugMatVisFcn(2); end
+  end
     function out = rgbContrastAdjust(in, relMin, relMax)
         if debugMatVis, debugMatVisFcn(1); end
         % Contrast adjustment: simply scaling and cutting the
