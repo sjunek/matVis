@@ -5157,10 +5157,10 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             close(tempWin);
             tempWin = [];
           end
-          tempWin = figure('Position',[gp(1) gp(2)-(70+nDim*20) 150 30+nDim*20],...
+          tempWin = figure('Position',[gp(1) gp(2)-(70+20) 150 30+20],...nDim*nDim*
             'Name', 'Win Scale','MenuBar', 'none', 'WindowStyle','normal', ...
             'Resize', 'off', 'NumberTitle','off', 'HandleVisibility', 'off', 'CloseRequestFcn', @closeTempWin);
-          uicontrol(tempWin, 'Style', 'Text', 'Position', [10 nDim*20+10 130 15], ...
+          uicontrol(tempWin, 'Style', 'Text', 'Position', [10 20+10 130 15], ...nDim*
             'String','Window scaling factor [%]','FontWeight', 'bold',...
             'BackgroundColor', get(tempWin, 'Color'), 'HorizontalAlignment', 'left');
           tempWinEtxt = uicontrol(tempWin, 'Style', 'Edit', 'Position', [50 10 40 15], ...
@@ -5205,7 +5205,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           if get(tbProfile,'Value');                figure(profileWin); figure(profileTraceWin); end
           if get(tbWin(1),'Value');  for ii=1:nMat; figure(imageWin(ii)); end; end
           if get(tbWin(2),'Value');  for ii=1:nMat; figure(zoomWin(ii));  end; end
-          if get(tbWin(3),'Value');  for ii=1:nMat; figure(plotWin(ii));  end; end
+          if get(tbWin(3),'Value') && strcmp(get(tbWin(3),'Enable'),'on')
+                                     for ii=1:nMat; figure(plotWin(ii));  end
+          end
           if get(tbRecord, 'Value');                figure(movdata.gui.hvidgen); figure(movdata.prev.hprev); end
           if get(roiName, 'Value');                 figure(tempRoiPropWin); end
           if get(tbRoiRename, 'Value');             figure(tempRoiSetWin);  end
@@ -5392,7 +5394,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         % Leave if window is empty (can happen for plotWin in ROI mode)
         if isempty(get(currWin, 'Children'))
           % does this ever happen???
-          % YES, if one klicks to an empty plot win
+          % YES, if one clicks to an empty plot win
           %stopHere
         else
           % "Normal" button clicks
