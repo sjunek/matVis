@@ -5175,6 +5175,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           startPosWins(10,1,:) = get(movdata.gui.hvidgen,'Position');
           startPosWins(11,1,:) = get(movdata.prev.hprev ,'Position');
         end
+        if ~isempty(tempWin);  startPosWins(12,1,:) = get(tempWin,'Position');  end
       end
       if debugMatVis, debugMatVisFcn(2); end
       function moveAllWindows(varargin)
@@ -5196,6 +5197,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           set(movdata.gui.hvidgen, 'Position',squeeze(startPosWins(10,1,:))' + [p2-p1 0 0]);
           set(movdata.prev.hprev , 'Position',squeeze(startPosWins(11,1,:))' + [p2-p1 0 0]);
         end
+        if ~isempty(tempWin);  set(tempWin, 'Position',squeeze(startPosWins(12,1,:))' + [p2-p1 0 0]); end
       end
       function releaseMiddleClickGui(varargin)
         set(gui,'WindowButtonMotionFcn',@mouseMotion);
