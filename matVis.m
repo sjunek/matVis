@@ -3903,7 +3903,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           case 'image'
             regionOffset = [0 0];
         end
-        selectedSize = size(selectedRegion);
+        selectedSize = ones(1,nDim);
+        tmpSZ = size(selectedRegion);
+        selectedSize(1:length(tmpSZ)) = tmpSZ;
         switch mnmx
           case 'min'
             [~, extrPos] = min(selectedRegion(:));
