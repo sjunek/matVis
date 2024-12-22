@@ -9428,6 +9428,62 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           inputArg{end+1} = 'colorBarLabel';
           inputArg{end+1} = colorBarLabelString;
         end
+        % matVisROIs %%%%%%
+        if tbRoi.Value && ~isempty(roiList)
+          % copy ROI list
+          roiListExp = roiList;
+          % check, if ROI is inside Zoom region
+          roiSel = false(1,length(roiList));
+          for rn=1:length(roiListExp)
+            myxySel = roiListExp(rn).settings.xySel;
+            myZoomRange = [ min(ind{myxySel(1)}) max(ind{myxySel(1)}); ...
+                            min(ind{myxySel(2)}) max(ind{myxySel(2)})];
+            myZoomDim = diff(myZoomRange,1,2)+1;
+            myInd = myZoomRange(1,1) < roiListExp(rn).index.x & roiListExp(rn).index.x < myZoomRange(1,2) & ...
+                    myZoomRange(2,1) < roiListExp(rn).index.y & roiListExp(rn).index.y < myZoomRange(2,2);
+            if any(myInd)
+              roiSel(rn) = true;
+              roiListExp(rn).mask = roiListExp(rn).mask(ind{myxySel});
+              roiListExp(rn).centerOfGravity = roiListExp(rn).centerOfGravity-[ind{myxySel(1)}(1) ind{myxySel(2)}(1)]+1;
+              roiListExp(rn).index.x(roiListExp(rn).index.x<myZoomRange(1,1)) = myZoomRange(1,1);
+              roiListExp(rn).index.x(roiListExp(rn).index.x>myZoomRange(1,2)) = myZoomRange(1,2);
+              roiListExp(rn).index.y(roiListExp(rn).index.y<myZoomRange(2,1)) = myZoomRange(2,1);
+              roiListExp(rn).index.y(roiListExp(rn).index.y>myZoomRange(2,2)) = myZoomRange(2,2);
+              roiListExp(rn).index.x = roiListExp(rn).index.x-myZoomRange(1,1)+1;
+              roiListExp(rn).index.y = roiListExp(rn).index.y-myZoomRange(2,1)+1;
+              roiListExp(rn).corners = roiListExp(rn).corners-[myZoomRange(2,1); myZoomRange(1,1)]+1;
+              roiListExp(rn).rectangle = roiListExp(rn).rectangle-[myZoomRange(2,1) myZoomRange(1,1) myZoomRange(2,1) myZoomRange(1,1)]+1;
+              roiListExp(rn).settings.position(myxySel)  = roiList(rn).settings.position(myxySel)-myZoomRange(:,1)'+1;
+              for iii = nDim:-1:1
+                if isscalar(ind{iii})
+                  roiListExp(rn).settings.position(iii) = [];
+                else
+                  roiListExp(rn).settings.position(iii) = max([1 min([roiListExp(rn).settings.position(iii) diff(ind{iii}([1 end]))+1])]);
+                end
+              end
+              roiListExp(rn).settings.zoomVal(1:2,1)  = roiListExp(rn).settings.zoomVal(1:2,1)-[ind{myxySel(1)}(1); ind{myxySel(2)}(1)]+1;
+              % need to be checked
+              if customDimScale
+                % Convert corners to pixel values
+                for jj = 1:size(roiListExp(rn).corners,2)
+                  roiListExp(rn).corners(:,jj) = pixelLocation(roiListExp(rn).corners(:,jj)');
+                end
+                roiListExp(rn).rectangle = [round(max(1  ,-1+min(roiListExp(rn).corners(1,:)))),...
+                  round(max(1  ,-1+min(roiListExp(rn).corners(2,:)))),...
+                  round(min(myZoomDim(myxySel(2)),1+max(roiListExp(rn).corners(1,:)))),...
+                  round(min(myZoomDim(myxySel(1)),1+max(roiListExp(rn).corners(2,:))))];
+              end
+              % Remove corners outside image (is this necessary?)
+              roiListExp(rn).corners(1,roiListExp(rn).corners(1,:) > myZoomDim(2)) = myZoomDim(2);
+              roiListExp(rn).corners(2,roiListExp(rn).corners(2,:) > myZoomDim(1)) = myZoomDim(1);
+              roiListExp(rn).corners(1,roiListExp(rn).corners(1,:) < 0) = 0;
+              roiListExp(rn).corners(2,roiListExp(rn).corners(2,:) < 0) = 0;
+            end
+
+          end
+          inputArg{end+1} = 'matVisROIs';
+          inputArg{end+1} = roiListExp(roiSel);
+        end
         % 'startPar', {'cmMinMax',[par.rLims; par.iLims],'colormap','Rainbow3'}
         % projectionHandling
         if length(indC)<projDim || indC(projDim) % actual projDim gets removed
