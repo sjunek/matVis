@@ -3549,7 +3549,7 @@ tbAspRatio = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', '
     'Callback', @updateAspRatio,'Value', customConfig.aspectRatio,'Tooltip',ttt1,'Tag',ttt);
 btPos = btPos + btGap + btWidth;
 %Toggle button for display of objects
-ttt = sprintf('Show / hide colorbar in the image window.');
+ttt = sprintf('Show / hide plot coordinates and zoom range in the image window.');
 if debugMatVis, ttt1 = sprintf('Handle: ''tbShowObjects''\nCallback: ''toggleShowObjects'''); else,  ttt1 = ttt; end
 tbShowObjects = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel',  ...
     'Position', [btPos 8 24 24], 'CData', objBt, 'Callback', @toggleShowObjects, 'Value', customConfig.lineVis, ...
