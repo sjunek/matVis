@@ -2979,7 +2979,7 @@ tb_plotsYLim = uicontrol('Parent',panel_positionControls, 'Style', 'togglebutton
 ttt = sprintf('Show / hide marker in plots'); 
 if debugMatVis, ttt1 = sprintf('Handle: ''tb_marker''\nCallback: ''updatePlots'''); else,  ttt1 = ttt; end
 tb_marker = uicontrol('Parent',panel_positionControls, 'Style', 'togglebutton', 'Callback', @updatePlots, 'Units', 'Pixel', ...
-    'Position', [100 10 24 24],  'String', '', 'TooltipString', 'Show / hide marker in plots', ...
+    'Position', [100 10 24 24],  'String', '', 'Tooltip', 'Show / hide marker in plots', ...
     'BackgroundColor', guiBGCol, 'Value', customConfig.marker, 'CData', marker, 'Tooltip',ttt1,'Tag',ttt);
 %Mean Plots
 ttt = sprintf('Average plot values over 1, 9, 25 pixels or the complete zoom area.\nIn stretch RGB mode all plots along the RGB dimension can be displayed alternatively.'); 
@@ -4421,7 +4421,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         if rgbCount == 0
             set(bg_colormap, 'SelectedObject', cmManual);
             set(tb_switchRGB, 'String', '', 'CData', RGB, 'Value', 0);
-            set(cmImage, 'String', 'Image','ToolTipString', '');
+            set(cmImage, 'String', 'Image','Tooltip', '');
             set(cmZoom, 'Visible','on');
             set(cmManual, 'Visible', 'on');
             set([cmThresh popThresh], 'Visible', 'on');
@@ -4452,7 +4452,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             notXY = setdiff(1:nDim, xySel);
             rgbDim = notXY(rgbCount);
             set(tb_switchRGB, 'String', dimNames(rgbDim), 'CData', RGB2, 'FontSize', 7, 'Value', 1);
-            set(cmImage, 'String', 'Channel','ToolTipString', 'Scale each color channel to its range.');
+            set(cmImage, 'String', 'Channel','Tooltip', 'Scale each color channel to its range.');
             set(cmManual, 'Visible', 'off');
             set(cmZoom, 'Visible','off');
             set([cmThresh popThresh], 'Visible', 'off');
@@ -8946,7 +8946,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         else
             set(histWin, 'Visible','off');
         end
-        set(tbHist, 'Enable','on','Tooltipstring','Show / hide histogram','String','','CData',histIcon);
+        set(tbHist, 'Enable','on','Tooltip','Show / hide histogram','String','','CData',histIcon);
         calculatingGlobalHist = 0;
         updateHistObjects;
         % Sort data for percentile function, called only once
@@ -9673,59 +9673,59 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             %Add Poly profile Button
             tb_newProfile = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [10,150,32,22],...
                 'CData', roiPolygonBt,'Callback',{@getNewProfile,'one'},...
-                'ToolTipString', 'Add polygonal/free hand profile. Left click for single profile (''push button''), right click for multiple selections (''toggle button'') ',...
+                'Tooltip', 'Add polygonal/free hand profile. Left click for single profile (''push button''), right click for multiple selections (''toggle button'') ',...
                 'Tag', 'Add polygonal/free hand profile. Draw straight lines using short clicks and free hand selections by keeping the mouse button pressed. End selection by right or double click. Left click for single profile, right click for multiple selections');
             %Copy profile Button
             tb_editProfile = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [49,150,32,22],...
                 'String', 'Edit','Callback',@editProfile,'Enable','off',...
-                'ToolTipString', 'Copy currently selected profile as new profile.',...
+                'Tooltip', 'Copy currently selected profile as new profile.',...
                 'Tag', 'Copy currently selected profile as new profile.');
             
             %Shift profile Button
             tb_ProfileShift = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [88,150,32,22], 'Enable', 'off',...
                 'CData', roiShiftBt,'Callback',@shiftProfile,...
-                'ToolTipString', ' Move selected profile with mouse or keyboard. Use control, shift or alt to move by 5, 10 or 20 px, respectively. ',...
+                'Tooltip', ' Move selected profile with mouse or keyboard. Use control, shift or alt to move by 5, 10 or 20 px, respectively. ',...
                 'Tag', 'Move selected profile(s) with mouse or keyboard. Use control, shift or alt to move by 5, 10 or 20 px, respectively.  Note that this is a toggle button.',...
                 'Value',0);
             %EmptyButton
             tb_profileProp1 = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [10,125,32,22],...
                 'String', 'NotUsed','Callback', @showProfileProp2,'Tag', 'Replace the selected profile. The position in the list and the name will be preserved. Note that this is a toggle button.',...
-                'FontSize', 6, 'Enable', 'off','ToolTipString','Replace selected profile by new selection');
+                'FontSize', 6, 'Enable', 'off','Tooltip','Replace selected profile by new selection');
             
             %EmptyButton
             tb_profileProp2 = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [49,125,32,22],...
-                'String', 'NotUsed','Callback', @showProfileProp2,'ToolTipString', ' Show or hide profile names in figure windows ',...
+                'String', 'NotUsed','Callback', @showProfileProp2,'Tooltip', ' Show or hide profile names in figure windows ',...
                 'Tag', 'Show or hide the profile names in the figure windows.','FontSize', 6, 'Value', 0,'Enable','off');
             
             %Show direction profile Button
             tb_profileDirection = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [88,125,32,22],...
-                'CData', profileDir,'Callback', @showProfileDirection,'ToolTipString', ' Rename selected profile ',...
-                'Value', 0, 'Enable', 'off','ToolTipString','Show profile direction','Tag','Show profile direction');
+                'CData', profileDir,'Callback', @showProfileDirection,'Tooltip', ' Rename selected profile ',...
+                'Value', 0, 'Enable', 'off','Tooltip','Show profile direction','Tag','Show profile direction');
             %Replace profile
             tb_profileReplace = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [10,100,32,22],...
                 'String', 'Replace','Tag', 'Replace the selected profile. The position in the list and the name will be preserved. Note that this is a toggle button.',...
-                'FontSize', 6, 'Enable', 'off','ToolTipString','Replace selected profile by new selection');
+                'FontSize', 6, 'Enable', 'off','Tooltip','Replace selected profile by new selection');
             
             %Rename profile Button
             tb_profileRename = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [49,100,32,22],...
-                'String', 'Rename','Callback', @renameProfile,'ToolTipString', ' Rename selected profile ',...
-                'FontSize', 6, 'Enable', 'off','ToolTipString','Rename Selected profile','Tag','Rename the selected profile.');
+                'String', 'Rename','Callback', @renameProfile,'Tooltip', ' Rename selected profile ',...
+                'FontSize', 6, 'Enable', 'off','Tooltip','Rename Selected profile','Tag','Rename the selected profile.');
             
             %Show / hide profile names button
             tb_profileShowNames = uicontrol(profileWin, 'Style', 'Togglebutton','Position', [88,100,32,22],...
-                'String', sprintf('Show%sNames',char(10)),'Callback', @showProfileNames,'ToolTipString', ' Show or hide profile names in figure windows ',...
+                'String', sprintf('Show%sNames',char(10)),'Callback', @showProfileNames,'Tooltip', ' Show or hide profile names in figure windows ',...
                 'Tag', 'Show or hide the profile names in the figure windows.','FontSize', 6, 'Value', 1,'Enable','off');
             
             %Delete profile Button
             bt_deleteProfile = uicontrol(profileWin, 'Style', 'Pushbutton','Position', [10,75,32,22],...
-                'CData',roiDeleteBt,'Callback', @deleteProfile,'ToolTipString', 'Delete selected profile(s).','Tag', 'Delete the selected profile(s).', 'Enable', 'off');
+                'CData',roiDeleteBt,'Callback', @deleteProfile,'Tooltip', 'Delete selected profile(s).','Tag', 'Delete the selected profile(s).', 'Enable', 'off');
             %Export profile Button
             bt_profileExport = uicontrol(profileWin, 'Style', 'Pushbutton','Position', [49,75,32,22],...
-                'CData', roiExportBt,'Callback', @exportProfiles,'Enable','on','ToolTipString', ' Export selected profile(s) ',...
+                'CData', roiExportBt,'Callback', @exportProfiles,'Enable','on','Tooltip', ' Export selected profile(s) ',...
                 'Tag', 'Export the selected profile(s) to the Matlab workspace or to a mat-file.', 'Enable', 'off');
             %Import profile Button
             uicontrol(profileWin, 'Style', 'Pushbutton','Position', [88,75,32,22],...
-                'CData', roiImportBt,'Callback', @importProfiles,'Enable','on','ToolTipString', ' Import profiles ',...
+                'CData', roiImportBt,'Callback', @importProfiles,'Enable','on','Tooltip', ' Import profiles ',...
                 'Tag', 'Import profiles.');
             if nDim>2
                 %Popup for Dimension for profile data export
@@ -9736,7 +9736,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                     'Tag', 'Select dimension for profile data export.');
                 %Export profile Data Button
                 bt_exportProfileData = uicontrol(profileWin, 'Style', 'Pushbutton','Position', [88,50,32,22],...
-                    'CData', roiExportDataBt,'Callback', @exportProfileData,'Enable','on','ToolTipString', ' Export profile data along specified dimension ',...
+                    'CData', roiExportDataBt,'Callback', @exportProfileData,'Enable','on','Tooltip', ' Export profile data along specified dimension ',...
                     'Tag', 'Export profile data along specified dimension into the workspace.', 'Enable', 'on');
             end
             profileStruct.show.width = 5;
@@ -10741,17 +10741,23 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 'String','List of ROIs','FontWeight', 'bold',...
                 'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'center');
             %Listbox for Rois
+            if debugMatVis, ttt = sprintf('Handle: ''roiListbox''\nCallback: ''roiListboxCallback'''); 
+            else, ttt = sprintf('List of ROIs.\nMultiple selections are possible.\nThe names of the ROIs can be changed (see buttons below),\nThe numbers in front of the names are generated by matVis and can not be edited.'); end
             roiListbox = uicontrol(roiWin, 'Style', 'listbox', 'Units', 'Pixel', ...
                 'BackgroundColor', roiWinCol,'Value',0,...
                 'Position', [10 roiWinPos(4)-177 110 157], 'String', '','Max',3, 'Callback', @roiListboxCallback,...
-                'Tooltip', sprintf('List of ROIs.\nMultiple selections are possible.\nThe Names of the ROIs can be changed (see buttons below),\nthe numbers in front of the names are generated by matVIs and can not be edited.'));
+                'Tooltip', ttt,'Tag', ttt);
             %Panel for display of Roi properties
+            if debugMatVis, ttt = sprintf('Handle: ''roiName''\nCallback: ''showRoiProperties''');
+            else, ttt = roiToolTip; end
             roiName = uicontrol('Parent',roiWin, 'Style', 'Togglebutton', 'Position', [155 roiWinPos(4)-20 145 20], ...
                 'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'center','FontWeight', 'bold',...
-                'String', 'ROI Name','Value',0,'Enable','off','Tooltip',roiToolTip, 'Callback', @showRoiProperties);
+                'String', 'ROI Name','Value',0,'Enable','off', 'Callback', @showRoiProperties,'Tooltip',ttt,'Tag', ttt);
+            if debugMatVis, ttt = sprintf('Handle: ''roiPropertiesPanel''\nCallback: ''none''');
+            else, ttt = sprintf('Shows the currently selected ROI\nAnd various properties (number of pixels, minimum, maximum and mean value).\nIn case multiple ROIs are selected, only the first selected ROIs\nand its properties are shown here.');
+            end
             roiPropertiesPanel = uipanel(roiWin,'Units','Pixel','Position', [130,roiWinPos(4)-305,185,285],'Title', 'Selected ROI',...
-                'BackgroundColor',get(roiWin,'Color'),'FontWeight', 'bold','TitlePosition','centertop',...
-                'Tag',sprintf('Shows the currently selected ROI\nand various properties (number of pixels, minimum, maximum and mean value).\nIn case multiple ROIs are selected, only the first selected ROIs\nand its properties are shown here.'));
+                'BackgroundColor',get(roiWin,'Color'),'FontWeight', 'bold','TitlePosition','centertop','Tag',ttt);
             %% ROI Histogram
             roiHistAxes  = axes('Parent', roiPropertiesPanel, 'Unit','pixel','OuterPosition', [0,0,190,150],'FontSize',7);
             if withAlpha
@@ -10783,112 +10789,181 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             set(roiAxes,'FontSize',8,'Color','k');
             roiLine.roi = line(dimScale(xySel(2),1),dimScale(xySel(1),1),'Parent', roiAxes,'Color',roiCol,'LineWidth',roiLineWidth);
             %% Add Rectangle Roi Button
+            ttt = sprintf('Add rectangular ROI.\nLeft click for single ROI (''push button''),\nMiddle click for single click ROI, set size below,\nRight click for multiple selections (''toggle button'')');
+            if debugMatVis, ttt1 = sprintf('Handle: ''tb_newRoi(1)''\nCallback: ''{@getNewRoi,1,''one''}''');
+            else, ttt1 = sprintf('<html>Add rectangular ROI.<br /><b>Left click:</b> single ROI  (''push button''),<br /><b>Middle click:</b> "Single Click" ROI,<br /><b>Right click:</b> multiple selections (''toggle button'').</html>'); end
             tb_newRoi(1) = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [10,roiWinPos(4)-205,32,22],...
                 'CData', roiRectBt,'Callback',{@getNewRoi,1,'one'}, 'BackgroundColor',guiBGCol, 'UserData',0,...
-                'ToolTipString', ' Add rectangular ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'') ',...
-                'Tag',  'Add rectangular ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'')');
+                'Tooltip', ttt1,'Tag',  ttt);
             %Add Ellipse Roi Button
+            ttt = sprintf('Add ellipsoid ROI.\nLeft click for single ROI (''push button''),\nMiddle click for single click ROI, set size below,\nRight click for multiple selections (''toggle button'')');
+            if debugMatVis, ttt1 = sprintf('Handle: ''tb_newRoi(2)''\nCallback: ''{@getNewRoi,2,''one''}''');
+            else, ttt1 = sprintf('<html>Add rectangular ROI.<br /><b>Left click:</b> single ROI  (''push button''),<br /><b>Middle click:</b> "Single Click" ROI,<br /><b>Right click:</b> multiple selections (''toggle button'').</html>'); end
             tb_newRoi(2) = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [49,roiWinPos(4)-205,32,22],...
                 'CData', roiEllipseBt,'Callback',{@getNewRoi,2,'one'},'BackgroundColor',guiBGCol, 'UserData',0, ...
-                'ToolTipString', ' Add ellipsoid ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'')',...
-                'Tag', 'Add ellipsoid ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'')');
+                'Tooltip', ttt1,'Tag',  ttt);
             %Add Poly Roi Button
+            ttt = sprintf('Add polygonal/free hand ROI.\nDraw straight lines using short clicks and free hand selections by keeping the mouse button pressed. End selection by right or double click.\nLeft click for single ROI (''push button''),\nRight click for multiple selections (''toggle button'')');
+            if debugMatVis, ttt1 = sprintf('Handle: ''tb_newRoi(3)''\nCallback: ''{@getNewRoi,3,''one''}''');
+            else, ttt1 = sprintf('<html>Add rectangular ROI.<br />Draw straight lines using short clicks and free hand selections by keeping the mouse button pressed.<br />End selection by right or double click.<br /><b>Left click:</b> single ROI  (''push button''),<br /><b>Right click:</b> multiple selections (''toggle button'').</html>'); end
             tb_newRoi(3) = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [88,roiWinPos(4)-205,32,22],...
                 'CData', roiPolygonBt,'Callback',{@getNewRoi,3,'one'},'BackgroundColor',guiBGCol, 'UserData',0, ...
-                'ToolTipString', 'Add polygonal/free hand ROI. Left click for single ROI (''push button''), right click for multiple selections (''toggle button'') ',...
-                'Tag', 'Add polygonal/free hand ROI. Draw straight lines using short clicks and free hand selections by keeping the mouse button pressed. End selection by right or double click. Left click for single ROI, right click for multiple selections');
+                'Tooltip', ttt1,'Tag',  ttt);
             
             %Shift Roi Button
+            ttt = sprintf('Move selected ROI(s) with mouse or keyboard.\nUse control, shift or alt to move by 5, 10 or 20 px, respectively.\nNote that this is a toggle button.');
+            if debugMatVis, ttt1 = sprintf('Handle: ''tbRoiShift''\nCallback: ''shiftRoi''');
+            else, ttt1 = ttt; end
             tbRoiShift = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [10,roiWinPos(4)-230,32,22], 'Enable', 'off',...
                 'CData', roiShiftBt,'Callback',@shiftRoi,'BackgroundColor',guiBGCol, ...
-                'ToolTipString', ' Move selected Roi with mouse or keyboard. Use control, shift or alt to move by 5, 10 or 20 px, respectively. ',...
-                'Tag', 'Move selected ROI(s) with mouse or keyboard. Use control, shift or alt to move by 5, 10 or 20 px, respectively.  Note that this is a toggle button.',...
-                'Value',0);
+                'Tooltip', ttt1,'Tag',  ttt,'Value',0);
             %Rotate Roi Button
+            ttt = sprintf('Rotate selected ROI(s).\nNote that this is a toggle button.');
+            if debugMatVis, ttt1 = sprintf('Handle: ''tbRoiRotate''\nCallback: ''rotateRoi''');
+            else, ttt1 = ttt; end
             tbRoiRotate = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [49,roiWinPos(4)-230,32,22], 'Enable', 'off',...
-                'CData', roiRotateBt,'Callback',@rotateRoi,'ToolTipString', ' Rotate selected Roi ',...
-                'Tag', 'Rotate selected ROI(s).  Note that this is a toggle button.');
+                'CData', roiRotateBt,'Callback',@rotateRoi,'Tooltip', ttt1,'Tag',  ttt);
             %Scale Roi Button
+            ttt = sprintf('Scale the selected ROI(s).\nNote that this is a toggle button.');
+            if debugMatVis, ttt1 = sprintf('Handle: ''tbRoiScale''\nCallback: ''scaleRoi''');
+            else, ttt1 = ttt; end
             tbRoiScale = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [88,roiWinPos(4)-230,32,22], 'Enable', 'off',...
-                'CData', roiScaleBt,'Callback',@scaleRoi,'ToolTipString', ' Scale selected Roi ','Tag', 'Scale the selected ROI(s). Note that this is a toggle button.');
+                'CData', roiScaleBt,'Callback',@scaleRoi,'Tooltip', ttt1,'Tag',  ttt);
             %Replace Roi
+            ttt = sprintf('Replace selected ROI by new selection.');
+            if debugMatVis, ttt1 = sprintf('Handle: ''tbRoiReplace''\nCallback: ''togRoiReplace''');
+            else, ttt1 = ttt; end
             tbRoiReplace = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [10,roiWinPos(4)-255,32,22],...
                 'String', 'Replace','Callback', @togRoiReplace,'Tag', 'Replace the selected ROI. The position in the list and the name will be preserved. Note that this is a toggle button.',...
-                'FontSize', 6, 'Enable', 'off','ToolTipString','Replace selected ROI by new selection');
+                'FontSize', 6, 'Enable', 'off','Tooltip', ttt1,'Tag',  ttt);
             
             %Rename Roi Button
+            ttt = sprintf('Update settings for selected ROI.');
+            if debugMatVis, ttt1 = sprintf('Handle: ''tbRoiRename''\nCallback: ''updateRoiSettings''');
+            else, ttt1 = ttt; end
             tbRoiRename = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [49,roiWinPos(4)-255,32,22],...
                 'String', 'ROI upd.','Callback', @updateRoiSettings,'FontSize', 6, 'Enable', 'off','UserData',0,...
-                'ToolTipString','Update settings for selected ROI','Tag','Update settings for selected ROI');
+                'Tooltip', ttt1,'Tag',  ttt);
             
             %Show / hide Roi names button
+            ttt = sprintf('Show or hide the ROI names in the figure windows.');
+            if debugMatVis, ttt1 = sprintf('Handle: ''tbRoiShowNames''\nCallback: ''showRoiNames''');
+            else, ttt1 = ttt; end
             tbRoiShowNames = uicontrol(roiWin, 'Style', 'Togglebutton','Position', [88,roiWinPos(4)-255,32,22],...
-                'String', 'ShowNames','Callback', @showRoiNames,'ToolTipString', ' Show or hide Roi names in figure windows ',...
-                'Tag', 'Show or hide the ROI names in the figure windows.','FontSize', 6, 'Value', 1, 'BackgroundColor',[168 198 247]/255);
+                'String', 'ShowNames','Callback', @showRoiNames,'Tooltip', ttt1,'Tag',  ttt,...
+                'FontSize', 6, 'Value', 1, 'BackgroundColor',[168 198 247]/255);
             
             %Delete Roi Button
+            ttt = sprintf('Delete selected ROI(s).');
+            if debugMatVis, ttt1 = sprintf('Handle: ''bt_deleteRoi''\nCallback: ''deleteRoi''');
+            else, ttt1 = ttt; end
             bt_deleteRoi = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [10,roiWinPos(4)-280,32,22],...
-                'CData',roiDeleteBt,'Callback', @deleteRoi,'ToolTipString', 'Delete selected ROI(s).','Tag', 'Delete the selected ROI(s).', 'Enable', 'off');
+                'CData',roiDeleteBt, 'Enable','off', 'Callback', @deleteRoi, 'Tooltip', ttt1,'Tag',  ttt);
             %Export Roi Button
+            ttt = sprintf('Export the selected ROI(s) to the Matlab workspace or to a mat-file.');
+            if debugMatVis, ttt1 = sprintf('Handle: ''bt_roiExport''\nCallback: ''exportRois''');
+            else, ttt1 = ttt; end
             bt_roiExport = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [49,roiWinPos(4)-280,32,22],...
-                'CData', roiExportBt,'Callback', @exportRois,'Enable','on','ToolTipString', ' Export selected Roi(s) ',...
-                'Tag', 'Export the selected ROI(s) to the Matlab workspace or to a mat-file.', 'Enable', 'off');
+                'CData', roiExportBt,'Callback', @exportRois,'Enable','on','Tooltip', ttt1,'Tag',  ttt, 'Enable', 'off');
             %Import Roi Button
+            ttt = sprintf('Import ROIs');
+            if debugMatVis, ttt1 = sprintf('Handle: ''not set''\nCallback: ''importRois''');
+            else, ttt1 = ttt; end
             uicontrol(roiWin, 'Style', 'Pushbutton','Position', [88,roiWinPos(4)-280,32,22],...
-                'CData', roiImportBt,'Callback', @importRois,'Enable','on','ToolTipString', ' Import Rois ',...
-                'Tag', 'Import ROIs.');
+                'CData', roiImportBt,'Callback', @importRois,'Enable','on','Tooltip', ttt1,'Tag',  ttt);
             %Copy Roi Button
+            ttt = sprintf('Copy ROI.');
+            if debugMatVis, ttt1 = sprintf('Handle: ''bt_copyRoi''\nCallback: ''copyRoi''');
+            else, ttt1 = ttt; end
             bt_copyRoi = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [10,roiWinPos(4)-305,32,22],...
-                'CData', copyRoiBt,'Callback', @copyRoi,'Enable','on','ToolTipString', ' Copy Roi ',...
-                'Tag', 'Copy ROI.', 'Enable','off');
+                'CData', copyRoiBt,'Callback', @copyRoi,'Enable','on','Tooltip', ttt1,'Tag',  ttt, 'Enable','off');
             if nDim>2
                 %Popup for Dimension for roi data export
                 n = dimNames;
                 n(xySel) = [];
+                ttt = sprintf('Select dimension for ROI data export.');
+                if debugMatVis, ttt1 = sprintf('Handle: ''roiPopDataExport''\nCallback: not set');
+                else, ttt1 = ttt; end
                 roiPopDataExport = uicontrol(roiWin, 'Style', 'Popup','Position', [49,roiWinPos(4)-305,32  ,22],...
-                    'Enable','on','String',n,...
-                    'Tag', 'Select dimension for ROI data export.','Fontsize',8);
+                    'Enable','on','String',n,'Tooltip', ttt1,'Tag',  ttt,'Fontsize',8);
                 %Export Roi Data Button
+                ttt = sprintf('Export ROI data along specified dimension into the workspace.');
+                if debugMatVis, ttt1 = sprintf('Handle: ''bt_exportRoiData''\nCallback: ''exportRoiData''');
+                else, ttt1 = ttt; end
                 bt_exportRoiData = uicontrol(roiWin, 'Style', 'Pushbutton','Position', [88,roiWinPos(4)-305,32,22],...
-                    'CData', roiExportDataBt,'Callback', @exportRoiData,'Enable','on','ToolTipString', ' Export Roi data along specified dimension ',...
-                    'Tag', 'Export ROI data along specified dimension into the workspace.', 'Enable', 'off');
+                    'CData', roiExportDataBt,'Callback', @exportRoiData,'Enable','on','Tooltip', ttt1,'Tag',  ttt, 'Enable', 'off');
             end
             %% extra switches
+            ttt = sprintf('Jump to position in data set at which ROI was defined.');
+            if debugMatVis, ttt1 = sprintf('Handle: ''jump2ROIPos_cb''\nCallback: ''roiListboxCallback''');
+            else, ttt1 = ttt; end
             jump2ROIPos_cb = uicontrol(roiWin, 'Style', 'checkbox','Position', [10,roiWinPos(4)-328,90  ,22],...
               'Callback', @roiListboxCallback,'Value',customConfig.jump2ROIPos,'String','Jump to ROI',...
-              'Tooltip', 'Jump to position in data set at which ROI was defined.');
+              'Tooltip', ttt1,'Tag', ttt);
+            ttt = sprintf('Show ROI center.');
+            if debugMatVis, ttt1 = sprintf('Handle: ''showROIcenter_cb''\nCallback: ''updateCenterOfGravity''');
+            else, ttt1 = ttt; end
             showROIcenter_cb = uicontrol(roiWin, 'Style', 'checkbox','Position', [90,roiWinPos(4)-328,90  ,22],...
               'Callback', @updateCenterOfGravity, 'Value',customConfig.showROIcenter,...
-              'String','Show cent.', 'Tooltip', 'Show ROI center.'); 
+              'String','Show cent.', 'Tooltip', ttt1,'Tag', ttt); 
+            ttt = sprintf('Use global histogram scaling.');
+            if debugMatVis, ttt1 = sprintf('Handle: ''roiFixHistScale''\nCallback: ''updateRoiProperties''');
+            else, ttt1 = ttt; end
             roiFixHistScale = uicontrol(roiWin, 'Style', 'checkbox','Position', [170,roiWinPos(4)-328,90  ,22],...
               'Callback', @updateRoiProperties, 'Value',0,...
-              'String','Global Hist.', 'Tooltip', 'Use global histogram scaling'); 
+              'String','Global Hist.', 'Tooltip', ttt1,'Tag', ttt); 
+            ttt = sprintf('Normalize plot traces.');
+            if debugMatVis, ttt1 = sprintf('Handle: ''roiNormPlots''\nCallback: ''updatePlots''');
+            else, ttt1 = ttt; end
             roiNormPlots = uicontrol(roiWin, 'Style', 'checkbox','Position', [245,roiWinPos(4)-328,90  ,22],...
-              'Callback', @updatePlots, 'Value',0,...
-              'String','Norm Plots', 'Tooltip', 'Normalize plot traces'); 
+              'String','Norm Plots', 'Value',0,...
+              'Callback', @updatePlots, 'Tooltip', ttt1,'Tag', ttt);
             if withAlpha; set(roiNormPlots,'Enable','off'); end
+            ttt = sprintf('Set ROI LineWidth.\ndefault 1');
+            if debugMatVis, ttt1 = sprintf('Handle: ''roiTxtLineWidth''\nCallback: not set');
+            else, ttt1 = ttt; end
             roiTxtLineWidth = uicontrol(roiWin, 'Style', 'Text', 'Position', [10 roiWinPos(4)-340 55 12], ...
-                'String','LineWidth', 'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'left', 'Tag', sprintf('Set ROI LineWidth.\ndefault 1'));
+                'String','LineWidth', 'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'left', 'Tooltip', ttt1,'Tag', ttt);
+            if debugMatVis, ttt1 = sprintf('Handle: ''roiEdtLineWidth''\nCallback: ''{@updateRoiStyle,''etxt''}''');
+            else, ttt1 = ttt; end
             roiEdtLineWidth = uicontrol(roiWin, 'Style', 'Edit', 'Units', 'Pixel', 'Position', [62 roiWinPos(4)-340 30 12], ...
               'String', num2Str(roiLineWidth,3), 'Callback', {@updateRoiStyle,'etxt'},...
-              'HorizontalAlignment', 'right');%,'Tooltip',ttt1,'Tag',ttt
+              'HorizontalAlignment', 'right','Tooltip',ttt1,'Tag',ttt);%
+            ttt = sprintf('Set ROI LineStyle.\ndefault ''-''');
+            if debugMatVis, ttt1 = sprintf('Handle: ''roiTxtLineStyle''\nCallback: not set');
+            else, ttt1 = ttt; end
             roiTxtLineStyle = uicontrol(roiWin, 'Style', 'Text', 'Position', [110 roiWinPos(4)-340 70 12], ...
-              'String','ROI LineStyle', 'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'left');
+              'String','ROI LineStyle', 'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'left','Tooltip',ttt1,'Tag',ttt);
+            if debugMatVis, ttt1 = sprintf('Handle: ''roiPopLineStyle''\nCallback: ''{@updateRoiStyle,''pop''}''');
+            else, ttt1 = ttt; end
             roiPopLineStyle = uicontrol(roiWin, 'Style', 'popupmenu', 'Callback', {@updateRoiStyle,'pop'}, 'Units', 'Pixel', ...
-              'Position', [180 roiWinPos(4)-340 30 15], 'String', {'-','--',':','-.'},'FontSize',7, 'Value',1);%,'Tooltip',ttt1,'Tag',ttt
+              'Position', [180 roiWinPos(4)-340 30 15], 'String', {'-','--',':','-.'},'FontSize',7, 'Value',1,'Tooltip',ttt1,'Tag',ttt); %
+            ttt = sprintf('Set size of 1-click ROI (middle-click).\ndefault 1');
+            if debugMatVis, ttt1 = sprintf('Handle: ''roiTxtAutoRoiSz''\nCallback: not set');
+            else, ttt1 = ttt; end
             roiTxtAutoRoiSz = uicontrol(roiWin, 'Style', 'Text', 'Position', [220 roiWinPos(4)-340 65 12], ...
-                'String','1-click Roi Sz', 'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'left', 'Tag', sprintf('Set size of 1-click ROI (middle-click).\ndefault 1'));
+                'String','1-click Roi Sz', 'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'left', 'Tooltip',ttt1,'Tag',ttt);
+            if debugMatVis, ttt1 = sprintf('Handle: ''roiEdtAutoRoiSz''\nCallback: ''updateRoiSize''');
+            else, ttt1 = ttt; end
             roiEdtAutoRoiSz = uicontrol(roiWin, 'Style', 'Edit', 'Units', 'Pixel', 'Position', [287 roiWinPos(4)-340 20 12], ...
-              'String', num2str(newRoiSize), ...
-              'HorizontalAlignment', 'right','Callback',@updateRoiSize);%,'Tooltip',ttt1,'Tag',ttt
+              'String', num2str(newRoiSize), 'HorizontalAlignment', 'right', ...
+              'Callback',@updateRoiSize,'Tooltip',ttt1,'Tag',ttt);%
+            ttt = sprintf('Set number of legend columns.\ndefault 1');
+            if debugMatVis, ttt1 = sprintf('Handle: ''roiTxtPlotLegendCol''\nCallback: not set');
+            else, ttt1 = ttt; end
             roiTxtPlotLegendCol = uicontrol(roiWin, 'Style', 'Text', 'Position', [10 roiWinPos(4)-355 95 12], ...
-              'String','Legend: NumCols.', 'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'left', 'Tag', sprintf('Set ROI LineWidth.\ndefault 1'));
+              'String','Legend: NumCols.', 'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'left', 'Tooltip',ttt1,'Tag',ttt);
+            if debugMatVis, ttt1 = sprintf('Handle: ''roiEdtPlotLegendCol''\nCallback: ''{@updatePlotLegend,''etxt''}''');
+            else, ttt1 = ttt; end
             roiEdtPlotLegendCol = uicontrol(roiWin, 'Style', 'Edit', 'Units', 'Pixel', 'Position', [105 roiWinPos(4)-355 20 12], ...
               'String', roiPlotLegendCol, 'Callback', {@updatePlotLegend,'etxt'},...
-              'HorizontalAlignment', 'right');%,'Tooltip',ttt1,'Tag',ttt
+              'HorizontalAlignment', 'right','Tooltip',ttt1,'Tag',ttt);%
+            ttt = sprintf('Set number of legend columns.\ndefault 1');
+            if debugMatVis, ttt1 = sprintf('Handle: ''cb_LegendTransp''\nCallback: ''updatePlotLegend''');
+            else, ttt1 = ttt; end
             cb_LegendTransp = uicontrol(roiWin, 'Style', 'checkbox', 'Position', [130 roiWinPos(4)-355 90 14], ...
               'Callback', @updatePlotLegend,'Value',0,'String','Transpar. BG', ...
-              'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'left', 'Tag', sprintf('Set ROI LineWidth.\ndefault 1'));
+              'BackgroundColor', roiWinCol, 'HorizontalAlignment', 'left','Tooltip',ttt1,'Tag',ttt);
 
             %% Fill Roi Axes with current image
             if ~debugMatVis, set(roiWin, 'HandleVisibility', 'off'); end
