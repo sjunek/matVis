@@ -3757,9 +3757,11 @@ if ~debugMatVis
 else
   set([gui imageWin zoomWin plotWin histWin],'HandleVisibility', 'on')
 end
-hist_jf = get(histWin,'JavaFrame');
-histIcon(isnan(histIcon)) = 1;
-hist_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(255*histIcon))));
+if matlabVer < 25
+  hist_jf = get(histWin,'JavaFrame');
+  histIcon(isnan(histIcon)) = 1;
+  hist_jf.setFigureIcon(javax.swing.ImageIcon(im2java(uint8(255*histIcon))));
+end
 warning('on','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
 warning('on','MATLAB:ui:javaframe:PropertyToBeRemoved');
 warning('on','MATLAB:im2java:functionToBeRemoved')
@@ -6133,9 +6135,14 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 end
               case 'median'      %median projection
                 if withAlpha
-                  currIm{ii}       = sum(c.*cA,3, 'omitnan')./sum(cA.*~isnan(c),3, 'omitnan'); % weighted mean ratio % wpercentile(c,cA,.5);% 
-                  currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')./sum(cA,           3, 'omitnan'); % mean Intensity
-                  fprintf(2,'Not clear how to calculate, used mean instead!!!\n')
+                  if matlabVer>24
+                    currIm{ii}       = median(c,3, 'Weights',cA,'omitnan'); % compare with wmedian
+                    currAlphaMap{ii} = sum(cA.^2,3,'omitnan')./sum(cA,3,'omitnan'); % mean Intensity
+                  else
+                    currIm{ii}       = median(c,3,'omitnan'); % weighted mean ratio % wpercentile(c,cA,.5);%
+                    currAlphaMap{ii} = sum(cA.^2,3,'omitnan')./sum(cA,3,'omitnan'); % mean Intensity
+                  end
+                  %fprintf(2,'Not clear how to calculate, used mean instead!!!\n')
                 else
                   currIm{ii} = squeeze(median(c,  3, 'omitnan')); % used to be nanmean
                 end
@@ -11030,8 +11037,8 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                             getNewRoi(0,0,ii);
                             set(tb_newRoi(ii), 'BackgroundColor',[168 247 198]/255);
                             if debugMatVis, debugMatVisFcn(2); end
-                            return
                         end
+                        return
                     end
                 end
             elseif strcmp(get(roiWin,'SelectionType'),'extend')
