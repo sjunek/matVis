@@ -646,10 +646,11 @@ else
                 error(sprintf('''colorBarLabel'' must be a string!\nUse <a href="matlab:help matVis">help matVis</a> for help.'));
               end
               colorBarLabelString = val;
-            case 'colorMap'
+            case {'cmap','colormap','colorMap'}
               if ismatrix(val)&& size(val,2)==3
                 popLutString{end+1} = 'customColormap';
                 customColormap = val;
+                % too early customConfig.colormap = length(popLutString);
               end
             case 'debug'
               debugMatVis = val;
@@ -1198,7 +1199,7 @@ else
     customConfig = defaultConfig;
 end
 if ~isempty(customColormap)
-  customConfig.colormap = 23;
+  customConfig.colormap = length(popLutString); %23;
 end
 
 % currConfig = customConfig; %Not necessary after removing currConfig
@@ -1259,7 +1260,7 @@ if ~isempty(startPar)
               if ischar(propVal)
                 propVal = find(ismember(popLutString, propVal)); 
               end
-              if isscalar(propVal) && any(propVal==1:31)
+              if isscalar(propVal) && any(propVal==1:32)
                 customConfig.colormap = propVal;
               end
             case 'aspRatio'   % checked
