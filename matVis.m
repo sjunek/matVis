@@ -91,7 +91,7 @@ function varargout = matVis(varargin)
 %                               aspRatio          Two element vector
 %                               rgbDim            Number of RGB dimensions
 %                               projDim           Number of projection dimensions
-%                               projMethod        Number or string: {'none';'max';'min';'mean';'std';'sar'; 'tile'}
+%                               projMethod        Number or string: {'none';'max';'min';'mean';'std';'var';'diff';'tile'}
 %                               windowVisibility  Binary vector indicating visibility of [imageWin zoomWin plotWin]
 %                               windowPositions   Structure s containing the fields s.gui, s.imageWin, s.zoomWin and s.plotWin. In case there is one data set, 
 %                                                   the values of the fields are four element vectors [x0, y0, width, height], in case there are nMat data sets, 
@@ -895,9 +895,9 @@ isPlaying = 0;                           %Playing status
 playDim = [];                            %Dimension which was selected for play mode
 projMethod = 0;                          %Number indicating method for projection.
 if withAlpha
-  projMethodStr = {'none';'max';sprintf('max(%s)',char(945));'min';'mean';'std';'var'; 'tile'};
+  projMethodStr = {'none';'max';sprintf('max(%s)',char(945));'min';'mean';'median';'std';'var';'diff'; 'tile'}; % ;'median';'sum' missing!!! weighted median & weighted sum 
 else
-  projMethodStr = {'none';'max';'min';'mean';'median';'sum';'std';'var'; 'tile'};
+  projMethodStr = {'none';'max';'min';'mean';'median';'sum';'std';'var';'diff'; 'tile'};
 end
 % Tile scan definition
 nRows = 1;
@@ -1275,7 +1275,7 @@ if ~isempty(startPar)
               if ischar(propVal)
                 propVal = find(ismember(projMethodStr, propVal)); 
               end
-              if isscalar(propVal) && any(propVal==0:8)
+              if isscalar(propVal) && any(propVal==0:9)
                 projMethod = propVal-1;
               end
             case 'windowVisibility'
@@ -6168,6 +6168,20 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                   currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
                 else
                   currIm{ii} = var(double(c), [], 3, 'omitnan');
+                end
+              case 'diff'      %variance projection
+                if withAlpha
+                  %stopHere % need to be refined, is still a copy from var
+                  currIm{ii}       = diff(c.*cA,1,3)./sum(cA.*~isnan(c),3, 'omitnan'); % weighted mean ratio;  % standard error of currIm{ii} -> SEM ././sqrt(sum(~isnan(A_rr),3))
+                  currAlphaMap{ii} = sum(cA.^2,3, 'omitnan')  ./sum(cA,3, 'omitnan');          % mean Intensity
+                elseif rgbCount
+                  stopHere % need to be refined, is still a copy from var
+                  [~,cInd] = var(sum(c,4), [], 3, 'omitnan');
+                  cInd  = (1:prod(sz1(1:2)))' + prod(sz1(1:2)) * (cInd(:)-1);
+                  c = reshape(c, [prod(sz1(1:3)) sz1(4)]);
+                  currIm{ii}  = reshape(c(cInd,:), sz1([1 2 4]));
+                else
+                  currIm{ii} = diff(single(c), 1, 3);
                 end
               case 'tile'    %Tile images ('montage')
                 if tileAutoMode
