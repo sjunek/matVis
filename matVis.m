@@ -4116,7 +4116,11 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 end
               end
             end
-            set([sld(projDim) etxt(projDim) bt_playAll(projDim) bt_playZoom(projDim) tb_lockPlots2Zoom(projDim)], 'Enable', 'off');
+            if projMethod==8
+              set([sld(projDim) etxt(projDim) bt_playAll(projDim) bt_playZoom(projDim) tb_lockPlots2Zoom(projDim)], 'Enable', 'on');
+            else
+              set([sld(projDim) etxt(projDim) bt_playAll(projDim) bt_playZoom(projDim) tb_lockPlots2Zoom(projDim)], 'Enable', 'off');
+            end
             %Allow no plots other than xy dimension (plot dimensions)
             set(cb_plots(notXY),  'Value', 0 ,'Enable', 'off'); %necessary when call from WindowCloseRequestFcn
             plotSel(notXY) = 0;
@@ -6062,8 +6066,18 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           busy(1);
           if get(bt_zoomProj, 'Value')
             imIndex{projDim} = zoomVal(projDim,1):sum(zoomVal(projDim,:))-1;
+          elseif matches(projMethodStr{projMethod+1},'diff')
+            if currPos(projDim)==1 % DO SOMETHING
+              currPos(projDim)=2;
+              % update currPos!!!
+              set(sld(projDim), 'Value', currPos(projDim));
+              set(etxt(projDim), 'String', num2str(currPos(projDim)));
+              %stopHere
+            end
+            % calculates diff to previous frame, could be extended
+            imIndex{projDim} = [-1:0]+currPos(projDim);
           else
-            imIndex{projDim} = ':';
+            imIndex{projDim} = ':'; % imIndex{projDim} = currPos(projDim)
           end
           % Find number of dimension of xySel(1), xySel(2) and projDim with
           % respect to extracted 3D data volume
@@ -6176,7 +6190,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 else
                   currIm{ii} = var(double(c), [], 3, 'omitnan');
                 end
-              case 'diff'      %variance projection
+              case 'diff'      % NO REAL PROJECTION
                 if withAlpha
                   %stopHere % need to be refined, is still a copy from var
                   currIm{ii}       = diff(c.*cA,1,3)./sum(cA.*~isnan(c),3, 'omitnan'); % weighted mean ratio;  % standard error of currIm{ii} -> SEM ././sqrt(sum(~isnan(A_rr),3))
@@ -7477,7 +7491,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         switch varargin{3}
           case 1 % sldLimMin
             myVal = str2double(get(valSldMin, 'String'));
-            if  myVal < get(sldMin, 'Min')
+            if  myVal < get(sldMin, 'Min') && ~matches(projMethodStr{projMethod+1},{'std','var','diff'})
               set(valSldMin, 'String', num2str(get(sldMin, 'Min')));
             elseif myVal > get(sldMax, 'Value')
               set(valSldMin, 'String', num2str(get(sldMax, 'Value')-(get(sldMin, 'Max')-get(sldMin, 'Min'))/1000));
@@ -7485,13 +7499,15 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             set(sldMin, 'Value', max(get(sldMin, 'Min'), str2double(get(valSldMin, 'String'))));
           case 2
             myVal = str2double(get(valSldMax, 'String'));
-            if  myVal > get(sldMax, 'Max')
+            if  myVal > get(sldMax, 'Max') && ~matches(projMethodStr{projMethod+1},{'std','var','diff'})
               set(valSldMax, 'String', num2str(get(sldMax, 'Max')));
             elseif myVal < get(sldMin, 'Value')
               set(valSldMin, 'String', num2str(get(sldMin, 'Value')-(get(sldMin, 'Max')-get(sldMin, 'Min'))/1000));
             end
             set(sldMax, 'Value', min(get(sldMin, 'Max'), str2double(get(valSldMax, 'String'))));
         end
+        set(valSldMin, 'Value', str2double(get(valSldMin, 'String')))
+        set(valSldMax, 'Value', str2double(get(valSldMax, 'String')))
         if rgbCount
           updateImages;
         else
@@ -7578,27 +7594,34 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 end
               end
             case cmManual       %Values from Min / Max sliders
-              cmMinMax(currContrastSel  ,:) = [get(sldMin, 'Value') get(sldMax, 'Value')];
-                if isinteger(data{currContrastSel})
-                  cmMinMax(currContrastSel  ,:) = round(cmMinMax(currContrastSel  ,:));
+              if  ~matches(projMethodStr{projMethod+1},{'std','var','diff'})
+                mySldMin = sldMin;
+                mySldMax = sldMax;
+              else
+                mySldMin = valSldMin;
+                mySldMax = valSldMax;
+              end
+              cmMinMax(currContrastSel  ,:) = [get(mySldMin, 'Value') get(mySldMax, 'Value')];
+              if isinteger(data{currContrastSel})
+                cmMinMax(currContrastSel  ,:) = round(cmMinMax(currContrastSel  ,:));
+              end
+              if linkContrastSettings
+                if ~(cmMinMax(currContrastSel  ,1) < cmMinMax(currContrastSel  ,2))
+                  w = get(sldMax, 'SliderStep');
+                  cmMinMax(currContrastSel  ,2) = cmMinMax(currContrastSel  ,1) + w(1)*(maxVal(1)-minVal(1));
+                  set(mySldMin, 'Value', cmMinMax(currContrastSel  ,1));
+                  set(mySldMax, 'Value', cmMinMax(currContrastSel  ,2));
                 end
-                if linkContrastSettings
-                    if ~(cmMinMax(currContrastSel  ,1) < cmMinMax(currContrastSel  ,2))
-                        w = get(sldMax, 'SliderStep');
-                        cmMinMax(currContrastSel  ,2) = cmMinMax(currContrastSel  ,1) + w(1)*(maxVal(1)-minVal(1));
-                        set(sldMin, 'Value', cmMinMax(currContrastSel  ,1));
-                        set(sldMax, 'Value', cmMinMax(currContrastSel  ,2));
-                    end
-                    idx = 1:nMat;
-                    idx(currContrastSel) = [];
-                    for ii = idx
-                        % Min val
-                        cmMinMax(ii,1) = minVal(ii)+(cmMinMax(currContrastSel,1)-minVal(currContrastSel))*(maxVal(ii)-minVal(ii))/(maxVal(currContrastSel)-minVal(currContrastSel));
-                        % Max val
-                        cmMinMax(ii,2) = minVal(ii)+(cmMinMax(currContrastSel,2)-minVal(currContrastSel))*(maxVal(ii)-minVal(ii))/(maxVal(currContrastSel)-minVal(currContrastSel));
-                        cmMinMax(isnan(cmMinMax)) = 0;
-                    end
+                idx = 1:nMat;
+                idx(currContrastSel) = [];
+                for ii = idx
+                  % Min val
+                  cmMinMax(ii,1) = minVal(ii)+(cmMinMax(currContrastSel,1)-minVal(currContrastSel))*(maxVal(ii)-minVal(ii))/(maxVal(currContrastSel)-minVal(currContrastSel));
+                  % Max val
+                  cmMinMax(ii,2) = minVal(ii)+(cmMinMax(currContrastSel,2)-minVal(currContrastSel))*(maxVal(ii)-minVal(ii))/(maxVal(currContrastSel)-minVal(currContrastSel));
+                  cmMinMax(isnan(cmMinMax)) = 0;
                 end
+              end
             case cmThresh
                 if isinteger(data{currContrastSel})
                     cmMinMax(currContrastSel  ,:) = round([get(sldMin, 'Value') get(sldMax, 'Value')]);
