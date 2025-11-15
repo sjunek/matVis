@@ -5005,6 +5005,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
       %Check for mouse position to enable fake 'button
       %right-clicks' in main GUI
       if strcmp(get(gui,'SelectionType'),'alt')
+        %% Right click handling
         p1 = round(get(gui,'CurrentPoint'));
         btPosAspectRatio      = get(tbAspRatio,         'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0]; % set aspect value
         btPosSldLimMin        = get(sldLimMin,          'Position') + get(panel_imageControls,    'Position') .* [1 1 0 0]; % resets to default
@@ -5044,7 +5045,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
               revPlay = [3 ii];
           end
         end
-        %%
+        %% Mouse Position check
         if ~isnan(revPlay)
           %% Right click on play buttons: play backwards
           rpType = revPlay(1);
@@ -10971,7 +10972,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
             roiFixHistScale = uicontrol(roiWin, 'Style', 'checkbox','Position', [170,roiWinPos(4)-328,90  ,22],...
               'Callback', @updateRoiProperties, 'Value',0,...
               'String','Global Hist.', 'Tooltip', ttt1,'Tag', ttt); 
-            ttt = sprintf('Normalize plot traces.');
+            ttt = sprintf('Normalize plot traces (mean).');
             if debugMatVis, ttt1 = sprintf('Handle: ''roiNormPlots''\nCallback: ''updatePlots''');
             else, ttt1 = ttt; end
             roiNormPlots = uicontrol(roiWin, 'Style', 'checkbox','Position', [245,roiWinPos(4)-328,90  ,22],...
@@ -14636,9 +14637,12 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
     end
     if debugMatVis, debugMatVisFcn(2); end
 end
-
+%% To Do's for "New Desktop" transition starting with R2025a
+% - Major (time consuming): change from "figure + uicontrols" to "uifigure"
+%   see also: https://de.mathworks.com/matlabcentral/answers/2181239-uicontrol-style-slider-in-new-app-design-uifigure
+% - Major (less time consuming but functional relevant): get(gcf,'CurrentPoint') behavior changed (see get(gcf,'CurrentPoint').md)
+% - Minor (not functional relevant): get(fig,'javaframe') is not supported anymore, workaround is available (see get(fig,'javaframe').md)  
 %% To do:
-% - RGB mode: requires gamma
 % - two side sliders for zoom and other issues
 % - Extend more functions for several data sets (global hist, ...)
 % - Apply filter to alpha map? Checkbox or toggle button?
@@ -14654,7 +14658,6 @@ end
 % making any changes to the settings)
 % - add new features to custom config: directions of x,y-axis, filter
 % setting, linked window size/position
-
 
 %% Known bugs:
 % - customConfig issue when preset as RGB mode (not verified) 
