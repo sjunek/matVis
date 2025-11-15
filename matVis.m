@@ -14537,6 +14537,12 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
     function debugMatVisFcn(inOut)
         inOutStr = {sprintf('%sStart ',char(9484)),sprintf('%sEnd   ',char(9492))'};
         ST = dbstack;
+        for ll=1:length(ST)
+          if ~startsWith(ST(ll).file, 'matVis') % && endsWith(ST(ll).file, 'Controller.m');
+            ST(ll:end)=[];
+            return
+          end
+        end
         %ST.name
         fctLevel = length(ST)-1;
         fctName = strrep(strrep(ST(2).name,'matVis/',''),'/','_');          % name of executed function
