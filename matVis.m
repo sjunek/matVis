@@ -3031,9 +3031,8 @@ if ~isCustomTif
 end
 
 %Separator line
-sepLine(1) = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', guiBGCol,...
-    'Position', [0 350 customConfig.winPos.gui(3) 9], 'String','_______________________________________________________________________________________________________________', ...
-    'HorizontalAlignment', 'left', 'FontWeight', 'Bold','Fontsize',6);
+sepLine(1) = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', .625*[1 1 1],...
+    'Position', [0 350 customConfig.winPos.gui(3) 1], 'String','');
 
 % Image controls
 txt_titles(end+1) = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', guiBGCol,...
@@ -3486,7 +3485,7 @@ ttt = sprintf(['Choose colormap.\n'...
 '''Magenta-Gray-Green (0 centered)''']);
 if debugMatVis, ttt1 = sprintf('Handle: ''popLut''\nCallback: ''updateColormap'''); else,  ttt1 = ttt; end
 popLut = uicontrol('Parent', panel_imageControls, 'Style', 'popupmenu', 'Callback', @updateColormap, 'Units', 'Pixel', ...
-    'Position', [7 14 80 15], 'String', popLutString,...
+    'Position', [7 10 80 15], 'String', popLutString,...
     'Value',customConfig.colormap,'FontSize',7,'Tooltip',ttt1,'Tag',ttt);
 
 if ~isempty(defaultColormap{1})
@@ -3501,34 +3500,34 @@ btWidth = 24;
 ttt = sprintf('Invert colormap.\nBright colors become dark and dark colors bright.');
 if debugMatVis, ttt1 = sprintf('Handle: ''tb_invert''\nCallback: ''updateInvertMode'''); else,  ttt1 = ttt; end
 tb_invert = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Value', 0,  ...
-    'Position', [btPos 8 24 24], 'Enable', 'on', 'CData', invertBt, 'Callback', @updateInvertMode,'Tooltip',ttt1,'Tag',ttt);
+    'Position', [btPos 4 24 24], 'Enable', 'on', 'CData', invertBt, 'Callback', @updateInvertMode,'Tooltip',ttt1,'Tag',ttt);
 btPos = btPos + btGap + btWidth;
 %Flip Colormap
 ttt = sprintf('Flip colormap range.');
 if debugMatVis, ttt1 = sprintf('Handle: ''tb_flip''\nCallback: ''updateFlipMode'''); else,  ttt1 = ttt; end
 tb_flip = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'Value', 0,  ...
-    'Position', [btPos 8 24 24], 'Enable', 'on', 'CData', flipBt, 'Callback', @updateFlipMode,'Tooltip',ttt1,'Tag',ttt);
+    'Position', [btPos 4 24 24], 'Enable', 'on', 'CData', flipBt, 'Callback', @updateFlipMode,'Tooltip',ttt1,'Tag',ttt);
 btPos = btPos + btGap + btWidth;
 if withAlpha
   %toggle button for figure background color
   ttt = sprintf('toggle Alpha background color in the image window.');
   if debugMatVis, ttt1 = sprintf('Handle: ''tbAlphaBW''\nCallback: ''toggleAlphaBW'''); else,  ttt1 = ttt; end
   tbAlphaBW = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel', ...
-    'CData', icon_image_24x24.*icon_AlphaImI_24,'Position', [btPos 8 24 24], ...
+    'CData', icon_image_24x24.*icon_AlphaImI_24,'Position', [btPos 4 24 24], ...
     'String', '', 'Value', 1, 'Callback', @toggleAlphaBW,'Tooltip',ttt1,'Tag',ttt);
   btPos = btPos + btGap + btWidth;
   %toggle button for figure background color
   ttt = sprintf('toggle figure background color in the image window.');
   if debugMatVis, ttt1 = sprintf('Handle: ''tbImageWinBGCol''\nCallback: ''toggleImageWinBGCol'''); else,  ttt1 = ttt; end
   tbImageWinBGCol = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel', ...
-    'CData', icon_image_14x14, 'BackgroundColor','k','Position', [btPos 8 24 24], ...
+    'CData', icon_image_14x14, 'BackgroundColor','k','Position', [btPos 4 24 24], ...
     'String', '', 'Value', 1, 'Callback', @toggleImageWinBGCol,'Tooltip',ttt1,'Tag',ttt);
 else
   %Toggle button for RGB display (disabled for 2D data)
   ttt = sprintf('Display three consecutive slices as RGB image or use ''stretch modes'' to create color-coded projections along the RGB dimension.');
   if debugMatVis, ttt1 = sprintf('Handle: ''tb_switchRGB''\nCallback: ''switchRGB'''); else,  ttt1 = ttt; end
   tb_switchRGB = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel',  ...
-    'Position', [btPos 8 24 24],  'Callback', @switchRGB, 'CData', RGB,'Tooltip',ttt1,'Tag',ttt);
+    'Position', [btPos 4 24 24],  'Callback', @switchRGB, 'CData', RGB,'Tooltip',ttt1,'Tag',ttt);
   if nDim < 3 || withAlpha
     set(tb_switchRGB, 'Enable', 'off');
   end
@@ -3539,21 +3538,21 @@ btPos = btPos + btGap + btWidth;
 ttt = sprintf('Show / hide colorbar in the image window.');
 if debugMatVis, ttt1 = sprintf('Handle: ''tbColorbar''\nCallback: ''showColorbar'''); else,  ttt1 = ttt; end
 tbColorbar = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel', 'CData', colorbarIcon, ...
-    'Position', [btPos 8 24 24], 'String', '', 'Value', 0, 'Callback', @showColorbar,'Tooltip',ttt1,'Tag',ttt);
+    'Position', [btPos 4 24 24], 'String', '', 'Value', 0, 'Callback', @showColorbar,'Tooltip',ttt1,'Tag',ttt);
 btPos = btPos + btGap + btWidth;
 %Toggle button for equal axes property
 ttt = sprintf('Switch axes between filling the figure or having a fixed aspect ratio.\n- Left click: Toggle fill / fixed.\n- Right click: Set aspect ratio.');
 ttt2 = sprintf('<html>Switch axes between filling the figure or having a fixed aspect ratio.<br /><b>Left click:</b> Toggle fill / fixed.<br /><b>Right click:</b> Set aspect ratio.</html>');
 if debugMatVis, ttt1 = sprintf('Handle: ''tbAspRatio''\nCallback: ''updateAspRatio'''); else,  ttt1 = ttt2; end
 tbAspRatio = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel',  ...
-    'Position', [btPos 8 24 24], 'String', '1:1', 'Value', 1  , 'FontSize', 7, ...
+    'Position', [btPos 4 24 24], 'String', '1:1', 'Value', 1  , 'FontSize', 7, ...
     'Callback', @updateAspRatio,'Value', customConfig.aspectRatio,'Tooltip',ttt1,'Tag',ttt);
 btPos = btPos + btGap + btWidth;
 %Toggle button for display of objects
 ttt = sprintf('Show / hide plot coordinates and zoom range in the image window.');
 if debugMatVis, ttt1 = sprintf('Handle: ''tbShowObjects''\nCallback: ''toggleShowObjects'''); else,  ttt1 = ttt; end
 tbShowObjects = uicontrol('Parent', panel_imageControls, 'Style', 'Togglebutton', 'Units', 'Pixel',  ...
-    'Position', [btPos 8 24 24], 'CData', objBt, 'Callback', @toggleShowObjects, 'Value', customConfig.lineVis, ...
+    'Position', [btPos 4 24 24], 'CData', objBt, 'Callback', @toggleShowObjects, 'Value', customConfig.lineVis, ...
     'Tooltip',ttt1,'Tag',ttt);
 btPos = btPos + btGap + btWidth;
 %100 % button
@@ -3561,13 +3560,12 @@ ttt = sprintf('Set display size of zoom window to 100 %% (1 image pixel equals 1
 ttt2 = sprintf('<html>Set display size of zoom window to 100 %% (1 image pixel equals 1 screen pixel).<br /><b>Right click</b> to specify another pixel scale.</html>');
 if debugMatVis, ttt1 = sprintf('Handle: ''bt_100pct''\nCallback: ''set100Pct'''); else,  ttt1 = ttt2; end
 bt_100pct = uicontrol('Parent', panel_imageControls, 'Style', 'pushbutton', 'Units', 'Pixel',  ...
-    'Position', [btPos 8 24 24], 'String', '100%','FontSize',6, 'Callback', @set100Pct, 'Value', 0, ...
+    'Position', [btPos 4 24 24], 'String', '100%','FontSize',6, 'Callback', @set100Pct, 'Value', 0, ...
     'Tooltip',ttt1,'Tag',ttt); 
 
 %Separator line
-sepLine(2) = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', guiBGCol,...
-    'Position', [0 133 customConfig.winPos.gui(3) 10], 'String','__________________________________________________________________________________', ...
-    'HorizontalAlignment', 'left', 'FontWeight', 'Bold','Fontsize',6);
+sepLine(2) = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', .625*[1 1 1],...
+    'Position', [0 133 customConfig.winPos.gui(3) 1], 'String','');
 
 % Windows, config & help
 txt_titles(end+1) = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', guiBGCol,...
@@ -3663,9 +3661,8 @@ uicontrol('Parent',panel_windowButtons, 'Style', 'Pushbutton', 'Units', 'Pixel',
     'FontSize',7, 'String','SaveConf', 'Callback',@saveConfig, 'Tooltip',ttt1,'Tag',ttt);
 
 %Separator line
-sepLine(3) = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', guiBGCol,...
-    'Position', [0 65 customConfig.winPos.gui(3) 10], 'String','__________________________________________________________________________________', ...
-    'HorizontalAlignment', 'left', 'FontWeight', 'Bold','Fontsize',6);
+sepLine(3) = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', .625*[1 1 1],...
+    'Position', [0 65 customConfig.winPos.gui(3) 1], 'String','');
 
 %Status line
 txt_tooltips = uicontrol(gui, 'Style', 'Text', 'Units', 'Pixel', 'BackgroundColor', guiBGCol,...
@@ -4545,12 +4542,18 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 set(sldMin_RGB, 'Value', get(sldMax_RGB, 'Value') - 0.01);
             end
         elseif any(get(bg_colormap, 'SelectedObject') ==  [cmStretchRGBMean cmStretchRGBMax])
-            set([sldGamma valSldGamma strGamma], 'Visible', 'off');
+            set([sldGamma valSldGamma strGamma], 'Visible', 'on');
+            sldGamma.Position    = [56    31   208    10];
+            valSldGamma.Position = [268    30    45    12];
+            strGamma.Position    = [-32     -15     1];
             set([valSldMin_RGB valSldMax_RGB sldMin_RGB sldMax_RGB rgbSldIm], 'Visible', 'on');
             set([sld(rgbDim) etxt(rgbDim) bt_playAll(rgbDim) bt_playZoom(rgbDim)], 'Enable','off');
             drawGuiHist(dim(rgbDim));
         else
             set([sldGamma valSldGamma strGamma], 'Visible', 'on');
+            sldGamma.Position    = [56    55   208    10];
+            valSldGamma.Position = [268    53    45    12];
+            strGamma.Position    = [-32     8     1];
             set([valSldMin_RGB valSldMax_RGB sldMin_RGB sldMax_RGB rgbSldIm], 'Visible', 'off');
             if dim(rgbDim) > 2
                 drawGuiHist(3);
@@ -6256,8 +6259,9 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
           end
           busy(0);
         end
-        %Non-RGB mode
+        %% handle RGB mode
         if ~rgbCount %withAlpha || get(tb_switchRGB, 'Value') == 0
+          %% Non-RGB mode
             currImVal = currIm; % Remember "original" values
             if withAlpha
                 currAlphaMapVal = currAlphaMap;
@@ -6299,7 +6303,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 end
             end
         else
-            %% RGB mode
+          %% RGB mode
             % Update slider for RGB mode (update otherwise by updateColormap function)
             if get(cmStretchRGBMean, 'Value') || get(cmStretchRGBMax, 'Value')
                 busy(1);
@@ -6334,7 +6338,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 cmMinMax(isnan(cmMinMax)) = 0;
             end
             if (~get(cmStretchRGBMean, 'Value') && ~get(cmStretchRGBMax, 'Value')) %if any(get(bg_colormap, 'SelectedObject') ==  [cmStretchRGBMean cmStretchRGBMax])
-                %"Normal" RGB mode (Global, Channel or Image)
+                %% "Normal" RGB mode (Global, Channel or Image)
                 for ii = 1:nMat
                     sz = size(currIm{ii});
                     if dim(rgbDim) == 2
@@ -6436,7 +6440,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
                 updateGuiHist(histValCurrIm);
                 %                 end
             else
-                %Stretch RGB mode
+                %% Stretch RGB mode
 %                 rgbStretchSldVal = [get(sldMin_RGB, 'Value') get(sldMax_RGB, 'Value')];
 %                 set(valSldMin_RGB, 'String', num2str(rgbStretchSldVal(1),'%6.3f'));
 %                 set(valSldMax_RGB, 'String', num2str(rgbStretchSldVal(2),'%6.3f'));
@@ -6559,7 +6563,16 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         % values larger than 1 can generate shifts in hue when
         % adjusting the contrast. Thus, the values are scaled
         % to the maximum of any channel, thereby preserving hue
-        % and only changing brightness:
+        % and only changing brightness. For test run:
+        %{
+          AA = zeros(32,64); 
+          for n=1:64;AA(ceil(n/2),n)=1; end
+          AA = repmat(AA,[1 1 16]);
+          AA = AA.*permute(linspace(0,1,16),[3 1 2]);
+          matVis(permute(AA,[3 2 1]))
+        %}
+        % goto "RGB Mode" + "Mean stretch" and adjust brightness...
+        % "gamma" waits to be implemented
         sz = size(in);
         % Reshape and avoid negative values by shifting data
         in = single(reshape(in-min(in(:)), [], sz(3)));
@@ -6575,7 +6588,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         % vector
         hue = single(in ./ repmat(brightness, [1 sz(3)]));
         hue(brightness==0,:) = 0; % sets NaNs in hue obtained from division by zero brightness zo zero
-        clear in;
+        % clear in;
         % Normalize intensities according to max intensities
         brightness = single(brightness ./ maxBright);
         brightness(isnan(brightness))=0;
@@ -6585,6 +6598,7 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         brightness = single((brightness - relMin) / (relMax - relMin)); % Scale to relative min/max values
         brightness(brightness < 0) = 0;  % cut off values below black point
         brightness(brightness > 1) = 1;  % cut off values above white point
+        brightness = brightness.^currGamma(1); % apply gamma to brightness (without changing color) 
         brightness = single(brightness .* maxBright); % Rescale to max. intensities for RGB triples
         clear maxBright
         out = single(hue .* repmat(brightness, [1 sz(3)]));
