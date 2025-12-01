@@ -168,6 +168,14 @@ function varargout = matVis(varargin)
 %   'dimUnits',{'um','um','min'});
 % matVis('debug',1)
 % hh = matVis(...); stopHere; close(hh.figHandles.gui)
+%
+% synchronizing matVis
+% hh1 = matVis(magic(4));hh2 = matVis(magic(4));
+% for dimNum=1:2
+%   hh1.objHandles.sld(dimNum).Callback = @(x,y)hh2.fctHandles.sliderUpdate(dimNum, hh1.objHandles.sld(dimNum).Value) ;
+%   % hh1.objHandles.sld_up(dimNum).Callback = @(x,y)hh2.fctHandles.zoomUpdate(dimNum, hh1.objHandles.sld_up(dimNum).Value) ;
+% end
+
 %**************************************************************************
 % Copyright Stephan Junek <stephan.junek@brain.mpg.de>
 %           Andre Zeug    <zeug.andre@mh-hannover.de>
@@ -3845,6 +3853,15 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         updateSelection(dimNum);
         if debugMatVis, debugMatVisFcn(2); end
     end
+    % sets slider Value from (external) source
+    function sliderUpdateCallback(dimNum, newVal)    %#ok
+        if debugMatVis, debugMatVisFcn(1); end
+        %dimNum = get(hObject, 'Userdata');
+        set(sld(dimNum), 'Value', newVal)
+        currPos(dimNum) = round(get(sld(dimNum), 'Value'));
+        updateSelection(dimNum);
+        if debugMatVis, debugMatVisFcn(2); end
+    end
 
 %Callback for textboxes for current position
     function etxtCallback(hObject, event, dimNum)   %#ok
@@ -5770,6 +5787,13 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         for ii = dimNum
             set(sld(ii), 'Value', currPos(ii));
             set(etxt(ii), 'String', num2str(currPos(ii)));
+            if ~isempty(sld(ii).Callback)
+              info = functions(sld(ii).Callback);
+              switch true
+                case contains(info.function,'fctHandles.sliderUpdate')
+                  sld(ii).Callback(ii,sld(ii).Value)
+              end
+            end
         end
         %         end
         % Call from position buttons
@@ -13286,11 +13310,18 @@ if debugMatVis; t1 = debugMatVisOutput('Initialization done', whos, toc(tStart),
         out.figHandles.zoomWin = zoomWin;
         out.figHandles.plotWin = plotWin;
         % Function handles
+        out.fctHandles.sliderUpdate = @(x1,x2)sliderUpdateCallback(x1,x2);
         out.fctHandles.loadNewData = @loadNewData;
         out.fctHandles.loadNewSettings = @loadNewSettings;
         out.fctHandles.exportOutputStrct = @exportOutputStrct;
         out.fctHandles.closeGui = @closeGui;
+        % Object handles
+        out.objHandles.sld      = sld;
+        out.objHandles.sld_up   = sld_up;
+        out.objHandles.sld_down = sld_down;
+        %out.objHandles.etxt = etxt;
         % Settings
+        out.settings.currPos = currPos;
         out.settings.zoom = zoomVal;
         out.settings.zoomXY = zoomValXY;
         % Data (file or variable) name
